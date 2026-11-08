@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carteira</title>
+<meta name="description" content="Gestão de clientes e CRM para barbearia">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#161512;--card:#1f1e1a;--mut:#2a2823;--fg:#f1eee8;--sub:#a29e94;--gold:#d6aa5c;--ok:#5fc08a;--bad:#e5694f;--bd:#ffffff14;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px Manrope,system-ui,sans-serif;color-scheme:dark}
+h1,.big{font-family:"Instrument Serif",Georgia,serif;font-weight:400}
+main{max-width:760px;margin:0 auto;padding:16px 16px 90px}
+h1{font-size:34px;margin:8px 0 2px}.sub{color:var(--sub);font-size:13px}
+nav{position:fixed;z-index:5;left:0;right:0;bottom:0;display:flex;background:#1a1915f2;border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(8px);overflow-x:auto}
+nav .brand{display:none}
+nav .s2{display:none}
+nav button{flex:1;min-width:72px;background:none;border:0;color:var(--sub);padding:10px 4px;font:inherit;font-size:10.5px;display:flex;flex-direction:column;align-items:center;gap:4px}nav button.on{color:var(--gold)}
+nav svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+@media(min-width:800px){nav{top:0;bottom:auto;right:auto;width:260px;flex-direction:column;border-top:0;border-right:1px solid var(--bd);background:#1b1a17;padding:calc(22px + env(safe-area-inset-top,0px)) 16px 22px;overflow:visible;gap:6px}
+nav .brand{display:flex;align-items:center;gap:14px;font-family:"Instrument Serif",Georgia,serif;font-size:32px;margin:0 8px 26px}.logo{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#e7bd7a,#b98846);display:grid;place-items:center;color:#1b1608}
+nav button{flex:none;flex-direction:row;gap:16px;font-size:16px;padding:14px 18px;border-radius:99px;text-align:left}nav button.on{background:var(--mut);color:var(--fg)}
+nav .s2{display:flex;margin-left:34px;padding:10px 18px;font-size:15px}nav .s2.on2{color:var(--gold);background:none}.tabs.mob{display:none}
+main{margin:0 auto 0 260px;max-width:1100px;padding:28px 40px}}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;text-align:left;color:inherit;font:inherit}
+.stat.hot{background:linear-gradient(135deg,#d9b068,#ad8040);color:#1b1608}.stat .big{font-size:44px;line-height:1}.stat small{font-size:12px;opacity:.8}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);margin:26px 0 10px}h2 b{color:var(--gold)}
+.card{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:10px;color:inherit;font:inherit}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}.nm{font-weight:600}
+.badge{font-size:11px;padding:3px 9px;border-radius:99px;background:var(--mut);color:var(--sub);white-space:nowrap}
+.badge.atrasado{background:#e5694f26;color:var(--bad)}.badge.hoje{background:#d6aa5c30;color:var(--gold)}.badge.proximo{background:#5fc08a22;color:var(--ok)}
+input,select,textarea{width:100%;background:var(--mut);border:1px solid var(--bd);border-radius:10px;color:var(--fg);padding:11px;font:inherit;margin-top:4px}
+label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
+.btn{background:var(--gold);color:#1b1608;border:0;border-radius:10px;padding:11px 16px;font:inherit;font-weight:600}
+.btn.alt{background:var(--mut);color:var(--fg)}.btn.wa{background:#3fbf6f;color:#07200f}.btn.del{background:none;color:var(--bad)}
+.tabs{display:flex;gap:8px;overflow-x:auto;margin:14px -16px 6px;padding:0 16px}.tabs button{flex:none;border:1px solid var(--bd);background:var(--card);color:var(--sub);border-radius:99px;padding:8px 14px;font:inherit;font-size:13px}.tabs button.on{background:var(--gold);color:#1b1608;border-color:var(--gold)}
+.tabs .chipsel{width:auto;margin:0;flex:none;border:1px solid var(--bd);background:var(--card);color:var(--sub);border-radius:99px;padding:8px 14px;font:inherit;font-size:13px}.tabs .chipsel.on{background:var(--gold);color:#1b1608;border-color:var(--gold)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.empty{color:var(--sub);text-align:center;padding:30px 0;font-size:14px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.note{color:var(--sub);font-size:12px;margin-top:20px}
+.tbl{display:none;overflow:hidden;border:1px solid var(--bd);border-radius:18px;background:var(--card)}
+.tbl table{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);background:#ffffff0a;padding:15px 12px;font-weight:600}
+.tbl td{padding:17px 12px;border-top:1px solid var(--bd);white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{padding-left:22px}.tbl td.p{color:var(--sub)}.tbl tr.r{cursor:pointer}.tbl tr.r:hover td{background:#ffffff08}
+.badge.proximo{background:#d6aa5c1c;color:#e3c27d}.badge.em_dia{background:#5fc08a22;color:var(--ok)}
+.lnk{background:none;border:0;color:var(--fg);font:inherit;padding:6px 0;cursor:pointer}
+.kvs{display:grid;grid-template-columns:1fr;column-gap:40px}.kv{display:flex;justify-content:space-between;gap:12px;padding:11px 0;color:var(--sub)}.kv b{color:var(--fg);font-weight:400;text-align:right}
+.tl{position:relative;padding-left:26px}.tl:before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:1px;background:var(--bd)}.tl .it{position:relative}.tl .dot{position:absolute;left:-26px;top:22px;width:11px;height:11px;border-radius:50%;background:var(--gold)}
+.ico{background:none;border:0;color:var(--sub);font-size:16px;cursor:pointer}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.chip{border:1px solid var(--bd);background:var(--mut);color:var(--sub);border-radius:99px;padding:9px 16px;font:inherit;font-size:14px;cursor:pointer}.chip.on{background:var(--gold);color:#1b1608;border-color:var(--gold)}
+.msg{background:var(--mut);border-radius:16px 16px 16px 4px;padding:12px 14px;margin-top:10px;max-width:94%}.msg .row{margin-bottom:4px}
+.info{grid-template-columns:1fr}
+.fbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}.fpanel{margin-top:10px;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px}.fpanel .flt{margin-top:0}.fpanel .actions{margin-top:12px}
+.kb{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding-bottom:12px}
+.col{flex:1 0 230px;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:12px;min-height:110px}
+.oc{background:var(--mut);border-radius:12px;padding:9px 11px;margin-top:8px;cursor:grab}.oc:active{cursor:grabbing}.sbs{width:auto;max-width:100%;margin:8px 0 0;padding:3px 9px;font-size:11px;border-radius:99px;color:var(--gold)}.meta{font-size:11.5px;color:var(--sub);margin-top:4px}.wab{background:#3fbf6f;color:#07200f;border-radius:99px;padding:4px 11px;font-size:11px;font-weight:600;text-decoration:none}.ac{display:flex;align-items:center;gap:6px;margin-top:8px}.dt{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px}
+.sbs{width:100%;border-radius:8px;padding:5px 8px;margin-top:8px}.ac{justify-content:space-between}.fu{margin-top:8px;font-size:11.5px;color:var(--sub);gap:6px}.fud{width:auto;margin:0;padding:3px 6px;font-size:11px;border-radius:8px}.hj{background:var(--card);border:1px solid var(--bd);color:var(--sub);border-radius:8px;padding:3px 8px;font-size:11px;margin-left:4px;cursor:pointer}.vl{color:var(--gold);font-weight:600}
+.row.fu{display:block}.fu>span:first-child{display:block;margin-bottom:4px;white-space:nowrap}.fu>span:last-child{display:flex;gap:6px;align-items:center}.fud{flex:1;min-width:0}.hj{margin-left:0;white-space:nowrap}
+#lock{position:fixed;inset:0;z-index:99;background:var(--bg);display:none;align-items:center;justify-content:center;padding:24px}#lock.on{display:flex}.lbox{width:100%;max-width:340px;text-align:center}
+.lbox .logo{width:64px;height:64px;margin:0 auto 18px;border-radius:50%;background:linear-gradient(135deg,#e7bd7a,#b98846);display:grid;place-items:center;color:#1b1608}.lbox .logo svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.lbox input{text-align:center;letter-spacing:.5em;font-size:22px;margin:16px 0 8px}
+.chip .x{margin-left:8px;padding:2px 4px;cursor:pointer;opacity:.7}.chip .x:hover{opacity:1}
+#dlg{position:fixed;inset:0;z-index:120;background:#000a;display:none;align-items:center;justify-content:center;padding:24px}#dlg.on{display:flex}.dbox{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:20px;max-width:340px;width:100%}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--mut);border:1px solid var(--bd);border-radius:12px;padding:10px 16px;z-index:130;display:none;max-width:90%}#toast.on{display:block}
+@media(min-width:800px){.kp{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:800px){.kvs{grid-template-columns:1fr 1fr}}
+@media(min-width:800px){.tbl{display:block}.cards{display:none}.flt{grid-template-columns:repeat(4,1fr)}}
+</style></head><body><main id="app"></main>
+<nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div>
+<script>
+const Q={qualificado:"Qualificado",nao_qualificado:"Sem potencial",nao_avaliado:"Não avaliado"},
+T={avulso:"Avulso",assinante:"Assinante"},
+YN={nao_informado:"Não informado",sim:"Sim",nao:"Não"},
+FQ=[["f15","Até 15 dias"],["f30","Até 30 dias"],["f60","Até 60 dias"],["f90","Até 90 dias"]],
+FO=["em_dia","sem_frequencia","atrasado","hoje","proximo"],
+freqOpts=v=>`<option value="">Frequência: todas</option>`+[...FO.map(k=>[k,SL[k]]),...FQ].map(([k,l])=>`<option value="${k}" ${v==k?"selected":""}>${l}</option>`).join(""),
+ff=(c,v)=>!v||(v[0]=="f"?(c.freq>0&&c.freq<=+v.slice(1)):c.st==v),
+SL={sem_frequencia:"Sem frequência",atrasado:"Atrasado",hoje:"Retorno hoje",proximo:"Próximos 7 dias",em_dia:"Em dia"};
+let S={clients:[]},view="painel",cur=null,tab="hoje",F={q:"",qual:"",status:"",tipo:"",sub:"todos"},form=null;
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const iso=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const U=s=>{const[a,b,c]=s.split("-").map(Number);return Date.UTC(a,b-1,c)};
+const add=(s,n)=>new Date(U(s)+n*864e5).toISOString().slice(0,10);
+const br=s=>s?s.split("-").reverse().join("/"):"—";
+const next=c=>c.last&&c.freq>0?add(c.last,+c.freq):null;
+function status(c){const n=next(c);if(!n)return"sem_frequencia";const d=Math.round((U(n)-U(iso()))/864e5);return d<0?"atrasado":d==0?"hoje":d<=7?"proximo":"em_dia"}
+const rows=()=>S.clients.map(c=>({...c,nx:next(c),st:status(c)}));
+const byNx=(a,b)=>(a.nx||"").localeCompare(b.nx||"");
+function wa(c){let d=(c.phone||"").replace(/\D/g,"");if(d.length<10)return null;if(d.length<=11)d="55"+d;
+return`https://wa.me/${d}?text=`+encodeURIComponent(`Fala, ${c.name.trim().split(/\s+/)[0]}! Tudo certo? Já está chegando a hora de dar aquela ajustada no corte. Quer que eu veja um horário pra você?`)}
+/* persistência: db (privado do usuário) com fallback em localStorage */
+function save(){try{localStorage.setItem("carteira",JSON.stringify(S))}catch(e){}}
+function init(){try{const l=localStorage.getItem("carteira");if(l)S=JSON.parse(l)}catch(e){}render();lockUI()}
+function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span class="nm">${esc(c.name)}</span><span class="badge ${c.st}">${SL[c.st]}</span></div>
+<div class="sub" style="margin-top:6px">Último: ${br(c.last)} · Freq.: ${c.freq?c.freq+"d":"—"} · Previsto: ${br(c.nx)}</div></button>`}
+const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td class="nm">${esc(c.name)}</td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
+function open_(id){cur=id;view="ficha";form=null;render()}
+function go(v){view=v;form=null;OF=null;if(v=="clientes")F.sub="todos";render();scrollTo(0,0)}
+function goSub(s){F.sub=s;view="clientes";form=null;render();scrollTo(0,0)}
+function render(){
+$("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=(view=="clientes"||view=="ficha"||view=="form")&&!add;return`<button class="${k=="clientes"?(inC&&(F.sub=="todos"||view!="clientes")?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["avulsos","Avulsos"],["assinatura","Assinantes"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
+let r=rows();const el=$("#app");
+if(view=="painel"){const rr=r.filter(c=>c.qual=="qualificado"&&c.tipo!="assinante"),m=f=>rr.filter(f).length,n=f=>r.filter(f).length,sec=(t,a,e)=>`<h2>${t} <b>${a.length}</b></h2>`+list(a,e);
+el.innerHTML=`<h1>Painel</h1><div class="sub">Hoje, ${br(iso())}</div><div class="grid">
+${[["Total de clientes",r.length,"clientes",""],["Retorno hoje",m(c=>c.st=="hoje"),"retornos","hot"],["Atrasados",m(c=>c.st=="atrasado"),"retornos",""],["Próximos 7 dias",m(c=>c.st=="proximo"),"retornos",""],["Qualificados",n(c=>c.qual=="qualificado"),"clientes",""],["Assinatura",n(c=>c.tipo=="assinante"&&c.qual!="nao_qualificado"),"assinatura",""]].map(([l,v,t,h])=>`<button class="stat ${h}" onclick="${t=="assinatura"?"goSub('assinatura')":"go('"+t+"')"}"><small>${l}</small><div class="big">${v}</div></button>`).join("")}</div>
+${sec("Retornos de hoje",rr.filter(c=>c.st=="hoje"),"Ninguém previsto para hoje.")}${sec("Atrasados",rr.filter(c=>c.st=="atrasado").sort(byNx),"Nenhum cliente atrasado.")}${sec("Próximos retornos",rr.filter(c=>c.st=="proximo").sort(byNx),"Nada nos próximos 7 dias.")}`}
+else if(view=="retornos"){r=r.filter(c=>c.qual=="qualificado"&&c.tipo!="assinante");const w=r.filter(c=>c.nx).sort(byNx),L={hoje:r.filter(c=>c.st=="hoje"),atrasado:w.filter(c=>c.st=="atrasado"),proximo:w.filter(c=>c.st=="proximo"),todos:w,sem_frequencia:r.filter(c=>c.st=="sem_frequencia"),em_dia:w.filter(c=>c.st=="em_dia"),f15:r.filter(c=>ff(c,"f15")).sort(byNx),f30:r.filter(c=>ff(c,"f30")).sort(byNx),f60:r.filter(c=>ff(c,"f60")).sort(byNx),f90:r.filter(c=>ff(c,"f90")).sort(byNx)},N={hoje:"Hoje",atrasado:"Atrasados",proximo:"7 dias",todos:"Todos",sem_frequencia:"Sem frequência",em_dia:"Em dia",f15:"Até 15 dias",f30:"Até 30 dias",f60:"Até 60 dias",f90:"Até 90 dias"};
+el.innerHTML=`<h1>Retornos</h1><div class="tabs" style="flex-wrap:wrap;overflow:visible">${["hoje","atrasado","proximo","todos"].map(k=>`<button class="${tab==k?"on":""}" onclick="tab='${k}';render()">${N[k]} ${L[k].length}</button>`).join("")}<select class="chipsel${["hoje","atrasado","proximo","todos"].includes(tab)?"":" on"}" onchange="if(this.value){tab=this.value;render()}"><option value="">Filtros</option>${Object.keys(N).slice(4).map(k=>`<option value="${k}" ${tab==k?"selected":""}>${N[k]} ${L[k].length}</option>`).join("")}</select></div>${list(L[tab],"Nenhum cliente nesta lista.")}`}
+else if(view=="clientes"){const q=F.q.toLowerCase().trim(),d=q.replace(/\D/g,"");
+const a=r.filter(c=>(!q||(c.name+" "+(c.instagram||"")+" "+(c.email||"")).toLowerCase().includes(q)||(d.length>=3&&(c.phone||"").replace(/\D/g,"").includes(d)))&&(!F.qual||c.qual==F.qual)&&(!F.status||(F.status[0]=="f"?(c.freq>0&&c.freq<=+F.status.slice(1)):c.st==F.status))&&(F.sub=="todos"||(c.qual!="nao_qualificado"&&(F.sub=="assinatura")==(c.tipo=="assinante")))&&(!F.tipo||(c.tipo=="assinante"?"assinante":"avulso")==F.tipo)&&(!F.visa||(F.visa=="sim")==(c.visa=="sim"))).sort((a,b)=>a.name.localeCompare(b.name));
+const opt=(o,v,e)=>`<option value="">${e}</option>`+Object.entries(o).map(([k,t])=>`<option value="${k}" ${v==k?"selected":""}>${t}</option>`).join("");
+el.innerHTML=`<div class="row"><div><h1>Clientes</h1><div class="sub">${a.length} ${F.sub=="assinatura"?"assinantes":F.sub=="avulsos"?"avulsos":"de "+r.length+" clientes"}</div></div><button class="btn" onclick="newC()">+ Novo</button></div>
+<div class="tabs mob" style="margin-top:6px">${[["todos","Todos"],["avulsos","Avulsos"],["assinatura","Assinantes"]].map(([k,t])=>`<button class="${F.sub==k?"on":""}" onclick="F.sub='${k}';render()">${t} ${r.filter(c=>k=="todos"||(c.qual!="nao_qualificado"&&(k=="assinatura")==(c.tipo=="assinante"))).length}</button>`).join("")}</div>
+<input style="margin-top:12px" placeholder="Nome, telefone, Instagram ou e-mail" value="${esc(F.q)}" oninput="F.q=this.value;render2()" id="q">
+<div class="fbar"><button class="btn alt" onclick="FOPEN=!FOPEN;render()">⚙ Filtros${fcount()?" · "+fcount():""}</button>${fchips()}</div><div class="fpanel" style="display:${FOPEN?"block":"none"}"><div class="two flt"><select onchange="F.qual=this.value;render()">${opt(Q,F.qual,"Qualificação")}</select><select onchange="F.status=this.value;render()">${freqOpts(F.status)}</select>${F.sub=="todos"?`<select onchange="F.tipo=this.value;render()">${opt(T,F.tipo,"Tipo de cliente")}</select>`:""}<select onchange="F.visa=this.value;render()">${opt({sim:"Fez visagismo",nao:"Não fez visagismo"},F.visa,"Visagismo")}</select></div><div class="actions"><button class="btn alt" onclick="clearF()">Limpar filtros</button></div></div>
+<div style="margin-top:14px">${list(a,"Nenhum cliente encontrado.")}</div>`;
+}
+else if(view=="ficha"||view=="form"){fichaView(r)}
+else if(view=="crm"){crmView()}
+else if(view=="registrar"){regView()}
+else if(view=="dados"){el.innerHTML=`<h1>Importar e exportar</h1><div class="sub">Arquivos CSV (no Google Sheets: Arquivo → Fazer download → CSV).</div><div class="card" style="margin-top:14px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div style="margin-top:12px"><div class="nm">Restaurar backup</div><div class="sub" style="margin:4px 0 8px">Arquivo JSON gerado pelo Backup completo.</div><input type="file" accept=".json,application/json" onchange="restoreJson(this)"></div><div class="card"><div class="nm">Exportar clientes</div><div class="sub">${S.clients.length} clientes</div><div class="actions"><button class="btn" onclick="exportCsv()">Exportar CSV</button></div></div>`}
+else if(view=="ajustes"){ajView()}}
+function render2(){const p=$("#q").selectionStart;render();const i=$("#q");i.focus();i.setSelectionRange(p,p)}
+function newC(){FSEC=null;form={id:"c"+Date.now(),name:"",phone:"",instagram:"",email:"",qual:"nao_avaliado",tipo:F.sub=="assinatura"?"assinante":"avulso",tesoura:"nao_informado",brig:"nao_informado",freq:"",last:"",notes:"",visits:[],created:iso(),isNew:true};cur=form.id;view="form";render()}
+function fichaView(r){const el=$("#app"),c=r.find(x=>x.id==cur);
+if(view=="form"){const f=form,o=(m,v)=>Object.entries(m).map(([k,t])=>`<option value="${k}" ${v==k?"selected":""}>${t}</option>`).join(""),i=(k,l,t="text")=>`<label>${l}<input type="${t}" value="${esc(f[k])}" oninput="FM.${k}=this.value"></label>`;
+el.innerHTML=`<h1>${f.isNew?"Novo cliente":FSEC=="info"?"Editar informações":FSEC=="perfil"?"Editar perfil do cliente":"Editar cliente"}</h1><div class="sub">Só o nome é obrigatório. O resto você completa depois.</div>${FSEC=="perfil"?"":`${i("name","Nome completo")}${i("phone","Telefone / WhatsApp","tel")}${i("instagram","Instagram (@usuário ou link)")}${i("email","E-mail","email")}
+<div class="two"><label>Qualificação<select onchange="FM.qual=this.value;render()">${o(Q,f.qual)}</select></label><label>Tipo de cliente<select onchange="FM.tipo=this.value;render()">${o(T,f.tipo)}</select></label></div>`}${f.qual=="nao_qualificado"||FSEC=="info"?"":`<h2>Perfil do cliente</h2><div class="two">
+<label>Já fez visagismo?<select onchange="FM.visa=this.value">${o(YN,f.visa)}</select></label><label>Já comprou produto?<select onchange="FM.produto=this.value">${o({sim:"Sim",nao:"Não"},f.produto||"nao")}</select></label>
+${f.tipo=="assinante"?"":i("freq","Frequência de retorno (dias)","number")+i("last","Último atendimento","date")}<div style="grid-column:1/-1"><label>Serviços contratados</label><div class="chips">${svList().map(s=>`<button type="button" class="chip ${svc(f).includes(s)?"on":""}" onclick="togForm(this,'${s}')">${s}</button>`).join("")}</div></div>${f.tipo=="assinante"?"":i("days","Dias frequentados")}</div>`}
+
+<div class="actions"><button class="btn" onclick="saveForm()">Salvar</button><button class="btn alt" onclick="${f.isNew?"go('clientes')":"view='ficha';render()"}">Cancelar</button></div>`;return}
+if(!c){go("clientes");return}
+ficha2(c);return}
+function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";const isNew=f.isNew;delete f.isNew;
+if(isNew)S.clients.push(f);else S.clients=S.clients.map(x=>x.id==f.id?f:x);save();cur=f.id;view="ficha";form=null;FSEC=null;render()}
+function exportCsv(){const h=["nome","telefone","instagram","email","qualificacao","tipo","tesoura","brigadeiro","frequencia_dias","ultimo_atendimento","observacoes"],
+e=v=>'"'+String(v??"").replace(/"/g,'""')+'"',
+csv=[h.join(",")].concat(S.clients.map(c=>[c.name,c.phone,c.instagram,c.email,c.qual,c.tipo,c.tesoura,c.brig,c.freq,c.last,c.notes].map(e).join(","))).join("\n");
+download("clientes.csv","text/csv;charset=utf-8","\ufeff"+csv)}
+const sv=p=>`<svg viewBox="0 0 24 24">${p}</svg>`,
+IC={logo:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/>',
+painel:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+clientes:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.4c2.2.7 3.5 2.6 3.5 5.6"/>',
+retornos:'<path d="M8 2v4M16 2v4M3 10h18M21 12V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/><circle cx="17" cy="17" r="4"/><path d="M17 15.5V17l1 1"/>',
+crm:'<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/>',registrar:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',adicionar:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6 1 0 2 .2 2.8.6M19 14v6M16 17h6"/>',dados:'<path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/>',
+ajustes:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>'},
+NAV=[["painel","Dashboard"],["clientes","Clientes"],["retornos","Retornos"],["crm","CRM"],["registrar","Registrar atendimento"],["adicionar","Adicionar cliente"],["ajustes","Configurações"]];
+function parseCsv(t){const l=t.split("\n")[0],sep=(l.match(/;/g)||[]).length>(l.match(/,/g)||[]).length?";":",",R=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}else if(ch=='"')q=true;else if(ch==sep){r.push(c);c=""}else if(ch=="\n"||ch=="\r"){if(ch=="\r"&&t[i+1]=="\n")i++;r.push(c);c="";if(r.some(x=>x.trim()))R.push(r);r=[]}else c+=ch}r.push(c);if(r.some(x=>x.trim()))R.push(r);return R}
+function importCsv(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{const R=parseCsv(t.replace(/^\uFEFF/,"")),m=$("#imsg");if(R.length<2){m.textContent="Arquivo vazio.";return}
+const H=R[0].map(h=>h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,"")),
+g=(r,...ks)=>{for(const k of ks){const i=H.indexOf(k);if(i>=0&&r[i])return r[i].trim()}return""},
+dt=s=>{let x=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(x)return(x[3].length==2?"20"+x[3]:x[3])+"-"+x[2].padStart(2,"0")+"-"+x[1].padStart(2,"0");x=s.match(/^\d{4}-\d{2}-\d{2}/);return x?x[0]:""},
+yn=v=>/^sim/i.test(v)?"sim":/^n[aã]o$/i.test(v)?"nao":"nao_informado";let n=0;
+R.slice(1).forEach((r,i)=>{const name=g(r,"nome","nomecompleto");if(!name)return;const fq=g(r,"frequenciadias","frequencia","frequenciaderetorno").match(/\d+/),ql=g(r,"qualificacao").toLowerCase(),tp=g(r,"tipo");
+S.clients.push({id:"c"+Date.now()+"_"+i,name,phone:g(r,"telefone","celular","whatsapp"),instagram:g(r,"instagram"),email:g(r,"email"),qual:ql in Q?ql:/potencial|^n[aã]o qualif/.test(ql)?"nao_qualificado":ql.startsWith("qualif")?"qualificado":"nao_avaliado",tipo:/assin/i.test(tp)?"assinante":"avulso",visa:yn(g(r,"visagismo")),freq:fq?+fq[0]:"",last:dt(g(r,"ultimoatendimento","ultimavisita")),notes:g(r,"observacoes","obs"),visits:[]});n++});
+save();inp.value="";m.textContent=n+" clientes importados."})}
+let RD=iso();
+const nz=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim(),dg=s=>(s||"").replace(/\D/g,"");
+let RS=null,RNEW=false,RTXT={name:"",phone:""};
+function regPaint(){$("#rbox").innerHTML=regBox();const i=$("#rs")||$("#rn");if(i)i.focus()}
+function regSug(){const v=$("#rs").value.trim(),box=$("#sug");if(!v){box.innerHTML="";return}
+const d=dg(v),isNum=d.length>0&&!/[a-zA-ZÀ-ÿ]/.test(v),q=nz(v).split(" ");
+const m=S.clients.filter(c=>isNum?(d.length>=2&&dg(c.phone).includes(d)):q.every(w=>nz(c.name).includes(w))).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,8);
+box.innerHTML=m.map(c=>`<button class="card" style="margin:8px 0 0" onclick="RS='${c.id}';regPaint()"><div class="row"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(c.phone||"")}</span></div></button>`).join("")+`<button class="card" style="margin:8px 0 0;border-style:dashed" onclick="regNew()">+ Cadastrar "${esc(v)}" como novo cliente</button>`}
+function regNew(){const v=$("#rs").value.trim();RTXT=dg(v).length>0&&!/[a-zA-ZÀ-ÿ]/.test(v)?{name:"",phone:v}:{name:v,phone:""};RNEW=true;regPaint()}
+function regView(){const done=S.clients.filter(c=>c.visits.some(v=>v.date==RD));
+$("#app").innerHTML=`<h1>Registrar atendimento</h1><div class="sub">Quem veio no dia. Atualiza o último atendimento e o próximo retorno.</div>
+<div class="card" style="margin-top:14px"><label>Dia do atendimento<input type="date" id="rd" value="${RD}" onchange="if(this.value){RD=this.value;render()}"></label><div id="rbox">${regBox()}</div></div>
+<h2>Atendimentos de ${br(RD)} <b>${done.length}</b></h2>${done.length?done.map(c=>`<div class="card"><div class="row"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(c.phone||"")}</span></div><div class="sub">Próximo retorno: ${br(next(c))}</div></div>`).join(""):'<p class="empty">Nenhum atendimento registrado neste dia.</p>'}`}
+const kv=(l,v)=>`<div class="kv"><span>${l}</span><b>${esc(v)}</b></div>`;
+const SERV=["Corte","Barba","Desondulação","Sobrancelha","Visagismo","Terapia capilar"];let RSV=[];
+const svc=c=>Array.isArray(c.services)?[...c.services]:c.services?String(c.services).split(/\s*[+,]\s*/).filter(Boolean):[];
+const chips=()=>`<label>O que o cliente fez</label><div class="chips">${svList().map(s=>`<button type="button" class="chip ${RSV.includes(s)?"on":""}" onclick="togS(this,'${s}')">${s}</button>`).join("")}</div>`;
+function togS(b,k){const i=RSV.indexOf(k);i<0?RSV.push(k):RSV.splice(i,1);b.classList.toggle("on")}
+function togForm(b,k){const a=svc(form),i=a.indexOf(k);i<0?a.push(k):a.splice(i,1);form.services=a;b.classList.toggle("on")}
+function regBox(){
+if(RS){const c=S.clients.find(x=>x.id==RS);if(c)return`<div class="card" style="margin:14px 0 0;background:var(--mut)"><div class="row"><span class="nm">${esc(c.name)}</span><button class="btn alt" onclick="RS=null;regPaint()">Trocar</button></div><div class="sub">${esc(c.phone||"Sem telefone")} · Último: ${br(c.last)}</div></div>${chips()}<div class="actions"><button class="btn" onclick="regAdd()">Registrar</button></div>`;RS=null}
+if(RNEW)return`<label>Nome<input id="rn" value="${esc(RTXT.name)}"></label><label>Telefone / WhatsApp<input id="rp" type="tel" value="${esc(RTXT.phone)}"></label>${chips()}<div class="actions"><button class="btn" onclick="regAdd()">Cadastrar e registrar</button><button class="btn alt" onclick="RNEW=false;regPaint()">Cancelar</button></div>`;
+return`<label>Cliente<input id="rs" placeholder="Digite o nome ou o final do telefone" autocomplete="off" oninput="regSug()"></label><div id="sug"></div>`}
+function regFor(id){cur=id;RS=id;RNEW=false;RSV=[];view="registrar";render()}
+function regAdd(){let c=RS&&S.clients.find(x=>x.id==RS);
+if(!c){const n=$("#rn").value.trim(),p=$("#rp").value.trim(),d=dg(p);if(!n){alert("Informe o nome.");return}
+c=(d.length>=8&&S.clients.find(x=>dg(x.phone).slice(-9)==d.slice(-9)))||S.clients.find(x=>nz(x.name)==nz(n));
+if(!c){c={id:"c"+Date.now(),name:n,phone:p,instagram:"",email:"",qual:"nao_avaliado",tipo:"avulso",visa:"nao_informado",freq:"",last:"",services:[],log:[],visits:[],created:iso()};S.clients.push(c)}else if(p&&!c.phone)c.phone=p}
+if(c.visits.some(v=>v.date==RD)){alert(c.name+" já foi registrado neste dia.");return}
+c.visits.push({date:RD,service:RSV.join(" + "),svcs:[...RSV],note:""});c.services=[...new Set([...svc(c),...RSV])];if(RSV.includes("Visagismo"))c.visa="sim";
+if(!c.last||RD>c.last)c.last=RD;save();RS=null;RNEW=false;RSV=[];render();$("#rs").focus()}
+function ficha2(c){const rc=S.clients.find(x=>x.id==c.id);
+if(rc.notes){rc.log=rc.log||[];rc.log.push({id:"n"+Date.now(),date:iso(),text:rc.notes});rc.notes="";save()}
+const w=wa(c),vs=[...c.visits].sort((a,b)=>b.date.localeCompare(a.date)),lg=[...(rc.log||[])].reverse(),sv=svc(rc);
+$("#app").innerHTML=`<div class="row"><button class="lnk" onclick="go('clientes')">← Clientes</button><button class="lnk" onclick="editC()">✎ Editar</button></div>
+<h1 style="font-size:50px;margin:18px 0 10px">${esc(c.name)}</h1><span class="badge ${c.st}">${SL[c.st]}</span>${rc.visa=="sim"?' <span class="badge hoje">Visagismo</span>':""}
+<div class="two" style="margin-top:20px"><div class="stat"><small>Última visita</small><div class="big">${br(c.last)}</div></div><div class="stat"><small>Próximo retorno</small><div class="big" style="color:var(--gold)">${br(c.nx)}</div></div></div>
+<div class="actions"><button class="btn" onclick="regFor('${c.id}')">+ Registrar atendimento</button>${w?`<a class="btn wa" style="text-decoration:none" href="${w}" target="_blank" rel="noopener">WhatsApp</a>`:""}</div>
+<div class="two info" style="margin-top:20px"><div class="card" style="margin:0;padding:6px 20px"><div class="row" style="padding:10px 0"><span class="nm">Informações</span><button class="btn alt" onclick="editC('info')">✎ Editar</button></div><div class="kvs">${kv("Telefone",c.phone||"—")}<div class="kv"><span>Instagram</span><b>${c.instagram?`<a href="https://www.instagram.com/${encodeURIComponent(igh(c.instagram))}/" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none">@${esc(igh(c.instagram))}</a>`:"—"}</b></div>${kv("E-mail",c.email||"—")}${kv("Qualificação",Q[c.qual]||"—")}${kv("Tipo de cliente",T[c.tipo]||"Avulso")}</div></div>${c.qual=="nao_qualificado"?"":`<div class="card" style="margin:0;padding:6px 20px"><div class="row" style="padding:10px 0"><span class="nm">Perfil do cliente</span><button class="btn alt" onclick="editC('perfil')">✎ Editar</button></div><div class="kvs">${c.tipo=="assinante"?"":kv("Frequência de retorno",c.freq?c.freq+" dias":"—")}${kv("Já fez visagismo?",YN[rc.visa]||"Não informado")}${kv("Já comprou produto?",rc.produto=="sim"?"Sim":"Não")}${kv("Serviços contratados",sv.length?sv.join(", "):"—")}${c.tipo=="assinante"?"":kv("Dias frequentados",c.days||"—")+kv("Atendimentos",c.visits.length)}</div></div>`}</div>
+<h2 style="margin-top:34px">Observações (${lg.length})</h2><div class="card"><div style="display:flex;gap:8px;align-items:center"><input id="nt" style="margin:0" placeholder="Escreva uma observação sobre o cliente…" onkeydown="if(event.key=='Enter')addNote()"><button class="btn" onclick="addNote()">Enviar</button></div>${lg.map(n=>`<div class="msg"><div class="row"><span class="sub">${br(n.date)}</span><button class="ico" title="Excluir" onclick="delNote('${n.id}')">🗑</button></div><div>${esc(n.text)}</div></div>`).join("")}</div>
+<h2 style="margin-top:34px">Histórico (${vs.length})</h2><div class="tl">${vs.length?vs.map(v=>`<div class="it"><span class="dot"></span><div class="card"><div class="row"><div><div class="nm" style="font-size:17px">${br(v.date)}</div>${v.service?`<div class="sub">${esc(v.service)}</div>`:""}${v.note?`<div>${esc(v.note)}</div>`:""}</div><button class="ico" title="Excluir" onclick="delVisit(${c.visits.indexOf(v)})">🗑</button></div></div></div>`).join(""):'<p class="empty">Nenhum atendimento registrado.</p>'}</div>
+<button class="lnk" style="color:var(--bad);margin-top:30px" onclick="delC()">Excluir cliente</button>`}
+function addNote(){const t=$("#nt").value.trim();if(!t)return;const c=S.clients.find(x=>x.id==cur);c.log=c.log||[];c.log.push({id:"n"+Date.now(),date:iso(),text:t});save();render();$("#nt").focus()}
+Object.defineProperty(globalThis,"FM",{get:()=>form,set:v=>{form=v}});
+const igh=s=>{s=(s||"").trim();const m=s.match(/instagram\.com\/([^/?#\s]+)/i);if(m)s=m[1];return s.replace(/^@/,"").replace(/[\/\s]+$/,"")};
+let FOPEN=false;
+function fcount(){return[F.qual,F.status,F.tipo,F.visa].filter(Boolean).length}
+function fchips(){const L=[];if(F.qual)L.push(["qual",Q[F.qual]]);if(F.status)L.push(["status",SL[F.status]||(FQ.find(x=>x[0]==F.status)||[])[1]]);if(F.tipo)L.push(["tipo",T[F.tipo]]);if(F.visa)L.push(["visa",F.visa=="sim"?"Fez visagismo":"Não fez visagismo"]);
+return L.map(([k,l])=>`<button class="chip on" onclick="F.${k}='';render()">${esc(l)} ✕</button>`).join("")}
+function clearF(){F.qual=F.status=F.tipo=F.visa="";render()}
+const ST=[["interesse","Teve interesse"],["conversa","Em conversa"],["followup","Follow-up"],["concluido","Concluído"],["desistencia","Desistência"]],SUB=["Link / orçamento enviado","Aguardando decisão"],
+BRL=v=>"R$ "+(+v||0).toLocaleString("pt-BR",{minimumFractionDigits:2}),crm=()=>{const L=S.crm=S.crm||[],M={novo:"interesse",orcamento:"followup",decisao:"followup",agendado:"followup"},SB={orcamento:"Link / orçamento enviado",decisao:"Aguardando decisão"};L.forEach(o=>{if(M[o.stage]){if(SB[o.stage]&&!o.sub)o.sub=SB[o.stage];o.stage=M[o.stage]}});return L};
+let OF=null;
+function moveO(id,d){const o=crm().find(x=>x.id==id),i=ST.findIndex(s=>s[0]==o.stage)+d;if(i<0||i>=ST.length)return;o.stage=ST[i][0];save();render()}
+function dropO(e,s){e.preventDefault();const o=crm().find(x=>x.id==e.dataTransfer.getData("text"));if(o&&o.stage!=s){o.stage=s;save();render()}}
+function newO(){OF={id:"o"+Date.now(),name:"",phone:"",clientId:"",tipo:"servico",item:"",value:"",stage:"interesse",interest:iso(),due:"",lastfu:"",notes:"",isNew:true};render()}
+function editO(id){OF=JSON.parse(JSON.stringify(crm().find(o=>o.id==id)));render()}
+function openC(id){OF=null;cur=id;view="ficha";render()}
+function crmForm(){const o=OF,i=(k,l,t="text")=>`<label>${l}<input type="${t}" value="${esc(o[k])}" oninput="OF.${k}=this.value"></label>`,c=o.clientId&&S.clients.find(x=>x.id==o.clientId);
+$("#app").innerHTML=`<h1>${o.isNew?"Nova oportunidade":"Editar oportunidade"}</h1>
+<div class="card" style="margin-top:14px"><label style="margin-top:0">Cliente já cadastrado</label>${c?`<div class="row" style="margin-top:8px"><span class="nm">${esc(c.name)} <span class="badge">vinculado</span></span><span><button class="btn alt" onclick="openC('${c.id}')">Ver ficha</button> <button class="btn alt" onclick="OF.clientId='';render()">Desvincular</button></span></div>`:`<input id="os" placeholder="Digite o nome ou o final do telefone para vincular" autocomplete="off" oninput="oSug()"><div id="osg"></div>`}
+<div class="two">${i("name","Nome")}${i("phone","WhatsApp","tel")}</div></div>
+<div class="two"><label>Tipo<select onchange="OF.tipo=this.value"><option value="servico" ${o.tipo=="servico"?"selected":""}>Serviço</option><option value="produto" ${o.tipo=="produto"?"selected":""}>Produto</option></select></label>${i("item","Produto ou serviço de interesse")}${i("value","Valor estimado (R$)","number")}<label>Etapa<select onchange="OF.stage=this.value">${ST.map(([s,t])=>`<option value="${s}" ${o.stage==s?"selected":""}>${t}</option>`).join("")}</select></label><label>Situação do follow-up<select onchange="OF.sub=this.value"><option value="">—</option>${SUB.map(s=>`<option ${o.sub==s?"selected":""}>${s}</option>`).join("")}</select></label>${i("interest","Data de interesse","date")}${i("lastfu","Último follow-up","date")}${i("due","Data prevista de compra","date")}</div>
+<label>Observações<textarea rows="3" oninput="OF.notes=this.value">${esc(o.notes)}</textarea></label>
+<div class="actions"><button class="btn" onclick="saveO()">Salvar</button><button class="btn alt" onclick="OF=null;render()">Cancelar</button>${o.isNew?"":`<button class="btn del" onclick="delO()">Excluir</button>`}</div>`}
+function oSug(){const v=$("#os").value.trim(),b=$("#osg");if(!v){b.innerHTML="";return}const d=dg(v),isN=d.length>0&&!/[a-zA-ZÀ-ÿ]/.test(v),q=nz(v).split(" ");
+b.innerHTML=S.clients.filter(c=>isN?(d.length>=2&&dg(c.phone).includes(d)):q.every(w=>nz(c.name).includes(w))).slice(0,6).map(c=>`<button class="card" style="margin:8px 0 0" onclick="linkO('${c.id}')"><div class="row"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(c.phone||"")}</span></div></button>`).join("")}
+function linkO(id){const c=S.clients.find(x=>x.id==id);OF.clientId=id;OF.name=c.name;OF.phone=c.phone||"";render()}
+function saveO(){const o=OF;if(!o.name.trim()){alert("Informe o nome.");return}o.name=o.name.trim();o.value=o.value?+o.value:"";const n=o.isNew;delete o.isNew;
+if(n)crm().push(o);else S.crm=crm().map(x=>x.id==o.id?o:x);OF=null;save();render()}
+function fuO(id){const o=crm().find(x=>x.id==id);o.lastfu=iso();save();setTimeout(render,300)}
+const SC={interesse:"#8aa1b8",conversa:"#a79bc9",followup:"#d6aa5c",concluido:"#6fbf8f",desistencia:"#c98a8a"},SUBC={"Link / orçamento enviado":"#6fa8dc","Aguardando decisão":"#e0a24a"};
+function crmView(){if(OF)return crmForm();const kb=$(".kb"),sx=kb?kb.scrollLeft:0,sy=scrollY;
+const L=crm(),op=L.filter(o=>o.stage!="concluido"&&o.stage!="desistencia");
+const k=[["Em aberto",op.length],["Concluídos",L.filter(o=>o.stage=="concluido").length],["Desistências",L.filter(o=>o.stage=="desistencia").length],["Potencial em aberto",BRL(op.reduce((s,o)=>s+(+o.value||0),0))]];
+$("#app").innerHTML=`<div class="row"><div><h1>CRM</h1><div class="sub">Acompanhe cada interesse até a venda. Arraste o cartão ou use as setas.</div></div><button class="btn" onclick="newO()">+ Oportunidade</button></div>
+<div class="grid kp">${k.map(([l,v])=>`<div class="stat" style="padding:10px 12px"><small>${l}</small><div class="big" style="font-size:${typeof v=="string"?22:30}px">${v}</div></div>`).join("")}</div>
+<div class="kb" style="margin-top:16px">${ST.map(([s,t],i)=>{const a=L.filter(o=>o.stage==s);return`<div class="col" style="border-top:3px solid ${SC[s]}" ondragover="event.preventDefault()" ondrop="dropO(event,'${s}')"><div class="row"><b><span class="dt" style="background:${SC[s]}"></span>${t}</b><span class="badge">${a.length}</span></div>${a.map(o=>ocard(o,i)).join("")}</div>`}).join("")}</div>`;
+setTimeout(()=>{const x=$(".kb");if(x)x.scrollLeft=sx;scrollTo(0,sy)},0)}
+function subO(el,id){const o=crm().find(x=>x.id==id);o.sub=el.value;const c=SUBC[o.sub]||"";el.style.color=c;el.style.borderColor=c||"";el.style.background=c?c+"22":"";save()}
+function fuSet(el,id){crm().find(x=>x.id==id).lastfu=el.value;save()}
+function fuToday(b,id){const o=crm().find(x=>x.id==id);o.lastfu=iso();b.previousElementSibling.value=o.lastfu;save()}
+function ocard(o,i){const d=dg(o.phone),w=d.length>=10?"https://wa.me/"+(d.length<=11?"55"+d:d):"",c=SUBC[o.sub]||"";
+return`<div class="oc" draggable="true" ondragstart="event.dataTransfer.setData('text','${o.id}')" onclick="editO('${o.id}')"><div class="row"><span class="nm" style="font-size:14px">${esc(o.name)}</span><span class="badge">${o.tipo=="produto"?"Produto":"Serviço"}</span></div><div class="row meta"><span>${esc(o.item||"—")}</span>${o.value?`<span class="vl">${BRL(o.value)}</span>`:""}</div>${o.stage=="followup"?`<select class="sbs" style="color:${c};border-color:${c||"var(--bd)"};background:${c?c+"22":"var(--mut)"}" onclick="event.stopPropagation()" onchange="subO(this,'${o.id}')"><option value="">Situação…</option>${SUB.map(s=>`<option ${o.sub==s?"selected":""}>${s}</option>`).join("")}</select>`:""}<div class="row fu"><span>Último follow-up</span><span style="display:flex;align-items:center"><input type="date" class="fud" value="${o.lastfu||""}" onclick="event.stopPropagation()" onchange="fuSet(this,'${o.id}')"><button class="hj" title="Marcar hoje" onclick="event.stopPropagation();fuToday(this,'${o.id}')">Hoje</button></span></div><div class="row ac">${w?`<a class="wab" href="${w}" target="_blank" rel="noopener" onclick="event.stopPropagation();fuO('${o.id}')">WhatsApp</a>`:"<span></span>"}<span>${i>0?`<button class="ico" title="Etapa anterior" onclick="event.stopPropagation();moveO('${o.id}',-1)">‹</button>`:""}${i<ST.length-1?`<button class="ico" title="Próxima etapa" onclick="event.stopPropagation();moveO('${o.id}',1)">›</button>`:""}</span></div></div>`}
+let ME=null,UNL=false,hid=0,PF=false;
+const cfg=()=>S.cfg=S.cfg||{},svList=()=>cfg().serv||SERV;
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("carteira:"+t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+function lockUI(){const el=$("#lock");if(!cfg().pin||UNL){el.classList.remove("on");return}el.classList.add("on");
+el.innerHTML=`<div class="lbox"><div class="logo">${sv(IC.logo)}</div><h1 style="margin:0">Carteira</h1><div class="sub" style="margin-top:6px">${ME&&ME.name?"Olá, "+esc(ME.name.split(" ")[0])+". ":""}Digite seu PIN para entrar.</div><input id="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" onkeydown="if(event.key=='Enter')unlock()"><div class="sub" id="perr" style="color:var(--bad);min-height:18px;margin-bottom:8px"></div><button class="btn" style="width:100%" onclick="unlock()">Entrar</button></div>`;setTimeout(()=>{const p=$("#pin");if(p)p.focus()},50)}
+async function unlock(){if(await sha($("#pin").value)==cfg().pin){UNL=true;lockUI()}else{$("#perr").textContent="PIN incorreto.";$("#pin").value=""}}
+function lockNow(){UNL=false;lockUI()}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState=="hidden")hid=Date.now();else if(cfg().pin&&hid&&Date.now()-hid>3e5){UNL=false;lockUI()}});
+async function savePin(){const g=i=>($("#"+i)||{}).value||"",m=$("#pm");
+if(cfg().pin&&await sha(g("p0"))!=cfg().pin){m.textContent="PIN atual incorreto.";return}
+if(PF=="rm"){delete cfg().pin;PF=false;save();lockUI();ajView();return}
+if(!/^\d{4,6}$/.test(g("p1"))){m.textContent="Use de 4 a 6 números.";return}
+if(g("p1")!=g("p2")){m.textContent="Os PINs não conferem.";return}
+cfg().pin=await sha(g("p1"));UNL=true;PF=false;save();lockUI();ajView()}
+function addServ(){const v=$("#ns").value.trim();if(!v)return;const a=svList();if(!a.includes(v)){cfg().serv=[...a,v];save()}ajView()}
+function rmServ(i){const a=[...svList()];a.splice(i,1);cfg().serv=a;save();ajView()}
+function ajView(){const hp=!!cfg().pin,kv2=(l,v)=>`<div class="kv" style="padding:6px 0"><span>${l}</span><b>${esc(v)}</b></div>`;
+$("#app").innerHTML=`<h1>Configurações</h1>
+<h2>Conta</h2><div class="card">${kv2("Nome",ME&&ME.name||"—")}${kv2("E-mail",ME&&ME.email||"—")}<div class="sub" style="margin-top:6px">Seus dados ficam salvos só neste navegador, neste aparelho. Faça backup de vez em quando.</div></div>
+<h2>Segurança</h2><div class="card"><div class="row"><div><div class="nm">Bloqueio por PIN</div><div class="sub">${hp?"Ativado. Pede o PIN ao abrir e depois de 5 minutos fora do app.":"Desativado."}</div></div>${hp?`<button class="btn alt" onclick="lockNow()">Bloquear agora</button>`:""}</div>
+${PF?`<div style="margin-top:12px">${hp?`<input id="p0" type="password" inputmode="numeric" placeholder="PIN atual">`:""}${PF=="set"?`<input id="p1" type="password" inputmode="numeric" maxlength="6" placeholder="Novo PIN (4 a 6 números)"><input id="p2" type="password" inputmode="numeric" maxlength="6" placeholder="Repita o novo PIN">`:""}<div class="sub" id="pm" style="color:var(--bad);min-height:18px"></div><div class="actions" style="margin-top:6px"><button class="btn" onclick="savePin()">Salvar</button><button class="btn alt" onclick="PF=false;ajView()">Cancelar</button></div></div>`:`<div class="actions"><button class="btn" onclick="PF='set';ajView()">${hp?"Trocar PIN":"Criar PIN"}</button>${hp?`<button class="btn alt" onclick="PF='rm';ajView()">Remover PIN</button>`:""}</div>`}
+<div class="sub" style="margin-top:10px">O PIN esconde a tela em aparelhos compartilhados. Os dados continuam guardados no navegador.</div></div>
+<h2>Serviços oferecidos</h2><div class="card"><div class="sub">Aparecem como opções no cadastro e ao registrar atendimento. Toque num serviço para remover.</div><div class="chips">${svList().map((s,i)=>`<span class="chip on">${esc(s)}<b class="x" title="Remover" onclick="rmServ(${i})">✕</b></span>`).join("")}</div><div style="display:flex;gap:8px;margin-top:12px"><input id="ns" style="margin:0" placeholder="Novo serviço" onkeydown="if(event.key=='Enter')addServ()"><button class="btn" onclick="addServ()">Adicionar</button></div><div class="actions"><button class="btn alt" onclick="resetServ()">Restaurar lista padrão</button></div></div>
+<h2>Dados</h2><div class="card">${kv2("Clientes",S.clients.length)}${kv2("Oportunidades no CRM",crm().length)}<div style="margin-top:12px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Arquivo CSV (no Google Sheets: Arquivo → Fazer download → CSV). Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div class="actions"><button class="btn alt" onclick="exportCsv()">Exportar clientes (CSV)</button><button class="btn alt" onclick="backupJson()">Backup completo (JSON)</button><button class="btn del" onclick="wipe()">Apagar todos os dados</button></div></div>`}
+function resetServ(){delete cfg().serv;save();ajView()}
+let FSEC=null;
+function editC(sec){FSEC=sec||null;form=JSON.parse(JSON.stringify(S.clients.find(x=>x.id==cur)));view="form";render()}
+let DLGF=null,tt;
+function askC(msg,fn,lbl){DLGF=fn;const d=$("#dlg");d.innerHTML=`<div class="dbox"><div class="nm" style="margin-bottom:14px">${esc(msg)}</div><div class="actions" style="margin-top:0;justify-content:flex-end"><button class="btn alt" onclick="dlgClose()">Cancelar</button><button class="btn" style="background:var(--bad);color:#fff" onclick="dlgOk()">${lbl||"Excluir"}</button></div></div>`;d.classList.add("on")}
+function dlgClose(){DLGF=null;$("#dlg").classList.remove("on")}
+function dlgOk(){const f=DLGF;dlgClose();if(f)f()}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),3500)}
+globalThis.alert=toast;
+function delVisit(i){askC("Excluir este atendimento?",()=>{const c=S.clients.find(x=>x.id==cur);c.visits.splice(i,1);c.last=c.visits.reduce((m,v)=>v.date>m?v.date:m,"");save();render()})}
+function delNote(id){askC("Excluir esta observação?",()=>{const c=S.clients.find(x=>x.id==cur);c.log=(c.log||[]).filter(n=>n.id!=id);save();render()})}
+function delC(){askC("Excluir este cliente e o histórico dele?",()=>{S.clients=S.clients.filter(x=>x.id!=cur);save();go("clientes")})}
+function delO(){askC("Excluir esta oportunidade?",()=>{S.crm=crm().filter(x=>x.id!=OF.id);OF=null;save();render()})}
+function download(name,type,text){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
+function backupJson(){download("carteira-backup-"+iso()+".json","application/json",JSON.stringify(S,null,1))}
+function restoreJson(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d||!Array.isArray(d.clients))throw 0;askC("Substituir todos os dados atuais por este backup?",()=>{S=d;save();render()},"Restaurar")}catch(e){toast("Arquivo de backup inválido.")}inp.value=""})}
+function wipe(){askC("Apagar TODOS os clientes, atendimentos e oportunidades? Isso não pode ser desfeito.",()=>{S={clients:[],crm:[],cfg:S.cfg};save();render()},"Apagar tudo")}
+init();
+</script></body></html>
