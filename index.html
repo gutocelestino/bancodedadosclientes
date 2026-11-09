@@ -67,7 +67,12 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 @media(min-width:800px){.tbl{display:block}.cards{display:none}.flt{grid-template-columns:repeat(4,1fr)}}
 </style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL="https://zkfgobmgwxbklwgwlhyu.supabase.co";
+const SUPABASE_KEY="sb_publishable_paXVsr9OplmsTNraw528Eg_POKNDRA0";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let cloudUser=null,cloudReady=false,cloudTimer=null,cloudQueue=Promise.resolve();
 const Q={qualificado:"Qualificado",nao_qualificado:"Sem potencial",nao_avaliado:"Não avaliado"},
 T={avulso:"Avulso",assinante:"Assinante"},
 YN={nao_informado:"Não informado",sim:"Sim",nao:"Não"},
@@ -89,8 +94,87 @@ const byNx=(a,b)=>(a.nx||"").localeCompare(b.nx||"");
 function wa(c){let d=(c.phone||"").replace(/\D/g,"");if(d.length<10)return null;if(d.length<=11)d="55"+d;
 return`https://wa.me/${d}?text=`+encodeURIComponent(`Fala, ${c.name.trim().split(/\s+/)[0]}! Tudo certo? Já está chegando a hora de dar aquela ajustada no corte. Quer que eu veja um horário pra você?`)}
 /* persistência: db (privado do usuário) com fallback em localStorage */
-function save(){try{localStorage.setItem("carteira",JSON.stringify(S))}catch(e){}}
-function init(){try{const l=localStorage.getItem("carteira");if(l)S=JSON.parse(l)}catch(e){}render();lockUI()}
+function save(){
+  try{localStorage.setItem("carteira",JSON.stringify(S))}catch(e){}
+  if(cloudUser&&cloudReady){
+    clearTimeout(cloudTimer);
+    cloudTimer=setTimeout(()=>syncCloud(),450);
+  }
+}
+async function syncCloud(){
+  if(!cloudUser||!cloudReady)return;
+  const snapshot=JSON.parse(JSON.stringify(S));
+  cloudQueue=cloudQueue.then(async()=>{
+    const {error}=await sb.from("carteira_data").upsert(
+      {user_id:cloudUser.id,data:snapshot,updated_at:new Date().toISOString()},
+      {onConflict:"user_id"}
+    );
+    if(error){console.error("Supabase save:",error);toast("Não consegui sincronizar. Confira sua conexão.");}
+    else toast("Dados sincronizados na nuvem.");
+  }).catch(e=>console.error(e));
+  return cloudQueue;
+}
+function authView(message=""){
+  cloudReady=false;$("#nav").style.display="none";$("#lock").classList.remove("on");
+  $("#app").innerHTML=`<div style="max-width:390px;margin:8vh auto 0">
+  <div class="logo" style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#e7bd7a,#b98846);display:grid;place-items:center;color:#1b1608;font-size:26px">✂</div>
+  <h1>Carteira</h1><p class="sub">Entre na sua conta para acessar seus clientes em qualquer aparelho.</p>
+  <div class="card" style="margin-top:20px">
+  <label>E-mail<input id="authEmail" type="email" autocomplete="email" placeholder="seu@email.com"></label>
+  <label>Senha<input id="authPass" type="password" autocomplete="current-password" placeholder="Sua senha"></label>
+  <div id="authMsg" class="sub" style="margin:10px 0;color:var(--bad)">${esc(message)}</div>
+  <button class="btn" style="width:100%" onclick="signIn()">Entrar</button>
+  <button class="btn alt" style="width:100%;margin-top:8px" onclick="signUp()">Criar conta</button>
+  <button class="lnk" style="margin-top:12px" onclick="resetPassword()">Esqueci minha senha</button>
+  </div><p class="sub">Se você já tem cadastro no Supabase, use o mesmo e-mail e a senha definida para essa conta.</p></div>`;
+}
+async function signIn(){
+  const email=$("#authEmail").value.trim(),password=$("#authPass").value;
+  if(!email||!password){authView("Preencha e-mail e senha.");return}
+  const {error}=await sb.auth.signInWithPassword({email,password});
+  if(error){authView(error.message);return}
+  await bootCloud();
+}
+async function signUp(){
+  const email=$("#authEmail").value.trim(),password=$("#authPass").value;
+  if(!email||password.length<6){authView("Informe um e-mail e uma senha com pelo menos 6 caracteres.");return}
+  const {error}=await sb.auth.signUp({email,password});
+  if(error){authView(error.message);return}
+  authView("Cadastro enviado. Se a confirmação por e-mail estiver ativa, confirme o endereço e depois entre.");
+}
+async function resetPassword(){
+  const email=$("#authEmail").value.trim();
+  if(!email){authView("Digite seu e-mail primeiro.");return}
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.href});
+  authView(error?"Erro ao enviar recuperação: "+error.message:"Enviamos um link de recuperação para seu e-mail.");
+}
+async function signOut(){
+  await syncCloud();await sb.auth.signOut();cloudUser=null;cloudReady=false;authView("Você saiu da sua conta.");
+}
+async function bootCloud(){
+  const {data:{session},error:sessionError}=await sb.auth.getSession();
+  if(sessionError||!session){cloudUser=null;authView();return}
+  cloudUser=session.user;$("#nav").style.display="flex";
+  const {data,error}=await sb.from("carteira_data").select("data").eq("user_id",cloudUser.id).maybeSingle();
+  if(error){authView("Não foi possível carregar seus dados: "+error.message);return}
+  let local=null;try{local=JSON.parse(localStorage.getItem("carteira")||"null")}catch(e){}
+  if(data&&data.data){S=data.data;try{localStorage.setItem("carteira",JSON.stringify(S))}catch(e){}}
+  else if(local&&Array.isArray(local.clients)&&(local.clients.length||(local.crm||[]).length)){
+    S=local;cloudReady=true;await syncCloud();
+  }else{
+    S=local&&Array.isArray(local.clients)?local:{clients:[],crm:[],cfg:{}};
+    cloudReady=true;await syncCloud();
+  }
+  cloudReady=true;render();lockUI();
+}
+async function init(){
+  try{const l=localStorage.getItem("carteira");if(l)S=JSON.parse(l)}catch(e){}
+  authView("Conectando à sua conta…");
+  await bootCloud();
+  sb.auth.onAuthStateChange((event)=>{
+    if(event==="SIGNED_OUT"){cloudUser=null;cloudReady=false;authView("Você saiu da sua conta.")}
+  });
+}
 function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span class="nm">${esc(c.name)}</span><span class="badge ${c.st}">${SL[c.st]}</span></div>
 <div class="sub" style="margin-top:6px">Último: ${br(c.last)} · Freq.: ${c.freq?c.freq+"d":"—"} · Previsto: ${br(c.nx)}</div></button>`}
 const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td class="nm">${esc(c.name)}</td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
@@ -257,7 +341,7 @@ function addServ(){const v=$("#ns").value.trim();if(!v)return;const a=svList();i
 function rmServ(i){const a=[...svList()];a.splice(i,1);cfg().serv=a;save();ajView()}
 function ajView(){const hp=!!cfg().pin,kv2=(l,v)=>`<div class="kv" style="padding:6px 0"><span>${l}</span><b>${esc(v)}</b></div>`;
 $("#app").innerHTML=`<h1>Configurações</h1>
-<h2>Conta</h2><div class="card">${kv2("Nome",ME&&ME.name||"—")}${kv2("E-mail",ME&&ME.email||"—")}<div class="sub" style="margin-top:6px">Seus dados ficam salvos só neste navegador, neste aparelho. Faça backup de vez em quando.</div></div>
+<h2>Conta</h2><div class="card">${kv2("Nome",ME&&ME.name||"—")}${kv2("E-mail",ME&&ME.email||"—")}<div class="sub" style="margin-top:6px">Sua conta está conectada ao Supabase. Clientes, histórico, CRM e configurações são sincronizados na nuvem.</div><div class="actions"><button class="btn alt" onclick="syncCloud()">Sincronizar agora</button><button class="btn del" onclick="signOut()">Sair da conta</button></div></div>
 <h2>Segurança</h2><div class="card"><div class="row"><div><div class="nm">Bloqueio por PIN</div><div class="sub">${hp?"Ativado. Pede o PIN ao abrir e depois de 5 minutos fora do app.":"Desativado."}</div></div>${hp?`<button class="btn alt" onclick="lockNow()">Bloquear agora</button>`:""}</div>
 ${PF?`<div style="margin-top:12px">${hp?`<input id="p0" type="password" inputmode="numeric" placeholder="PIN atual">`:""}${PF=="set"?`<input id="p1" type="password" inputmode="numeric" maxlength="6" placeholder="Novo PIN (4 a 6 números)"><input id="p2" type="password" inputmode="numeric" maxlength="6" placeholder="Repita o novo PIN">`:""}<div class="sub" id="pm" style="color:var(--bad);min-height:18px"></div><div class="actions" style="margin-top:6px"><button class="btn" onclick="savePin()">Salvar</button><button class="btn alt" onclick="PF=false;ajView()">Cancelar</button></div></div>`:`<div class="actions"><button class="btn" onclick="PF='set';ajView()">${hp?"Trocar PIN":"Criar PIN"}</button>${hp?`<button class="btn alt" onclick="PF='rm';ajView()">Remover PIN</button>`:""}</div>`}
 <div class="sub" style="margin-top:10px">O PIN esconde a tela em aparelhos compartilhados. Os dados continuam guardados no navegador.</div></div>
