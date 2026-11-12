@@ -118,16 +118,25 @@ function save(){
   }
 }
 async function syncCloud(){
-  if(!cloudUser||!cloudReady)return;
+  if(!cloudUser||!cloudReady)return false;
   const snapshot=JSON.parse(JSON.stringify(S));
   cloudQueue=cloudQueue.then(async()=>{
     const {error}=await sb.from("carteira_data").upsert(
       {user_id:cloudUser.id,data:snapshot,updated_at:new Date().toISOString()},
       {onConflict:"user_id"}
     );
-    if(error){console.error("Supabase save:",error);toast("Não consegui sincronizar. Confira sua conexão.");}
-    else toast("Dados sincronizados na nuvem.");
-  }).catch(e=>console.error(e));
+    if(error){
+      console.error("Supabase save:",error);
+      toast("Não consegui sincronizar. Confira sua conexão.");
+      return false;
+    }
+    toast("Dados sincronizados na nuvem.");
+    return true;
+  }).catch(e=>{
+    console.error("Supabase save:",e);
+    toast("Não consegui sincronizar. Confira sua conexão.");
+    return false;
+  });
   return cloudQueue;
 }
 function authView(message=""){
@@ -204,17 +213,24 @@ async function refreshPhotoUrls(){
   for(const el of document.querySelectorAll("[data-photo-path]")){
     const path=el.getAttribute("data-photo-path");
     if(!path)continue;
-    const cached=photoUrlCache[path];
-    if(cached&&cached.expires>Date.now())continue;
     try{
-      const {data,error}=await sb.storage.from(PHOTO_BUCKET).createSignedUrl(path,3600);
-      if(error)throw error;
-      photoUrlCache[path]={url:data.signedUrl,expires:Date.now()+3300000};
+      let signedUrl;
+      const cached=photoUrlCache[path];
+      if(cached&&cached.expires>Date.now()){
+        signedUrl=cached.url;
+      }else{
+        const {data,error}=await sb.storage.from(PHOTO_BUCKET).createSignedUrl(path,3600);
+        if(error)throw error;
+        signedUrl=data.signedUrl;
+        photoUrlCache[path]={url:signedUrl,expires:Date.now()+3300000};
+      }
       const img=document.createElement("img");
-      img.src=data.signedUrl;
+      img.src=signedUrl;
       img.alt="Foto do cliente";
       el.replaceChildren(img);
-    }catch(error){console.error("Erro ao carregar foto:",error);}
+    }catch(error){
+      console.error("Erro ao carregar foto:",error);
+    }
   }
 }
 
@@ -241,6 +257,16 @@ async function uploadClientPhoto(input,id){
     const previousPath=client.photo||"";
     client.photo=path;
     save();
+    clearTimeout(cloudTimer);
+    const synced=await syncCloud();
+    if(!synced){
+      client.photo=previousPath;
+      save();
+      clearTimeout(cloudTimer);
+      await syncCloud();
+      await sb.storage.from(PHOTO_BUCKET).remove([path]);
+      throw new Error("A foto foi enviada, mas o cadastro não foi confirmado na nuvem. Tente novamente.");
+    }
     if(previousPath){
       const {error:removeError}=await sb.storage.from(PHOTO_BUCKET).remove([previousPath]);
       if(removeError)console.warn("A foto antiga não foi removida:",removeError);
@@ -248,7 +274,8 @@ async function uploadClientPhoto(input,id){
     }
     delete photoUrlCache[path];
     render();
-    toast("Foto atualizada!");
+    await refreshPhotoUrls();
+    toast("Foto salva e sincronizada!");
   }catch(error){
     console.error("Erro ao enviar foto:",error);
     toast("Não consegui enviar a foto: "+(error.message||"verifique sua conexão."));
@@ -267,8 +294,12 @@ function removeClientPhoto(id){
       client.photo="";
       delete photoUrlCache[path];
       save();
+      clearTimeout(cloudTimer);
+      const synced=await syncCloud();
+      if(!synced)throw new Error("Não consegui confirmar a remoção na nuvem.");
+      await sb.storage.from(PHOTO_BUCKET).remove([path]);
       render();
-      toast("Foto removida!");
+      toast("Foto removida e sincronizada!");
     }catch(error){
       console.error("Erro ao remover foto:",error);
       toast("Não consegui remover a foto: "+(error.message||"tente novamente."));
