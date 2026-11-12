@@ -289,15 +289,20 @@ function removeClientPhoto(id){
   askC("Deseja remover a foto deste cliente?",async()=>{
     const path=client.photo;
     try{
-      const {error}=await sb.storage.from(PHOTO_BUCKET).remove([path]);
-      if(error)throw error;
       client.photo="";
       delete photoUrlCache[path];
       save();
       clearTimeout(cloudTimer);
       const synced=await syncCloud();
-      if(!synced)throw new Error("Não consegui confirmar a remoção na nuvem.");
-      await sb.storage.from(PHOTO_BUCKET).remove([path]);
+      if(!synced){
+        client.photo=path;
+        save();
+        clearTimeout(cloudTimer);
+        await syncCloud();
+        throw new Error("Não consegui confirmar a remoção na nuvem.");
+      }
+      const {error}=await sb.storage.from(PHOTO_BUCKET).remove([path]);
+      if(error)console.warn("Não consegui apagar o arquivo antigo:",error);
       render();
       toast("Foto removida e sincronizada!");
     }catch(error){
