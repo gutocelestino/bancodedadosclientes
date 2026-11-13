@@ -588,7 +588,7 @@ const svc=c=>{
 const allClientServices=()=>[...new Set([...svList(),...S.clients.flatMap(client=>svc(client))])].sort((a,b)=>a.localeCompare(b));
 const chips=()=>`<label>O que o cliente fez</label><div class="chips">${svList().map(s=>`<button type="button" class="chip ${RSV.includes(s)?"on":""}" onclick="togS(this,'${s}')">${s}</button>`).join("")}</div>`;
 function togS(b,k){const i=RSV.indexOf(k);i<0?RSV.push(k):RSV.splice(i,1);b.classList.toggle("on")}
-function togForm(b,k){const a=svc(form),i=a.indexOf(k);i<0?a.push(k):a.splice(i,1);form.services=a;b.classList.toggle("on")}
+function togForm(b,k){const a=svc(form),i=a.indexOf(k);i<0?a.push(k):a.splice(i,1);form.services=a;if(k=="Visagismo")form.visa=i<0?"sim":"nao";b.classList.toggle("on")}
 function regBox(){
 if(RS){const c=S.clients.find(x=>x.id==RS);if(c)return`<div class="card" style="margin:14px 0 0;background:var(--mut)"><div class="row"><span class="nm">${esc(c.name)}</span><button class="btn alt" onclick="RS=null;regPaint()">Trocar</button></div><div class="sub">${esc(c.phone||"Sem telefone")} · Último: ${br(c.last)}</div></div>${chips()}<div class="actions"><button class="btn" onclick="regAdd()">Registrar</button></div>`;RS=null}
 if(RNEW)return`<label>Nome<input id="rn" value="${esc(RTXT.name)}"></label><label>Telefone / WhatsApp<input id="rp" type="tel" value="${esc(RTXT.phone)}"></label>${chips()}<div class="actions"><button class="btn" onclick="regAdd()">Cadastrar e registrar</button><button class="btn alt" onclick="RNEW=false;regPaint()">Cancelar</button></div>`;
