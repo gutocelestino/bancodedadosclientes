@@ -3,6 +3,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Carteira</title>
 <meta name="description" content="Gestão de clientes e CRM para barbearia">
+<meta name="theme-color" content="#1b1a17">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="./manifest.json?v=1">
+<link rel="apple-touch-icon" href="./pwa-192.png">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=2">
 <link rel="shortcut icon" href="./favicon.svg?v=2">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
@@ -678,4 +684,18 @@ function backupJson(){download("carteira-backup-"+iso()+".json","application/jso
 function restoreJson(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d||!Array.isArray(d.clients))throw 0;askC("Substituir todos os dados atuais por este backup?",()=>{S=d;save();render()},"Restaurar")}catch(e){toast("Arquivo de backup inválido.")}inp.value=""})}
 function wipe(){askC("Apagar TODOS os clientes, atendimentos e oportunidades? Isso não pode ser desfeito.",()=>{S={clients:[],crm:[],cfg:S.cfg};save();render()},"Apagar tudo")}
 init();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register("./sw.js", {
+        scope: "./",
+        updateViaCache: "none"
+      });
+      await registration.update();
+    } catch (error) {
+      console.warn("Não consegui atualizar o aplicativo instalado:", error);
+    }
+  });
+}
 </script></body></html>
