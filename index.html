@@ -103,12 +103,9 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .photo-crop-actions button{flex:1}
 @media(max-height:620px){.photo-crop-card{max-height:98vh;padding:12px}.photo-crop-viewport{width:min(64vw,230px);margin:8px auto}.photo-crop-title{font-size:24px}}
 /* Ordenação por situação dos clientes */
-.sort-th{appearance:none;background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:600;letter-spacing:inherit;text-transform:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-.sort-th span{font-size:16px;color:var(--gold)}
-.client-sortbar{display:flex;align-items:center;justify-content:flex-end;margin-top:12px}
-.client-sort-button{display:inline-flex;align-items:center;gap:8px;font-size:12px}
-.client-sort-arrow{font-size:17px;color:var(--gold);line-height:1}
-@media(min-width:800px){.client-sortbar{display:none}}
+.client-sort-arrows{display:inline-flex;align-items:center;justify-content:center;gap:1px;height:38px;min-width:38px;padding:0 9px;background:var(--card);border:1px solid var(--bd);border-radius:12px;color:var(--gold);font:300 18px/1 Manrope,system-ui,sans-serif;cursor:pointer}
+.client-sort-arrows span{display:inline-block;opacity:1}
+.client-sort-arrows .muted{opacity:.35}
 </style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -128,7 +125,7 @@ FO=["em_dia","sem_frequencia","atrasado","hoje","proximo"],
 freqOpts=v=>`<option value="">Frequência: todas</option>`+[...FO.map(k=>[k,SL[k]]),...FQ].map(([k,l])=>`<option value="${k}" ${v==k?"selected":""}>${l}</option>`).join(""),
 ff=(c,v)=>!v||(v[0]=="f"?(c.freq>0&&c.freq<=+v.slice(1)):c.st==v),
 SL={sem_frequencia:"Sem frequência",atrasado:"Atrasado",hoje:"Retorno hoje",proximo:"Próximos 7 dias",em_dia:"Em dia"};
-let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",tipo:"",sub:"todos"},form=null;
+let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",tipo:"",service:"",sub:"todos"},form=null;
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const iso=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const U=s=>{const[a,b,c]=s.split("-").map(Number);return Date.UTC(a,b-1,c)};
@@ -502,7 +499,7 @@ function removeClientPhoto(id){
 
 function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span style="display:flex;align-items:center;gap:10px;min-width:0"><span class="avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span></span><span class="badge ${c.st}">${SL[c.st]}</span></div>
 <div class="sub" style="margin-top:6px">Último: ${br(c.last)} · Freq.: ${c.freq?c.freq+"d":"—"} · Previsto: ${br(c.nx)}</div></button>`}
-const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th><button class="sort-th" onclick="toggleClientSort()" title="Inverter ordem por situação">Situação <span>${clientSortUrgentFirst?"↓":"↑"}</span></button></th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span></span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
+const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span></span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
 function open_(id){cur=id;view="ficha";form=null;render()}
 function go(v){view=v;form=null;OF=null;if(v=="clientes")F.sub="todos";render();scrollTo(0,0)}
 function goSub(s){F.sub=s;view="clientes";form=null;render();scrollTo(0,0)}
@@ -516,13 +513,12 @@ ${sec("Retornos de hoje",rr.filter(c=>c.st=="hoje"),"Ninguém previsto para hoje
 else if(view=="retornos"){r=r.filter(c=>c.qual=="qualificado"&&c.tipo!="assinante");const w=r.filter(c=>c.nx).sort(byNx),L={hoje:r.filter(c=>c.st=="hoje"),atrasado:w.filter(c=>c.st=="atrasado"),proximo:w.filter(c=>c.st=="proximo"),todos:w,sem_frequencia:r.filter(c=>c.st=="sem_frequencia"),em_dia:w.filter(c=>c.st=="em_dia"),f15:r.filter(c=>ff(c,"f15")).sort(byNx),f30:r.filter(c=>ff(c,"f30")).sort(byNx),f60:r.filter(c=>ff(c,"f60")).sort(byNx),f90:r.filter(c=>ff(c,"f90")).sort(byNx)},N={hoje:"Hoje",atrasado:"Atrasados",proximo:"7 dias",todos:"Todos",sem_frequencia:"Sem frequência",em_dia:"Em dia",f15:"Até 15 dias",f30:"Até 30 dias",f60:"Até 60 dias",f90:"Até 90 dias"};
 el.innerHTML=`<h1>Retornos</h1><div class="tabs" style="flex-wrap:wrap;overflow:visible">${["hoje","atrasado","proximo","todos"].map(k=>`<button class="${tab==k?"on":""}" onclick="tab='${k}';render()">${N[k]} ${L[k].length}</button>`).join("")}<select class="chipsel${["hoje","atrasado","proximo","todos"].includes(tab)?"":" on"}" onchange="if(this.value){tab=this.value;render()}"><option value="">Filtros</option>${Object.keys(N).slice(4).map(k=>`<option value="${k}" ${tab==k?"selected":""}>${N[k]} ${L[k].length}</option>`).join("")}</select></div>${list(L[tab],"Nenhum cliente nesta lista.")}`}
 else if(view=="clientes"){const q=F.q.toLowerCase().trim(),d=q.replace(/\D/g,"");
-const a=r.filter(c=>(!q||(c.name+" "+(c.instagram||"")+" "+(c.email||"")).toLowerCase().includes(q)||(d.length>=3&&(c.phone||"").replace(/\D/g,"").includes(d)))&&(!F.qual||c.qual==F.qual)&&(!F.status||(F.status[0]=="f"?(c.freq>0&&c.freq<=+F.status.slice(1)):c.st==F.status))&&(F.sub=="todos"||(c.qual!="nao_qualificado"&&(F.sub=="assinatura")==(c.tipo=="assinante")))&&(!F.tipo||(c.tipo=="assinante"?"assinante":"avulso")==F.tipo)&&(!F.visa||(F.visa=="sim")==(c.visa=="sim"))).sort((a,b)=>clientStatusRank(a)-clientStatusRank(b)||byNx(a,b)||a.name.localeCompare(b.name));
+const a=r.filter(c=>(!q||(c.name+" "+(c.instagram||"")+" "+(c.email||"")).toLowerCase().includes(q)||(d.length>=3&&(c.phone||"").replace(/\D/g,"").includes(d)))&&(!F.qual||c.qual==F.qual)&&(!F.status||(F.status[0]=="f"?(c.freq>0&&c.freq<=+F.status.slice(1)):c.st==F.status))&&(F.sub=="todos"||(c.qual!="nao_qualificado"&&(F.sub=="assinatura")==(c.tipo=="assinante")))&&(!F.tipo||(c.tipo=="assinante"?"assinante":"avulso")==F.tipo)&&(!F.service||svc(c).includes(F.service))).sort((a,b)=>clientStatusRank(a)-clientStatusRank(b)||byNx(a,b)||a.name.localeCompare(b.name));
 const opt=(o,v,e)=>`<option value="">${e}</option>`+Object.entries(o).map(([k,t])=>`<option value="${k}" ${v==k?"selected":""}>${t}</option>`).join("");
 el.innerHTML=`<div class="row"><div><h1>Clientes</h1><div class="sub">${a.length} ${F.sub=="assinatura"?"assinantes":F.sub=="avulsos"?"avulsos":"de "+r.length+" clientes"}</div></div><button class="btn" onclick="newC()">+ Novo</button></div>
 <div class="tabs mob" style="margin-top:6px">${[["todos","Todos"],["avulsos","Avulsos"],["assinatura","Assinantes"]].map(([k,t])=>`<button class="${F.sub==k?"on":""}" onclick="F.sub='${k}';render()">${t} ${r.filter(c=>k=="todos"||(c.qual!="nao_qualificado"&&(k=="assinatura")==(c.tipo=="assinante"))).length}</button>`).join("")}</div>
 <input style="margin-top:12px" placeholder="Nome, telefone, Instagram ou e-mail" value="${esc(F.q)}" oninput="F.q=this.value;render2()" id="q">
-<div class="fbar"><button class="btn alt" onclick="FOPEN=!FOPEN;render()">⚙ Filtros${fcount()?" · "+fcount():""}</button>${fchips()}</div>
-<div class="client-sortbar"><button class="btn alt client-sort-button" onclick="toggleClientSort()"><span class="client-sort-arrow">↕</span>${clientSortUrgentFirst?"Atrasados primeiro":"Em dia primeiro"}</button></div><div class="fpanel" style="display:${FOPEN?"block":"none"}"><div class="two flt"><select onchange="F.qual=this.value;render()">${opt(Q,F.qual,"Qualificação")}</select><select onchange="F.status=this.value;render()">${freqOpts(F.status)}</select>${F.sub=="todos"?`<select onchange="F.tipo=this.value;render()">${opt(T,F.tipo,"Tipo de cliente")}</select>`:""}<select onchange="F.visa=this.value;render()">${opt({sim:"Fez visagismo",nao:"Não fez visagismo"},F.visa,"Visagismo")}</select></div><div class="actions"><button class="btn alt" onclick="clearF()">Limpar filtros</button></div></div>
+<div class="fbar"><button class="btn alt" onclick="FOPEN=!FOPEN;render()">⚙ Filtros${fcount()?" · "+fcount():""}</button><button class="client-sort-arrows" onclick="toggleClientSort()" title="Inverter ordem dos clientes" aria-label="Inverter ordem dos clientes"><span class="${clientSortUrgentFirst?"muted":""}">↑</span><span class="${clientSortUrgentFirst?"":"muted"}">↓</span></button>${fchips()}</div><div class="fpanel" style="display:${FOPEN?"block":"none"}"><div class="two flt"><select onchange="F.qual=this.value;render()">${opt(Q,F.qual,"Qualificação")}</select><select onchange="F.status=this.value;render()">${freqOpts(F.status)}</select>${F.sub=="todos"?`<select onchange="F.tipo=this.value;render()">${opt(T,F.tipo,"Tipo de cliente")}</select>`:""}<select onchange="F.service=this.value;render()"><option value="">Serviços</option>${allClientServices().map(service=>`<option value="${esc(service)}" ${F.service==service?"selected":""}>${esc(service)}</option>`).join("")}</select></div><div class="actions"><button class="btn alt" onclick="clearF()">Limpar filtros</button></div></div>
 <div style="margin-top:14px">${list(a,"Nenhum cliente encontrado.")}</div>`;
 }
 else if(view=="ficha"||view=="form"){fichaView(r)}
@@ -531,18 +527,18 @@ else if(view=="registrar"){regView()}
 else if(view=="dados"){el.innerHTML=`<h1>Importar e exportar</h1><div class="sub">Arquivos CSV (no Google Sheets: Arquivo → Fazer download → CSV).</div><div class="card" style="margin-top:14px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div style="margin-top:12px"><div class="nm">Restaurar backup</div><div class="sub" style="margin:4px 0 8px">Arquivo JSON gerado pelo Backup completo.</div><input type="file" accept=".json,application/json" onchange="restoreJson(this)"></div><div class="card"><div class="nm">Exportar clientes</div><div class="sub">${S.clients.length} clientes</div><div class="actions"><button class="btn" onclick="exportCsv()">Exportar CSV</button></div></div>`}
 else if(view=="ajustes"){ajView()}refreshPhotoUrls()}
 function render2(){const p=$("#q").selectionStart;render();const i=$("#q");i.focus();i.setSelectionRange(p,p)}
-function newC(){FSEC=null;form={id:"c"+Date.now(),name:"",phone:"",instagram:"",email:"",qual:"nao_avaliado",tipo:F.sub=="assinatura"?"assinante":"avulso",tesoura:"nao_informado",brig:"nao_informado",freq:"",last:"",notes:"",visits:[],created:iso(),isNew:true};cur=form.id;view="form";render()}
+function newC(){FSEC=null;form={id:"c"+Date.now(),name:"",phone:"",instagram:"",email:"",qual:"nao_avaliado",tipo:F.sub=="assinatura"?"assinante":"avulso",services:[],tesoura:"nao_informado",brig:"nao_informado",freq:"",last:"",notes:"",visits:[],created:iso(),isNew:true};cur=form.id;view="form";render()}
 function fichaView(r){const el=$("#app"),c=r.find(x=>x.id==cur);
 if(view=="form"){const f=form,o=(m,v)=>Object.entries(m).map(([k,t])=>`<option value="${k}" ${v==k?"selected":""}>${t}</option>`).join(""),i=(k,l,t="text")=>`<label>${l}<input type="${t}" value="${esc(f[k])}" oninput="FM.${k}=this.value"></label>`;
 el.innerHTML=`<h1>${f.isNew?"Novo cliente":FSEC=="info"?"Editar informações":FSEC=="perfil"?"Editar perfil do cliente":"Editar cliente"}</h1><div class="sub">Só o nome é obrigatório. O resto você completa depois.</div>${FSEC=="perfil"?"":`${i("name","Nome completo")}${i("phone","Telefone / WhatsApp","tel")}${i("instagram","Instagram (@usuário ou link)")}${i("email","E-mail","email")}
 <div class="two"><label>Qualificação<select onchange="FM.qual=this.value;render()">${o(Q,f.qual)}</select></label><label>Tipo de cliente<select onchange="FM.tipo=this.value;render()">${o(T,f.tipo)}</select></label></div>`}${f.qual=="nao_qualificado"||FSEC=="info"?"":`<h2>Perfil do cliente</h2><div class="two">
-<label>Já fez visagismo?<select onchange="FM.visa=this.value">${o(YN,f.visa)}</select></label><label>Já comprou produto?<select onchange="FM.produto=this.value">${o({sim:"Sim",nao:"Não"},f.produto||"nao")}</select></label>
-${f.tipo=="assinante"?"":i("freq","Frequência de retorno (dias)","number")+i("last","Último atendimento","date")}<div style="grid-column:1/-1"><label>Serviços contratados</label><div class="chips">${svList().map(s=>`<button type="button" class="chip ${svc(f).includes(s)?"on":""}" onclick="togForm(this,'${s}')">${s}</button>`).join("")}</div></div>${f.tipo=="assinante"?"":i("days","Dias frequentados")}</div>`}
+<label>Já comprou produto?<select onchange="FM.produto=this.value">${o({sim:"Sim",nao:"Não"},f.produto||"nao")}</select></label>
+${f.tipo=="assinante"?"":i("freq","Frequência de retorno (dias)","number")+i("last","Último atendimento","date")}<div style="grid-column:1/-1"><label>Serviços do cliente</label><div class="sub" style="margin:2px 0 8px">Marque os serviços que ele costuma fazer. Os atendimentos registrados também entram automaticamente.</div><div class="chips">${svList().map(s=>`<button type="button" class="chip ${svc(f).includes(s)?"on":""}" onclick="togForm(this,'${s}')">${s}</button>`).join("")}</div></div>${f.tipo=="assinante"?"":i("days","Dias frequentados")}</div>`}
 
 <div class="actions"><button class="btn" onclick="saveForm()">Salvar</button><button class="btn alt" onclick="${f.isNew?"go('clientes')":"view='ficha';render()"}">Cancelar</button></div>`;return}
 if(!c){go("clientes");return}
 ficha2(c);return}
-function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";const isNew=f.isNew;delete f.isNew;
+function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";f.services=svc(f);delete f.visa;const isNew=f.isNew;delete f.isNew;
 if(isNew)S.clients.push(f);else S.clients=S.clients.map(x=>x.id==f.id?f:x);save();cur=f.id;view="ficha";form=null;FSEC=null;render()}
 function exportCsv(){const h=["nome","telefone","instagram","email","qualificacao","tipo","tesoura","brigadeiro","frequencia_dias","ultimo_atendimento","observacoes"],
 e=v=>'"'+String(v??"").replace(/"/g,'""')+'"',
@@ -580,7 +576,16 @@ $("#app").innerHTML=`<h1>Registrar atendimento</h1><div class="sub">Quem veio no
 <h2>Atendimentos de ${br(RD)} <b>${done.length}</b></h2>${done.length?done.map(c=>`<div class="card"><div class="row"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(c.phone||"")}</span></div><div class="sub">Próximo retorno: ${br(next(c))}</div></div>`).join(""):'<p class="empty">Nenhum atendimento registrado neste dia.</p>'}`}
 const kv=(l,v)=>`<div class="kv"><span>${l}</span><b>${esc(v)}</b></div>`;
 const SERV=["Corte","Barba","Desondulação","Sobrancelha","Visagismo","Terapia capilar"];let RSV=[];
-const svc=c=>Array.isArray(c.services)?[...c.services]:c.services?String(c.services).split(/\s*[+,]\s*/).filter(Boolean):[];
+const svc=c=>{
+  const services=Array.isArray(c.services)?[...c.services]:c.services?String(c.services).split(/\s*[+,]\s*/).filter(Boolean):[];
+  (Array.isArray(c.visits)?c.visits:[]).forEach(visit=>{
+    const performed=Array.isArray(visit.svcs)?visit.svcs:(visit.service?String(visit.service).split(/\s*\+\s*/):[]);
+    services.push(...performed);
+  });
+  if(c.visa=="sim")services.push("Visagismo");
+  return [...new Set(services.map(service=>String(service||"").trim()).filter(Boolean))];
+};
+const allClientServices=()=>[...new Set([...svList(),...S.clients.flatMap(client=>svc(client))])].sort((a,b)=>a.localeCompare(b));
 const chips=()=>`<label>O que o cliente fez</label><div class="chips">${svList().map(s=>`<button type="button" class="chip ${RSV.includes(s)?"on":""}" onclick="togS(this,'${s}')">${s}</button>`).join("")}</div>`;
 function togS(b,k){const i=RSV.indexOf(k);i<0?RSV.push(k):RSV.splice(i,1);b.classList.toggle("on")}
 function togForm(b,k){const a=svc(form),i=a.indexOf(k);i<0?a.push(k):a.splice(i,1);form.services=a;b.classList.toggle("on")}
@@ -592,9 +597,9 @@ function regFor(id){cur=id;RS=id;RNEW=false;RSV=[];view="registrar";render()}
 function regAdd(){let c=RS&&S.clients.find(x=>x.id==RS);
 if(!c){const n=$("#rn").value.trim(),p=$("#rp").value.trim(),d=dg(p);if(!n){alert("Informe o nome.");return}
 c=(d.length>=8&&S.clients.find(x=>dg(x.phone).slice(-9)==d.slice(-9)))||S.clients.find(x=>nz(x.name)==nz(n));
-if(!c){c={id:"c"+Date.now(),name:n,phone:p,instagram:"",email:"",qual:"nao_avaliado",tipo:"avulso",visa:"nao_informado",freq:"",last:"",services:[],log:[],visits:[],created:iso()};S.clients.push(c)}else if(p&&!c.phone)c.phone=p}
+if(!c){c={id:"c"+Date.now(),name:n,phone:p,instagram:"",email:"",qual:"nao_avaliado",tipo:"avulso",freq:"",last:"",services:[],log:[],visits:[],created:iso()};S.clients.push(c)}else if(p&&!c.phone)c.phone=p}
 if(c.visits.some(v=>v.date==RD)){alert(c.name+" já foi registrado neste dia.");return}
-c.visits.push({date:RD,service:RSV.join(" + "),svcs:[...RSV],note:""});c.services=[...new Set([...svc(c),...RSV])];if(RSV.includes("Visagismo"))c.visa="sim";
+c.visits.push({date:RD,service:RSV.join(" + "),svcs:[...RSV],note:""});c.services=[...new Set([...svc(c),...RSV])];
 if(!c.last||RD>c.last)c.last=RD;save();RS=null;RNEW=false;RSV=[];render();$("#rs").focus()}
 function ficha2(c){const rc=S.clients.find(x=>x.id==c.id);
 if(rc.notes){rc.log=rc.log||[];rc.log.push({id:"n"+Date.now(),date:iso(),text:rc.notes});rc.notes="";save()}
@@ -604,7 +609,7 @@ $("#app").innerHTML=`<div class="row"><button class="lnk" onclick="go('clientes'
   <span class="avatar profile-photo" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span>
   <div>
     <h1 style="font-size:36px;margin:0 0 8px">${esc(c.name)}</h1>
-    <span class="badge ${c.st}">${SL[c.st]}</span>${rc.visa=="sim"?' <span class="badge hoje">Visagismo</span>':""}
+    <span class="badge ${c.st}">${SL[c.st]}</span>
   </div>
 </div>
 <div class="photo-actions">
@@ -614,7 +619,7 @@ $("#app").innerHTML=`<div class="row"><button class="lnk" onclick="go('clientes'
 </div>
 <div class="two" style="margin-top:20px"><div class="stat"><small>Última visita</small><div class="big">${br(c.last)}</div></div><div class="stat"><small>Próximo retorno</small><div class="big" style="color:var(--gold)">${br(c.nx)}</div></div></div>
 <div class="actions"><button class="btn" onclick="regFor('${c.id}')">+ Registrar atendimento</button>${w?`<a class="btn wa" style="text-decoration:none" href="${w}" target="_blank" rel="noopener">WhatsApp</a>`:""}</div>
-<div class="two info" style="margin-top:20px"><div class="card" style="margin:0;padding:6px 20px"><div class="row" style="padding:10px 0"><span class="nm">Informações</span><button class="btn alt" onclick="editC('info')">✎ Editar</button></div><div class="kvs">${kv("Telefone",c.phone||"—")}<div class="kv"><span>Instagram</span><b>${c.instagram?`<a href="https://www.instagram.com/${encodeURIComponent(igh(c.instagram))}/" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none">@${esc(igh(c.instagram))}</a>`:"—"}</b></div>${kv("E-mail",c.email||"—")}${kv("Qualificação",Q[c.qual]||"—")}${kv("Tipo de cliente",T[c.tipo]||"Avulso")}</div></div>${c.qual=="nao_qualificado"?"":`<div class="card" style="margin:0;padding:6px 20px"><div class="row" style="padding:10px 0"><span class="nm">Perfil do cliente</span><button class="btn alt" onclick="editC('perfil')">✎ Editar</button></div><div class="kvs">${c.tipo=="assinante"?"":kv("Frequência de retorno",c.freq?c.freq+" dias":"—")}${kv("Já fez visagismo?",YN[rc.visa]||"Não informado")}${kv("Já comprou produto?",rc.produto=="sim"?"Sim":"Não")}${kv("Serviços contratados",sv.length?sv.join(", "):"—")}${c.tipo=="assinante"?"":kv("Dias frequentados",c.days||"—")+kv("Atendimentos",c.visits.length)}</div></div>`}</div>
+<div class="two info" style="margin-top:20px"><div class="card" style="margin:0;padding:6px 20px"><div class="row" style="padding:10px 0"><span class="nm">Informações</span><button class="btn alt" onclick="editC('info')">✎ Editar</button></div><div class="kvs">${kv("Telefone",c.phone||"—")}<div class="kv"><span>Instagram</span><b>${c.instagram?`<a href="https://www.instagram.com/${encodeURIComponent(igh(c.instagram))}/" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none">@${esc(igh(c.instagram))}</a>`:"—"}</b></div>${kv("E-mail",c.email||"—")}${kv("Qualificação",Q[c.qual]||"—")}${kv("Tipo de cliente",T[c.tipo]||"Avulso")}</div></div>${c.qual=="nao_qualificado"?"":`<div class="card" style="margin:0;padding:6px 20px"><div class="row" style="padding:10px 0"><span class="nm">Perfil do cliente</span><button class="btn alt" onclick="editC('perfil')">✎ Editar</button></div><div class="kvs">${c.tipo=="assinante"?"":kv("Frequência de retorno",c.freq?c.freq+" dias":"—")}${kv("Já comprou produto?",rc.produto=="sim"?"Sim":"Não")}${kv("Serviços do cliente",sv.length?sv.join(", "):"—")}${c.tipo=="assinante"?"":kv("Dias frequentados",c.days||"—")+kv("Atendimentos",c.visits.length)}</div></div>`}</div>
 <h2 style="margin-top:34px">Observações (${lg.length})</h2><div class="card"><div style="display:flex;gap:8px;align-items:center"><input id="nt" style="margin:0" placeholder="Escreva uma observação sobre o cliente…" onkeydown="if(event.key=='Enter')addNote()"><button class="btn" onclick="addNote()">Enviar</button></div>${lg.map(n=>`<div class="msg"><div class="row"><span class="sub">${br(n.date)}</span><button class="ico" title="Excluir" onclick="delNote('${n.id}')">🗑</button></div><div>${esc(n.text)}</div></div>`).join("")}</div>
 <h2 style="margin-top:34px">Histórico (${vs.length})</h2><div class="tl">${vs.length?vs.map(v=>`<div class="it"><span class="dot"></span><div class="card"><div class="row"><div><div class="nm" style="font-size:17px">${br(v.date)}</div>${v.service?`<div class="sub">${esc(v.service)}</div>`:""}${v.note?`<div>${esc(v.note)}</div>`:""}</div><button class="ico" title="Excluir" onclick="delVisit(${c.visits.indexOf(v)})">🗑</button></div></div></div>`).join(""):'<p class="empty">Nenhum atendimento registrado.</p>'}</div>
 <button class="lnk" style="color:var(--bad);margin-top:30px" onclick="delC()">Excluir cliente</button>`}
@@ -622,10 +627,10 @@ function addNote(){const t=$("#nt").value.trim();if(!t)return;const c=S.clients.
 Object.defineProperty(globalThis,"FM",{get:()=>form,set:v=>{form=v}});
 const igh=s=>{s=(s||"").trim();const m=s.match(/instagram\.com\/([^/?#\s]+)/i);if(m)s=m[1];return s.replace(/^@/,"").replace(/[\/\s]+$/,"")};
 let FOPEN=false;
-function fcount(){return[F.qual,F.status,F.tipo,F.visa].filter(Boolean).length}
-function fchips(){const L=[];if(F.qual)L.push(["qual",Q[F.qual]]);if(F.status)L.push(["status",SL[F.status]||(FQ.find(x=>x[0]==F.status)||[])[1]]);if(F.tipo)L.push(["tipo",T[F.tipo]]);if(F.visa)L.push(["visa",F.visa=="sim"?"Fez visagismo":"Não fez visagismo"]);
+function fcount(){return[F.qual,F.status,F.tipo,F.service].filter(Boolean).length}
+function fchips(){const L=[];if(F.qual)L.push(["qual",Q[F.qual]]);if(F.status)L.push(["status",SL[F.status]||(FQ.find(x=>x[0]==F.status)||[])[1]]);if(F.tipo)L.push(["tipo",T[F.tipo]]);if(F.service)L.push(["service",F.service]);
 return L.map(([k,l])=>`<button class="chip on" onclick="F.${k}='';render()">${esc(l)} ✕</button>`).join("")}
-function clearF(){F.qual=F.status=F.tipo=F.visa="";render()}
+function clearF(){F.qual=F.status=F.tipo=F.service="";render()}
 const ST=[["interesse","Teve interesse"],["conversa","Em conversa"],["followup","Follow-up"],["concluido","Concluído"],["desistencia","Desistência"]],SUB=["Link / orçamento enviado","Aguardando decisão"],
 BRL=v=>"R$ "+(+v||0).toLocaleString("pt-BR",{minimumFractionDigits:2}),crm=()=>{const L=S.crm=S.crm||[],M={novo:"interesse",orcamento:"followup",decisao:"followup",agendado:"followup"},SB={orcamento:"Link / orçamento enviado",decisao:"Aguardando decisão"};L.forEach(o=>{if(M[o.stage]){if(SB[o.stage]&&!o.sub)o.sub=SB[o.stage];o.stage=M[o.stage]}});return L};
 let OF=null;
