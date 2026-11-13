@@ -81,8 +81,23 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 /* Foto na tabela desktop */
 .client-name-cell{display:flex;align-items:center;gap:10px;min-width:190px}
 .table-avatar{width:36px;height:36px;min-width:36px;font-size:12px}
+
+/* Ajuste de enquadramento da foto do cliente */
+.photo-crop-overlay{position:fixed;inset:0;z-index:150;background:#000c;display:none;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.photo-crop-overlay.on{display:flex}
+.photo-crop-card{width:min(100%,420px);max-height:94vh;overflow:auto;background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:18px;box-shadow:0 18px 60px #0009}
+.photo-crop-title{font-family:"Instrument Serif",Georgia,serif;font-size:28px;margin:0}
+.photo-crop-viewport{width:min(82vw,320px);aspect-ratio:1;margin:16px auto 10px;position:relative;overflow:hidden;border-radius:14px;background:#111;touch-action:none;user-select:none;cursor:grab;border:1px solid var(--bd)}
+.photo-crop-viewport:active{cursor:grabbing}
+.photo-crop-image{position:absolute;max-width:none;max-height:none;width:auto;height:auto;pointer-events:none;user-select:none}
+.photo-crop-help{text-align:center;color:var(--sub);font-size:12px;line-height:1.5}
+.photo-crop-zoom{display:block;margin:16px 0 4px;color:var(--sub);font-size:12px}
+.photo-crop-zoom input{padding:0;border:0;background:transparent;margin-top:12px;accent-color:var(--gold)}
+.photo-crop-actions{display:flex;gap:8px;margin-top:18px}
+.photo-crop-actions button{flex:1}
+@media(max-height:620px){.photo-crop-card{max-height:98vh;padding:12px}.photo-crop-viewport{width:min(64vw,230px);margin:8px auto}.photo-crop-title{font-size:24px}}
 </style></head><body><main id="app"></main>
-<nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div>
+<nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://zkfgobmgwxbklwgwlhyu.supabase.co";
@@ -91,6 +106,7 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let cloudUser=null,cloudReady=false,cloudTimer=null,cloudQueue=Promise.resolve();
 const PHOTO_BUCKET="client-photos";
 let photoUrlCache={};
+let photoCrop=null;
 const Q={qualificado:"Qualificado",nao_qualificado:"Sem potencial",nao_avaliado:"Não avaliado"},
 T={avulso:"Avulso",assinante:"Assinante"},
 YN={nao_informado:"Não informado",sim:"Sim",nao:"Não"},
@@ -236,10 +252,157 @@ async function refreshPhotoUrls(){
   }
 }
 
-// Enviar ou trocar foto
-async function uploadClientPhoto(input,id){
+// Abre o editor para enquadrar a foto antes do envio
+function openPhotoCrop(input,id){
   const file=input.files&&input.files[0];
   input.value="";
+  if(!file)return;
+  if(!cloudUser){toast("Entre na sua conta para enviar fotos.");return;}
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
+    toast("Use uma imagem JPG, PNG ou WebP.");return;
+  }
+  if(file.size>5*1024*1024){toast("A imagem precisa ter até 5 MB.");return;}
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    photoCrop={id,file,img,url,zoom:1,x:0,y:0,scale:1,dragging:false};
+    const modal=$("#photoCrop");
+    modal.innerHTML =
+      '<div class="photo-crop-card">' +
+        '<h2 class="photo-crop-title">Ajustar foto</h2>' +
+        '<p class="sub" style="margin:4px 0 0">Posicione o rosto dentro do quadrado.</p>' +
+        '<div id="photoCropViewport" class="photo-crop-viewport" ' +
+          'onpointerdown="startPhotoDrag(event)" ' +
+          'onpointermove="movePhotoDrag(event)" ' +
+          'onpointerup="endPhotoDrag(event)" ' +
+          'onpointercancel="endPhotoDrag(event)">' +
+          '<img id="photoCropImage" class="photo-crop-image" alt="Prévia do enquadramento">' +
+        '</div>' +
+        '<div class="photo-crop-help">Arraste a foto para centralizar. Ajuste o zoom até ficar do jeito que você quer.</div>' +
+        '<label class="photo-crop-zoom">Zoom' +
+          '<input id="photoZoom" type="range" min="1" max="3" step="0.01" value="1" oninput="setPhotoZoom(this.value)">' +
+        '</label>' +
+        '<div class="photo-crop-actions">' +
+          '<button class="btn alt" onclick="cancelPhotoCrop()">Cancelar</button>' +
+          '<button id="photoCropSave" class="btn" onclick="confirmPhotoCrop()">Usar esta foto</button>' +
+        '</div>' +
+      '</div>';
+    modal.classList.add("on");
+    modal.setAttribute("aria-hidden","false");
+    requestAnimationFrame(()=>{
+      const viewport=$("#photoCropViewport");
+      const size=viewport.clientWidth;
+      const scale=Math.max(size/img.naturalWidth,size/img.naturalHeight);
+      photoCrop.scale=scale;
+      photoCrop.x=(size-img.naturalWidth*scale)/2;
+      photoCrop.y=(size-img.naturalHeight*scale)/2;
+      $("#photoCropImage").src=url;
+      drawPhotoCrop();
+    });
+  };
+  img.onerror=()=>{
+    URL.revokeObjectURL(url);
+    toast("Não consegui abrir essa imagem. Tente outra foto.");
+  };
+  img.src=url;
+}
+
+function drawPhotoCrop(){
+  if(!photoCrop)return;
+  const viewport=$("#photoCropViewport");
+  const image=$("#photoCropImage");
+  if(!viewport||!image)return;
+  const size=viewport.clientWidth;
+  const width=photoCrop.img.naturalWidth*photoCrop.scale;
+  const height=photoCrop.img.naturalHeight*photoCrop.scale;
+  photoCrop.x=Math.min(0,Math.max(size-width,photoCrop.x));
+  photoCrop.y=Math.min(0,Math.max(size-height,photoCrop.y));
+  image.style.width=width+"px";
+  image.style.height=height+"px";
+  image.style.left=photoCrop.x+"px";
+  image.style.top=photoCrop.y+"px";
+}
+
+function setPhotoZoom(value){
+  if(!photoCrop)return;
+  const viewport=$("#photoCropViewport");
+  const size=viewport.clientWidth;
+  const focusX=(size/2-photoCrop.x)/photoCrop.scale;
+  const focusY=(size/2-photoCrop.y)/photoCrop.scale;
+  const base=Math.max(size/photoCrop.img.naturalWidth,size/photoCrop.img.naturalHeight);
+  photoCrop.zoom=Number(value);
+  photoCrop.scale=base*photoCrop.zoom;
+  photoCrop.x=size/2-focusX*photoCrop.scale;
+  photoCrop.y=size/2-focusY*photoCrop.scale;
+  drawPhotoCrop();
+}
+
+function startPhotoDrag(event){
+  if(!photoCrop)return;
+  event.preventDefault();
+  photoCrop.dragging=true;
+  photoCrop.pointerId=event.pointerId;
+  photoCrop.startPointerX=event.clientX;
+  photoCrop.startPointerY=event.clientY;
+  photoCrop.startX=photoCrop.x;
+  photoCrop.startY=photoCrop.y;
+  event.currentTarget.setPointerCapture(event.pointerId);
+}
+function movePhotoDrag(event){
+  if(!photoCrop||!photoCrop.dragging||event.pointerId!==photoCrop.pointerId)return;
+  event.preventDefault();
+  photoCrop.x=photoCrop.startX+(event.clientX-photoCrop.startPointerX);
+  photoCrop.y=photoCrop.startY+(event.clientY-photoCrop.startPointerY);
+  drawPhotoCrop();
+}
+function endPhotoDrag(event){
+  if(!photoCrop||!photoCrop.dragging)return;
+  if(event.pointerId!==undefined&&event.pointerId!==photoCrop.pointerId)return;
+  photoCrop.dragging=false;
+}
+function cancelPhotoCrop(){
+  if(photoCrop&&photoCrop.url)URL.revokeObjectURL(photoCrop.url);
+  photoCrop=null;
+  const modal=$("#photoCrop");
+  modal.classList.remove("on");
+  modal.setAttribute("aria-hidden","true");
+  modal.innerHTML="";
+}
+
+async function confirmPhotoCrop(){
+  if(!photoCrop)return;
+  const button=$("#photoCropSave");
+  button.disabled=true;
+  button.textContent="Preparando...";
+  try{
+    const viewport=$("#photoCropViewport");
+    const size=viewport.clientWidth;
+    const canvas=document.createElement("canvas");
+    canvas.width=1024;
+    canvas.height=1024;
+    const ctx=canvas.getContext("2d");
+    const sx=Math.max(0,(0-photoCrop.x)/photoCrop.scale);
+    const sy=Math.max(0,(0-photoCrop.y)/photoCrop.scale);
+    const sw=Math.min(size/photoCrop.scale,photoCrop.img.naturalWidth-sx);
+    const sh=Math.min(size/photoCrop.scale,photoCrop.img.naturalHeight-sy);
+    ctx.drawImage(photoCrop.img,sx,sy,sw,sh,0,0,1024,1024);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",0.92));
+    if(!blob)throw new Error("Não consegui preparar o recorte da foto.");
+    const originalName=(photoCrop.file.name||"foto").replace(/\.[^.]+$/,"");
+    const file=new File([blob],originalName+".jpg",{type:"image/jpeg",lastModified:Date.now()});
+    const id=photoCrop.id;
+    cancelPhotoCrop();
+    await uploadClientPhoto(file,id);
+  }catch(error){
+    console.error("Erro ao ajustar foto:",error);
+    button.disabled=false;
+    button.textContent="Usar esta foto";
+    toast("Não consegui preparar a foto: "+(error.message||"tente novamente."));
+  }
+}
+
+// Enviar ou trocar foto
+async function uploadClientPhoto(file,id){
   if(!file)return;
   if(!cloudUser){toast("Entre na sua conta para enviar fotos.");return;}
   if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
@@ -422,7 +585,7 @@ $("#app").innerHTML=`<div class="row"><button class="lnk" onclick="go('clientes'
 </div>
 <div class="photo-actions">
   <label class="btn alt" for="photo-${c.id}">${c.photo?"Trocar foto":"Adicionar foto"}</label>
-  <input id="photo-${c.id}" type="file" accept="image/jpeg,image/png,image/webp" onchange="uploadClientPhoto(this,'${c.id}')">
+  <input id="photo-${c.id}" type="file" accept="image/jpeg,image/png,image/webp" onchange="openPhotoCrop(this,'${c.id}')">
   ${c.photo?`<button class="btn alt" onclick="removeClientPhoto('${c.id}')">Remover foto</button>`:""}
 </div>
 <div class="two" style="margin-top:20px"><div class="stat"><small>Última visita</small><div class="big">${br(c.last)}</div></div><div class="stat"><small>Próximo retorno</small><div class="big" style="color:var(--gold)">${br(c.nx)}</div></div></div>
