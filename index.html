@@ -102,6 +102,13 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .photo-crop-actions{display:flex;gap:8px;margin-top:18px}
 .photo-crop-actions button{flex:1}
 @media(max-height:620px){.photo-crop-card{max-height:98vh;padding:12px}.photo-crop-viewport{width:min(64vw,230px);margin:8px auto}.photo-crop-title{font-size:24px}}
+/* Ordenação por situação dos clientes */
+.sort-th{appearance:none;background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:600;letter-spacing:inherit;text-transform:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.sort-th span{font-size:16px;color:var(--gold)}
+.client-sortbar{display:flex;align-items:center;justify-content:flex-end;margin-top:12px}
+.client-sort-button{display:inline-flex;align-items:center;gap:8px;font-size:12px}
+.client-sort-arrow{font-size:17px;color:var(--gold);line-height:1}
+@media(min-width:800px){.client-sortbar{display:none}}
 </style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -121,7 +128,7 @@ FO=["em_dia","sem_frequencia","atrasado","hoje","proximo"],
 freqOpts=v=>`<option value="">Frequência: todas</option>`+[...FO.map(k=>[k,SL[k]]),...FQ].map(([k,l])=>`<option value="${k}" ${v==k?"selected":""}>${l}</option>`).join(""),
 ff=(c,v)=>!v||(v[0]=="f"?(c.freq>0&&c.freq<=+v.slice(1)):c.st==v),
 SL={sem_frequencia:"Sem frequência",atrasado:"Atrasado",hoje:"Retorno hoje",proximo:"Próximos 7 dias",em_dia:"Em dia"};
-let S={clients:[]},view="painel",cur=null,tab="hoje",F={q:"",qual:"",status:"",tipo:"",sub:"todos"},form=null;
+let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",tipo:"",sub:"todos"},form=null;
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const iso=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const U=s=>{const[a,b,c]=s.split("-").map(Number);return Date.UTC(a,b-1,c)};
@@ -131,6 +138,16 @@ const next=c=>c.last&&c.freq>0?add(c.last,+c.freq):null;
 function status(c){const n=next(c);if(!n)return"sem_frequencia";const d=Math.round((U(n)-U(iso()))/864e5);return d<0?"atrasado":d==0?"hoje":d<=7?"proximo":"em_dia"}
 const rows=()=>S.clients.map(c=>({...c,nx:next(c),st:status(c)}));
 const byNx=(a,b)=>(a.nx||"").localeCompare(b.nx||"");
+function clientStatusRank(c){
+  if(c.st=="atrasado")return clientSortUrgentFirst?0:2;
+  if(c.st=="hoje"||c.st=="proximo")return 1;
+  if(c.st=="em_dia")return clientSortUrgentFirst?2:0;
+  return 3;
+}
+function toggleClientSort(){
+  clientSortUrgentFirst=!clientSortUrgentFirst;
+  render();
+}
 function wa(c){let d=(c.phone||"").replace(/\D/g,"");if(d.length<10)return null;if(d.length<=11)d="55"+d;
 return`https://wa.me/${d}?text=`+encodeURIComponent(`Fala, ${c.name.trim().split(/\s+/)[0]}! Tudo certo? Já está chegando a hora de dar aquela ajustada no corte. Quer que eu veja um horário pra você?`)}
 /* persistência: db (privado do usuário) com fallback em localStorage */
@@ -485,7 +502,7 @@ function removeClientPhoto(id){
 
 function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span style="display:flex;align-items:center;gap:10px;min-width:0"><span class="avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span></span><span class="badge ${c.st}">${SL[c.st]}</span></div>
 <div class="sub" style="margin-top:6px">Último: ${br(c.last)} · Freq.: ${c.freq?c.freq+"d":"—"} · Previsto: ${br(c.nx)}</div></button>`}
-const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span></span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
+const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th><button class="sort-th" onclick="toggleClientSort()" title="Inverter ordem por situação">Situação <span>${clientSortUrgentFirst?"↓":"↑"}</span></button></th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span></span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
 function open_(id){cur=id;view="ficha";form=null;render()}
 function go(v){view=v;form=null;OF=null;if(v=="clientes")F.sub="todos";render();scrollTo(0,0)}
 function goSub(s){F.sub=s;view="clientes";form=null;render();scrollTo(0,0)}
@@ -499,12 +516,13 @@ ${sec("Retornos de hoje",rr.filter(c=>c.st=="hoje"),"Ninguém previsto para hoje
 else if(view=="retornos"){r=r.filter(c=>c.qual=="qualificado"&&c.tipo!="assinante");const w=r.filter(c=>c.nx).sort(byNx),L={hoje:r.filter(c=>c.st=="hoje"),atrasado:w.filter(c=>c.st=="atrasado"),proximo:w.filter(c=>c.st=="proximo"),todos:w,sem_frequencia:r.filter(c=>c.st=="sem_frequencia"),em_dia:w.filter(c=>c.st=="em_dia"),f15:r.filter(c=>ff(c,"f15")).sort(byNx),f30:r.filter(c=>ff(c,"f30")).sort(byNx),f60:r.filter(c=>ff(c,"f60")).sort(byNx),f90:r.filter(c=>ff(c,"f90")).sort(byNx)},N={hoje:"Hoje",atrasado:"Atrasados",proximo:"7 dias",todos:"Todos",sem_frequencia:"Sem frequência",em_dia:"Em dia",f15:"Até 15 dias",f30:"Até 30 dias",f60:"Até 60 dias",f90:"Até 90 dias"};
 el.innerHTML=`<h1>Retornos</h1><div class="tabs" style="flex-wrap:wrap;overflow:visible">${["hoje","atrasado","proximo","todos"].map(k=>`<button class="${tab==k?"on":""}" onclick="tab='${k}';render()">${N[k]} ${L[k].length}</button>`).join("")}<select class="chipsel${["hoje","atrasado","proximo","todos"].includes(tab)?"":" on"}" onchange="if(this.value){tab=this.value;render()}"><option value="">Filtros</option>${Object.keys(N).slice(4).map(k=>`<option value="${k}" ${tab==k?"selected":""}>${N[k]} ${L[k].length}</option>`).join("")}</select></div>${list(L[tab],"Nenhum cliente nesta lista.")}`}
 else if(view=="clientes"){const q=F.q.toLowerCase().trim(),d=q.replace(/\D/g,"");
-const a=r.filter(c=>(!q||(c.name+" "+(c.instagram||"")+" "+(c.email||"")).toLowerCase().includes(q)||(d.length>=3&&(c.phone||"").replace(/\D/g,"").includes(d)))&&(!F.qual||c.qual==F.qual)&&(!F.status||(F.status[0]=="f"?(c.freq>0&&c.freq<=+F.status.slice(1)):c.st==F.status))&&(F.sub=="todos"||(c.qual!="nao_qualificado"&&(F.sub=="assinatura")==(c.tipo=="assinante")))&&(!F.tipo||(c.tipo=="assinante"?"assinante":"avulso")==F.tipo)&&(!F.visa||(F.visa=="sim")==(c.visa=="sim"))).sort((a,b)=>a.name.localeCompare(b.name));
+const a=r.filter(c=>(!q||(c.name+" "+(c.instagram||"")+" "+(c.email||"")).toLowerCase().includes(q)||(d.length>=3&&(c.phone||"").replace(/\D/g,"").includes(d)))&&(!F.qual||c.qual==F.qual)&&(!F.status||(F.status[0]=="f"?(c.freq>0&&c.freq<=+F.status.slice(1)):c.st==F.status))&&(F.sub=="todos"||(c.qual!="nao_qualificado"&&(F.sub=="assinatura")==(c.tipo=="assinante")))&&(!F.tipo||(c.tipo=="assinante"?"assinante":"avulso")==F.tipo)&&(!F.visa||(F.visa=="sim")==(c.visa=="sim"))).sort((a,b)=>clientStatusRank(a)-clientStatusRank(b)||byNx(a,b)||a.name.localeCompare(b.name));
 const opt=(o,v,e)=>`<option value="">${e}</option>`+Object.entries(o).map(([k,t])=>`<option value="${k}" ${v==k?"selected":""}>${t}</option>`).join("");
 el.innerHTML=`<div class="row"><div><h1>Clientes</h1><div class="sub">${a.length} ${F.sub=="assinatura"?"assinantes":F.sub=="avulsos"?"avulsos":"de "+r.length+" clientes"}</div></div><button class="btn" onclick="newC()">+ Novo</button></div>
 <div class="tabs mob" style="margin-top:6px">${[["todos","Todos"],["avulsos","Avulsos"],["assinatura","Assinantes"]].map(([k,t])=>`<button class="${F.sub==k?"on":""}" onclick="F.sub='${k}';render()">${t} ${r.filter(c=>k=="todos"||(c.qual!="nao_qualificado"&&(k=="assinatura")==(c.tipo=="assinante"))).length}</button>`).join("")}</div>
 <input style="margin-top:12px" placeholder="Nome, telefone, Instagram ou e-mail" value="${esc(F.q)}" oninput="F.q=this.value;render2()" id="q">
-<div class="fbar"><button class="btn alt" onclick="FOPEN=!FOPEN;render()">⚙ Filtros${fcount()?" · "+fcount():""}</button>${fchips()}</div><div class="fpanel" style="display:${FOPEN?"block":"none"}"><div class="two flt"><select onchange="F.qual=this.value;render()">${opt(Q,F.qual,"Qualificação")}</select><select onchange="F.status=this.value;render()">${freqOpts(F.status)}</select>${F.sub=="todos"?`<select onchange="F.tipo=this.value;render()">${opt(T,F.tipo,"Tipo de cliente")}</select>`:""}<select onchange="F.visa=this.value;render()">${opt({sim:"Fez visagismo",nao:"Não fez visagismo"},F.visa,"Visagismo")}</select></div><div class="actions"><button class="btn alt" onclick="clearF()">Limpar filtros</button></div></div>
+<div class="fbar"><button class="btn alt" onclick="FOPEN=!FOPEN;render()">⚙ Filtros${fcount()?" · "+fcount():""}</button>${fchips()}</div>
+<div class="client-sortbar"><button class="btn alt client-sort-button" onclick="toggleClientSort()"><span class="client-sort-arrow">↕</span>${clientSortUrgentFirst?"Atrasados primeiro":"Em dia primeiro"}</button></div><div class="fpanel" style="display:${FOPEN?"block":"none"}"><div class="two flt"><select onchange="F.qual=this.value;render()">${opt(Q,F.qual,"Qualificação")}</select><select onchange="F.status=this.value;render()">${freqOpts(F.status)}</select>${F.sub=="todos"?`<select onchange="F.tipo=this.value;render()">${opt(T,F.tipo,"Tipo de cliente")}</select>`:""}<select onchange="F.visa=this.value;render()">${opt({sim:"Fez visagismo",nao:"Não fez visagismo"},F.visa,"Visagismo")}</select></div><div class="actions"><button class="btn alt" onclick="clearF()">Limpar filtros</button></div></div>
 <div style="margin-top:14px">${list(a,"Nenhum cliente encontrado.")}</div>`;
 }
 else if(view=="ficha"||view=="form"){fichaView(r)}
