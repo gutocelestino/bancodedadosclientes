@@ -1,4 +1,4 @@
-const CACHE_NAME = "carteira-pwa-v2";
+const CACHE_NAME = "carteira-pwa-v3";
 const APP_SCOPE = self.registration.scope;
 const APP_ROOT = new URL("./", APP_SCOPE);
 
@@ -8,7 +8,8 @@ const APP_FILES = [
   new URL("manifest.json", APP_ROOT).href,
   new URL("favicon.svg", APP_ROOT).href,
   new URL("pwa-192.png", APP_ROOT).href,
-  new URL("pwa-512.png", APP_ROOT).href
+  new URL("pwa-512.png", APP_ROOT).href,
+  new URL("apple-touch-icon.png", APP_ROOT).href
 ];
 
 self.addEventListener("install", event => {
