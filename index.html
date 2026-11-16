@@ -612,11 +612,18 @@ let UF=null;
 function filterUnqualified(input){
   const pos=input.selectionStart||0;
   UNQ_Q=input.value;
+  goSub("naoqualificados");
+  const next=$("#q");
+  if(next){next.value=UNQ_Q;next.focus();next.setSelectionRange(pos,pos)}
+}
+function filterNoReturn(input){
+  const pos=input.selectionStart||0;
+  NORETURN_Q=input.value;
   render();
-  const next=$("#uqSearch");
+  const next=$("#nrSearch");
   if(next){next.focus();next.setSelectionRange(pos,pos)}
 }
-function backToUnqualified(){go("naoqualificados")}
+function backToUnqualified(){goSub("naoqualificados")}
 function newUnqualified(){
   UF={id:"c"+Date.now(),name:"",phone:"",notes:""};
   view="unqualifiedForm";
@@ -672,15 +679,15 @@ function unqualifiedFichaView(r){
     '<div class="actions"><button class="btn" onclick="editC()">Reavaliar contato</button><button class="btn alt" onclick="backToUnqualified()">Voltar para a lista</button></div>';
 }
 
-function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span style="display:flex;align-items:center;gap:10px;min-width:0"><span class="avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"?'<span class="badge subscriber">Assinante</span>':""}</span><span class="badge ${c.st}">${SL[c.st]}</span></div>
+function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span style="display:flex;align-items:center;gap:10px;min-width:0"><span class="avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${c.qual=="nao_qualificado"?'<span class="badge unqualified-badge">Não qualificado</span>':clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"&&c.qual!="nao_qualificado"?'<span class="badge subscriber">Assinante</span>':""}</span><span class="badge ${c.st}">${SL[c.st]}</span></div>
 <div class="sub" style="margin-top:6px">Último: ${br(c.last)} · Freq.: ${c.freq?c.freq+"d":"—"} · Previsto: ${br(c.nx)}</div></button>`}
-const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"?'<span class="badge subscriber">Assinante</span>':""}</span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
+const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${c.qual=="nao_qualificado"?'<span class="badge unqualified-badge">Não qualificado</span>':clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"&&c.qual!="nao_qualificado"?'<span class="badge subscriber">Assinante</span>':""}</span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
 function open_(id){cur=id;const c=S.clients.find(x=>x.id==id);view=c&&c.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;render()}
 function go(v){view=v;form=null;OF=null;UF=null;if(v=="clientes")F.sub="todos";render();scrollTo(0,0)}
-function goSub(s){if(s=="naoqualificados"){view="naoqualificados"}else{F.sub=s;view="clientes"}form=null;render();scrollTo(0,0)}
+function goSub(s){F.sub=s;view="clientes";form=null;render();scrollTo(0,0)}
 function goReturnTab(value){tab=value;go("retornos")}
 function render(){
-$("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["naoqualificados","Não qualificados"]].map(([s,l])=>`<button class="s2 ${(s=="naoqualificados"?["naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view):F.sub==s&&view=="clientes")?"on2":""}" onclick="goSub('${s}')">${l}${s=="naoqualificados"?" ("+S.clients.filter(c=>c.qual=="nao_qualificado").length+")":""}</button>`).join(""):"")}).join("");
+$("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["nao_retorno","Não retornaram"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
 let r=rows();const el=$("#app");
 if(view=="painel"){
 const clientes=r.filter(c=>c.qual!="nao_qualificado"&&!c.semRetorno),naoQualificados=r.filter(c=>c.qual=="nao_qualificado"),naoRetornaram=r.filter(c=>c.qual!="nao_qualificado"&&c.semRetorno);
@@ -793,7 +800,7 @@ function fichaView(r){
 }
 function goClientes(){go("clientes")}
 function cancelEditForm(){view=form&&form.returnView||'ficha';form=null;FSEC=null;render()}
-function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";f.services=svc(f);f.fase=f.fase=="novo"?"novo":"fixo";delete f.visa;delete f.days;const isNew=f.isNew;delete f.isNew;delete f.returnView;
+function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";f.services=svc(f);f.fase=f.fase=="novo"?"novo":"fixo";delete f.visa;delete f.days;const isNew=f.isNew;delete f.isNew;delete f.returnView;if(f.qual=="nao_qualificado"){f.semRetorno=false;delete f.semRetornoDesde}
 if(isNew)S.clients.push(f);else S.clients=S.clients.map(x=>x.id==f.id?f:x);save();cur=f.id;view=f.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;FSEC=null;render()}
 function exportCsv(){const h=["nome","telefone","instagram","email","qualificacao","tipo","tesoura","brigadeiro","frequencia_dias","ultimo_atendimento","observacoes"],
 e=v=>'"'+String(v??"").replace(/"/g,'""')+'"',
@@ -858,7 +865,7 @@ c=(d.length>=8&&S.clients.find(x=>x.qual!="nao_qualificado"&&dg(x.phone).slice(-
 if(!c){c={id:"c"+Date.now(),name:n,phone:p,instagram:"",email:"",qual:"nao_avaliado",tipo:REG_TIPO,fase:REG_FASE,freq:"",last:"",services:[],log:[],visits:[],created:iso()};S.clients.push(c)}else if(p&&!c.phone)c.phone=p}
 if(c.visits.some(v=>v.date==RD)){alert(c.name+" já foi registrado neste dia.");return}
 c.visits.push({date:RD,service:RSV.join(" + "),svcs:[...RSV],note:""});c.services=[...new Set([...svc(c),...RSV])];
-if(!c.last||RD>c.last)c.last=RD;save();RS=null;RNEW=false;RSV=[];render();$("#rs").focus()}
+if(!c.last||RD>c.last)c.last=RD;if(c.semRetorno){c.semRetorno=false;delete c.semRetornoDesde}save();RS=null;RNEW=false;RSV=[];render();$("#rs").focus()}
 function ficha2(c){const rc=S.clients.find(x=>x.id==c.id);
 if(rc.notes){rc.log=rc.log||[];rc.log.push({id:"n"+Date.now(),date:iso(),text:rc.notes});rc.notes="";save()}
 const w=wa(c),vs=[...c.visits].sort((a,b)=>b.date.localeCompare(a.date)),lg=[...(rc.log||[])].reverse(),sv=svc(rc);
@@ -873,10 +880,10 @@ $("#app").innerHTML=`<div class="row"><button class="lnk" onclick="go('clientes'
   </div>
   <div>
     <h1 style="font-size:36px;margin:0 0 8px">${esc(c.name)}</h1>
-    <span class="badge ${c.st}">${SL[c.st]}</span> ${clientStage(c)=="assinante"?'<span class="badge subscriber">Assinante</span>':`<span class="badge ${clientStage(c)=="novo"?"new-client":"fixed-client"}">${clientStage(c)=="novo"?"Novo cliente":"Cliente fixo"}</span>`}
+    <span class="badge ${c.st}">${SL[c.st]}</span> ${clientStage(c)=="assinante"?'<span class="badge subscriber">Assinante</span>':`<span class="badge ${clientStage(c)=="novo"?"new-client":"fixed-client"}">${clientStage(c)=="novo"?"Novo cliente":"Cliente fixo"}</span>`} ${c.semRetorno?'<span class="badge unqualified-badge">Não retornou</span>':""}
   </div>
 </div>
-${clientStage(c)=="assinante"?"":`<div class="actions" style="margin-top:8px"><button class="btn alt" onclick="toggleClientStage('${c.id}')">${clientStage(c)=="novo"?"Promover para cliente fixo":"Mover para novos clientes"}</button></div>`}
+${clientStage(c)=="assinante"?"":`<div class="actions" style="margin-top:8px"><button class="btn alt" onclick="toggleClientStage('${c.id}')">${clientStage(c)=="novo"?"Promover para cliente fixo":"Mover para novos clientes"}</button></div>`}<div class="actions" style="margin-top:8px">${c.semRetorno?`<button class="btn" onclick="reactivateClient('${c.id}')">Reativar cliente</button>`:`<button class="btn alt" onclick="moveToNoReturn('${c.id}')">Mover para Não retornaram</button>`}</div>
 <div class="two" style="margin-top:20px"><div class="stat"><small>Última visita</small><div class="big">${br(c.last)}</div></div><div class="stat"><small>Próximo retorno</small><div class="big" style="color:var(--gold)">${br(c.nx)}</div></div></div>
 <div class="actions"><button class="btn" onclick="regFor('${c.id}')">+ Registrar atendimento</button>${w?`<a class="btn wa" style="text-decoration:none" href="${w}" target="_blank" rel="noopener">WhatsApp</a>`:""}</div>
 <div class="two info" style="margin-top:20px"><div class="card" style="margin:0;padding:6px 20px"><div class="row" style="padding:10px 0"><span class="nm">Informações</span><button class="btn alt" onclick="editC('info')">✎ Editar</button></div><div class="kvs">${kv("Telefone",c.phone||"—")}<div class="kv"><span>Instagram</span><b>${c.instagram?`<a href="https://www.instagram.com/${encodeURIComponent(igh(c.instagram))}/" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none">@${esc(igh(c.instagram))}</a>`:"—"}</b></div>${kv("E-mail",c.email||"—")}${kv("Qualificação",Q[c.qual]||"—")}</div></div>${c.qual=="nao_qualificado"?"":`<div class="card" style="margin:0;padding:6px 20px"><div class="row" style="padding:10px 0"><span class="nm">Perfil do cliente</span><button class="btn alt" onclick="editC('perfil')">✎ Editar</button></div><div class="kvs">${c.tipo=="assinante"?"":kv("Frequência de retorno",c.freq?c.freq+" dias":"—")}${kv("Já comprou produto?",rc.produto=="sim"?"Sim":"Não")}${kv("Serviços do cliente",sv.length?sv.join(", "):"—")}${c.tipo=="assinante"?"":kv("Atendimentos",c.visits.length)}</div></div>`}</div>
