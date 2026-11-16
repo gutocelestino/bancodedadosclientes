@@ -1340,11 +1340,9 @@ function finNormalizeServiceName(name){
   return String(name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
 }
 function finServiceKind(name){
-  const n=finNormalizeServiceName(name);
-  if(n==="corte"||n==="barba"||n==="corte e barba"||n==="corte barba"||n==="corte + barba"||n==="corte & barba"||n==="combo corte e barba"||n==="combo corte barba")return "servicos";
-  if(/^corte\s/.test(n)&&!n.includes("barba"))return "servicos";
-  if(/^combo\s+corte/.test(n)&&n.includes("barba"))return "servicos";
-  return "extras";
+  const n=finNormalizeServiceName(name).replace(/[()]/g,"").replace(/\s+/g," ").trim();
+  const principais=["corte","barba","corte e barba","corte + barba","corte & barba","corte barba","corte/barba","combo corte e barba","combo corte + barba","combo corte barba","combo corte/barba"];
+  return principais.includes(n)?"servicos":"extras";
 }
 function finServiceUnits(item){
   const qty=Math.max(0,finN(item&&item.qty));
@@ -1561,12 +1559,12 @@ function financeView(){
     body='<div class="finance-kpis">'+
       finKpi("Lançamentos",finInt(total.launches),"Agendamentos registrados no período")+
       finKpi("Clientes atendidos",finInt(total.customers),FIN_MONTH==="all"?"Soma mensal; o mesmo cliente pode aparecer em mais de um mês.":"Clientes informados no relatório")+
-      finKpi("Serviços vendidos",finInt(total.serviceCount),finBRL(total.serviceGross)+" em vendas")+
+      finKpi("Serviços principais",finInt(finMonthGroupItems(months,"servicos").reduce((n,x)=>n+finServiceUnits(x),0)),finBRL(finMonthGroupItems(months,"servicos").reduce((n,x)=>n+finN(x.value),0))+" em vendas")+
+      finKpi("Serviços extras",finInt(finMonthGroupItems(months,"extras").reduce((n,x)=>n+finServiceUnits(x),0)),finBRL(finMonthGroupItems(months,"extras").reduce((n,x)=>n+finN(x.value),0))+" em vendas")+
       finKpi("Produtos vendidos",finInt(total.productCount),finBRL(total.productGross)+" em vendas")+
       finKpi("Vendas brutas",finBRL(total.gross),"Serviços + produtos","primary")+
       finKpi("Entradas / comissões",finBRL(total.income),"Comissões de serviços e produtos + extras","green")+
       finKpi("Assinaturas previstas",finBRL(total.subscriptionCommission),"Comissão prevista, separada das entradas")+
-      finKpi("Saldo após saídas",finBRL(total.net),"Entradas menos saídas lançadas",total.net<0?"red":"green")+
       '</div>'+
       '<section class="finance-panel"><h2>Vendas por mês</h2><div class="hint">Comparação de vendas brutas de serviços e produtos ao longo de '+FIN_YEAR+'.</div><div class="finance-chart">'+finChart(FIN_YEAR,"revenue",FIN_MONTH)+'</div><div class="finance-legend"><span><i style="background:#d6aa5c"></i>Serviços</span><span><i style="background:#5fc08a"></i>Produtos</span></div></section>'+
       '<section class="finance-panel"><h2>Volume vendido por mês</h2><div class="hint">Quantidade de serviços e unidades de produtos informadas em cada mês.</div><div class="finance-chart">'+finChart(FIN_YEAR,"volume",FIN_MONTH)+'</div><div class="finance-legend"><span><i style="background:#d6aa5c"></i>Serviços</span><span><i style="background:#5fc08a"></i>Produtos</span></div></section>'+
