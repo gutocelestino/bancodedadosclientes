@@ -170,12 +170,57 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 @media(max-width:560px){.profile-head + .actions button,.profile-head + .actions + .actions button{min-height:52px;padding:10px 13px;font-size:13px}}
 .profile-head + .actions .profile-stage-secondary{background:#24221d;border:1px solid #8b7044;color:#d7b778}
 @media(max-width:600px){input,select,textarea{font-size:16px}}
+@media(min-width:800px){nav button:last-child{position:relative;margin-top:18px}nav button:last-child:after{content:"FINANCEIRO";position:absolute;left:18px;top:-17px;color:var(--sub);font-size:10px;letter-spacing:.14em;opacity:.72}}@media(max-width:799px){nav button{min-width:78px}}
 .app-refresh{position:fixed;z-index:180;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translate(-50%,-150%);display:flex;align-items:center;gap:9px;padding:10px 16px;border:1px solid #d6aa5c66;border-radius:999px;background:#242119;color:var(--fg);font-size:12px;font-weight:600;box-shadow:0 8px 24px #0005;opacity:0;pointer-events:none;transition:transform .18s ease,opacity .18s ease;white-space:nowrap}
 .app-refresh.on{transform:translate(-50%,0);opacity:1}
 .app-refresh-mark{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#d6aa5c22;color:var(--gold);font-size:16px}
 .app-refresh.loading .app-refresh-mark{animation:app-refresh-spin .7s linear infinite}
 @keyframes app-refresh-spin{to{transform:rotate(360deg)}}
 .client-reg-panel{border-color:#d6aa5c66;background:linear-gradient(135deg,#242119,#1f1e1a)}
+
+.finance-page{max-width:100%;padding-bottom:28px}
+.finance-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.finance-head .sub{max-width:520px;line-height:1.5}
+.finance-filters{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}
+.finance-filters label{margin:0}.finance-filters select{margin-top:5px}
+.finance-tabs{margin:12px -16px 14px}
+.finance-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.finance-kpi{min-width:0;background:var(--card);border:1px solid var(--bd);border-radius:15px;padding:13px}
+.finance-kpi .label{font-size:11px;color:var(--sub);line-height:1.35}
+.finance-kpi .value{font-size:23px;font-weight:700;line-height:1.2;margin-top:7px;overflow-wrap:anywhere}
+.finance-kpi .hint{font-size:11px;color:var(--sub);margin-top:6px;line-height:1.4}
+.finance-kpi.primary{background:#d6aa5c18;border-color:#d6aa5c55}
+.finance-kpi.green .value{color:var(--ok)}.finance-kpi.red .value{color:var(--bad)}
+.finance-panel{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin:12px 0;min-width:0}
+.finance-panel h2{margin:0 0 8px;color:var(--fg);font-size:13px;letter-spacing:.02em;text-transform:none}
+.finance-panel .hint{font-size:11px;color:var(--sub);line-height:1.5}
+.finance-chart{width:100%;overflow:hidden;margin-top:12px}
+.finance-chart svg{width:100%;height:auto;display:block;overflow:visible}
+.finance-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--sub);margin-top:10px}
+.finance-legend span{display:inline-flex;align-items:center;gap:6px}
+.finance-legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.finance-table{width:100%;border-collapse:collapse;font-size:12px}
+.finance-table th{text-align:left;color:var(--sub);font-size:10px;font-weight:600;padding:9px 5px;border-bottom:1px solid var(--bd)}
+.finance-table td{padding:11px 5px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.finance-table td:last-child,.finance-table th:last-child{text-align:right;white-space:nowrap}
+.finance-table td:nth-child(2),.finance-table th:nth-child(2){text-align:right;white-space:nowrap}
+.finance-table-wrap{overflow-x:auto}
+.finance-pill{display:inline-block;border-radius:99px;background:var(--mut);padding:3px 7px;font-size:10px;color:var(--sub)}
+.finance-compare{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.finance-compare-item{background:var(--mut);border-radius:12px;padding:11px;min-width:0}
+.finance-compare-item small{display:block;color:var(--sub);font-size:10px}
+.finance-compare-item strong{display:block;font-size:16px;margin-top:5px;overflow-wrap:anywhere}
+.finance-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.finance-form-grid .full{grid-column:1/-1}
+.finance-form-grid label{margin-top:7px}
+.finance-form-grid textarea{min-height:108px;font-size:13px;line-height:1.55}
+.finance-form-section{border-top:1px solid var(--bd);margin-top:17px;padding-top:12px}
+.finance-form-section h2{margin:0 0 5px;color:var(--fg);text-transform:none;letter-spacing:0}
+.finance-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.finance-empty{padding:22px 10px;text-align:center;color:var(--sub);font-size:13px;line-height:1.5}
+.finance-row-actions{display:flex;gap:9px;justify-content:flex-end}
+.finance-link{border:0;background:transparent;color:var(--gold);font:inherit;font-size:11px;padding:4px;cursor:pointer}
+@media(min-width:800px){.finance-page{max-width:1100px}.finance-filters{grid-template-columns:190px 210px;justify-content:start}.finance-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.finance-panel{padding:18px}.finance-form-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.finance-form-grid .half{grid-column:span 2}.finance-form-grid .full{grid-column:1/-1}}
 </style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="appRefresh" class="app-refresh" aria-live="polite" aria-hidden="true"><span class="app-refresh-mark">↓</span><span class="app-refresh-label">Puxe para atualizar</span></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -196,6 +241,7 @@ freqOpts=v=>`<option value="">Frequência: todas</option>`+[...FO.map(k=>[k,SL[k
 ff=(c,v)=>!v||(v[0]=="f"?(c.freq>0&&c.freq<=+v.slice(1)):c.st==v),
 SL={sem_frequencia:"Sem frequência",atrasado:"Atrasado",hoje:"Retorno hoje",proximo:"Próximos 7 dias",em_dia:"Em dia"};
 let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",service:"",sub:"todos"},form=null,UNQ_Q="",NORETURN_Q="";
+let FIN_TAB="resumo",FIN_YEAR=new Date().getFullYear(),FIN_MONTH="all",FIN_FORM=null,FIN_MOV_FORM=null;
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const iso=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const U=s=>{const[a,b,c]=s.split("-").map(Number);return Date.UTC(a,b-1,c)};
@@ -712,7 +758,7 @@ function card(c){return`<button class="card" onclick="open_('${c.id}')"><div cla
 <div class="sub" style="margin-top:6px">Último: ${br(c.last)} · Freq.: ${c.freq?c.freq+"d":"—"} · Previsto: ${br(c.nx)}</div></button>`}
 const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${c.qual=="nao_qualificado"?'<span class="badge unqualified-badge">Desqualificado</span>':clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"&&c.qual!="nao_qualificado"?'<span class="badge subscriber">Assinante</span>':""}</span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
 function open_(id){cur=id;CLIENT_REG_OPEN=false;RS=null;RSV=[];const c=S.clients.find(x=>x.id==id);view=c&&c.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;render()}
-function go(v){if(v=="registrar")RD=iso();view=v;form=null;OF=null;UF=null;if(v=="clientes")F.sub="todos";render();scrollTo(0,0)}
+function go(v){if(v=="registrar")RD=iso();view=v;form=null;OF=null;UF=null;if(v=="clientes")F.sub="todos";if(v=="financeiro"&&!FIN_TAB)FIN_TAB="resumo";render();scrollTo(0,0)}
 function setClientFilter(s){
   F.sub=s;F.q="";
   if(s=="naoqualificados"){F.qual="";F.status="";F.service=""}
@@ -732,12 +778,13 @@ function navRouteKey(){
   if(view==="unqualifiedForm")return "unqualifiedForm|"+((UF&&UF.id)||"novo");
   if(view==="crm")return "crm|"+((OF&&OF.id)||"lista");
   if(view==="registrar")return "registrar|"+(RS||"novo");
+  if(view==="financeiro")return "financeiro|"+(FIN_TAB||"resumo");
   return view;
 }
 function captureNavState(){
   return {view,cur,tab,F:navCopy(F),form:navCopy(form),FSEC,OF:navCopy(OF),UF:navCopy(UF),
     UNQ_Q,NORETURN_Q,FOPEN,clientSortUrgentFirst,RS,RNEW,CLIENT_REG_OPEN,REG_FASE,REG_TIPO,
-    RTXT:navCopy(RTXT),RSV:navCopy(RSV),RD,scrollY:window.scrollY||0};
+    RTXT:navCopy(RTXT),RSV:navCopy(RSV),RD,FIN_TAB,FIN_YEAR,FIN_MONTH,FIN_FORM:navCopy(FIN_FORM),FIN_MOV_FORM:navCopy(FIN_MOV_FORM),scrollY:window.scrollY||0};
 }
 function restoreNavState(state){
   view=state.view;cur=state.cur;tab=state.tab;F=navCopy(state.F)||F;
@@ -746,6 +793,7 @@ function restoreNavState(state){
   if(typeof state.clientSortUrgentFirst==="boolean")clientSortUrgentFirst=state.clientSortUrgentFirst;
   RS=state.RS??null;RNEW=!!state.RNEW;CLIENT_REG_OPEN=!!state.CLIENT_REG_OPEN;REG_FASE=state.REG_FASE||"fixo";REG_TIPO=state.REG_TIPO||"avulso";
   RTXT=navCopy(state.RTXT)||{name:"",phone:""};RSV=navCopy(state.RSV)||[];RD=state.RD||RD;
+  FIN_TAB=state.FIN_TAB||"resumo";FIN_YEAR=Number(state.FIN_YEAR)||new Date().getFullYear();FIN_MONTH=state.FIN_MONTH||"all";FIN_FORM=navCopy(state.FIN_FORM);FIN_MOV_FORM=navCopy(state.FIN_MOV_FORM);
 }
 function renderBackControl(){
   const app=$("#app");if(!app)return;
@@ -992,7 +1040,7 @@ else if(view=="ficha"||view=="form"){fichaView(r)}
 else if(view=="crm"){crmView()}
 else if(view=="registrar"){regView()}
 else if(view=="dados"){el.innerHTML=`<h1>Importar e exportar</h1><div class="sub">Arquivos CSV (no Google Sheets: Arquivo → Fazer download → CSV).</div><div class="card" style="margin-top:14px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div style="margin-top:12px"><div class="nm">Restaurar backup</div><div class="sub" style="margin:4px 0 8px">Arquivo JSON gerado pelo Backup completo.</div><input type="file" accept=".json,application/json" onchange="restoreJson(this)"></div><div class="card"><div class="nm">Exportar clientes</div><div class="sub">${S.clients.length} clientes</div><div class="actions"><button class="btn" onclick="exportCsv()">Exportar CSV</button></div></div>`}
-else if(view=="ajustes"){ajView()}trackNavRender();refreshPhotoUrls()}
+else if(view=="financeiro"){financeView()}else if(view=="ajustes"){ajView()}trackNavRender();refreshPhotoUrls()}
 function render2(){const p=$("#q").selectionStart;render();const i=$("#q");i.focus();i.setSelectionRange(p,p)}
 function newC(){FSEC=null;form={id:"c"+Date.now(),name:"",phone:"",instagram:"",email:"",qual:"nao_avaliado",tipo:"avulso",fase:"fixo",services:[],tesoura:"nao_informado",brig:"nao_informado",freq:"",last:"",notes:"",visits:[],created:iso(),isNew:true};cur=form.id;view="form";render()}
 function fichaView(r){
@@ -1052,8 +1100,8 @@ painel:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" widt
 clientes:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.4c2.2.7 3.5 2.6 3.5 5.6"/>',
 retornos:'<path d="M8 2v4M16 2v4M3 10h18M21 12V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/><circle cx="17" cy="17" r="4"/><path d="M17 15.5V17l1 1"/>',
 crm:'<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/>',registrar:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',adicionar:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6 1 0 2 .2 2.8.6M19 14v6M16 17h6"/>',dados:'<path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/>',
-ajustes:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>'},
-NAV=[["painel","Dashboard"],["clientes","Clientes"],["retornos","Retornos"],["crm","CRM"],["registrar","Registrar atendimento"],["adicionar","Adicionar cliente"],["ajustes","Configurações"]];
+ajustes:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',financeiro:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 15v-3M12 15V7M17 15v-6"/>'},
+NAV=[["painel","Dashboard"],["clientes","Clientes"],["retornos","Retornos"],["crm","CRM"],["registrar","Registrar atendimento"],["adicionar","Adicionar cliente"],["ajustes","Configurações"],["financeiro","Financeiro"]];
 function parseCsv(t){const l=t.split("\n")[0],sep=(l.match(/;/g)||[]).length>(l.match(/,/g)||[]).length?";":",",R=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}else if(ch=='"')q=true;else if(ch==sep){r.push(c);c=""}else if(ch=="\n"||ch=="\r"){if(ch=="\r"&&t[i+1]=="\n")i++;r.push(c);c="";if(r.some(x=>x.trim()))R.push(r);r=[]}else c+=ch}r.push(c);if(r.some(x=>x.trim()))R.push(r);return R}
 function importCsv(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{const R=parseCsv(t.replace(/^\uFEFF/,"")),m=$("#imsg");if(R.length<2){m.textContent="Arquivo vazio.";return}
 const H=R[0].map(h=>h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,"")),
@@ -1231,7 +1279,263 @@ function delO(){askC("Excluir esta oportunidade?",()=>{S.crm=crm().filter(x=>x.i
 function download(name,type,text){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
 function backupJson(){download("carteira-backup-"+iso()+".json","application/json",JSON.stringify(S,null,1))}
 function restoreJson(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d||!Array.isArray(d.clients))throw 0;askC("Substituir todos os dados atuais por este backup?",()=>{S=d;save();render()},"Restaurar")}catch(e){toast("Arquivo de backup inválido.")}inp.value=""})}
-function wipe(){askC("Apagar TODOS os clientes, atendimentos e oportunidades? Isso não pode ser desfeito.",()=>{S={clients:[],crm:[],cfg:S.cfg};save();render()},"Apagar tudo")}
+function wipe(){askC("Apagar TODOS os clientes, atendimentos e oportunidades? Isso não pode ser desfeito.",()=>{S={clients:[],crm:[],cfg:S.cfg,finance:S.finance};save();render()},"Apagar tudo")}
+
+const FIN_MONTH_NAMES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const finStore=()=>{if(!S.finance||typeof S.finance!=="object")S.finance={months:[],movements:[]};if(!Array.isArray(S.finance.months))S.finance.months=[];if(!Array.isArray(S.finance.movements))S.finance.movements=[];return S.finance};
+const finN=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
+const finBRL=v=>finN(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const finInt=v=>Math.round(finN(v)).toLocaleString("pt-BR");
+const finMonthLabel=p=>{const a=String(p||"").split("-");return a.length===2?FIN_MONTH_NAMES[Number(a[1])-1]+" "+a[0]:String(p||"—")};
+const finPeriodId=(year,month)=>String(year)+"-"+String(month).padStart(2,"0");
+const finMonthRecord=p=>finStore().months.find(m=>m.period===p)||null;
+const finMonthsInFilter=()=>finStore().months.filter(m=>String(m.period||"").startsWith(String(FIN_YEAR)+"-")&&(FIN_MONTH==="all"||m.period.slice(5,7)===FIN_MONTH)).sort((a,b)=>a.period.localeCompare(b.period));
+const finParseAmount=v=>{let x=String(v??"").trim().replace(/\s/g,"");if(!x)return 0;if(x.includes(","))x=x.replace(/\./g,"").replace(",",".");const n=Number(x);return Number.isFinite(n)?n:0};
+const finParseLines=t=>String(t||"").split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{const a=line.split(";");const name=(a[0]||"").trim();return{name:name,qty:Math.max(0,Math.round(finParseAmount(a[1]))),value:Math.max(0,finParseAmount(a.slice(2).join(";"))),subscription:/\bass\b|assin/i.test(name)}}).filter(x=>x.name);
+const finFormatLines=a=>(a||[]).map(x=>x.name+";"+x.qty+";"+finN(x.value).toFixed(2).replace(".",",")).join("\n");
+const finMonthRange=(period)=>{const [y,m]=period.split("-").map(Number);const start=period+"-01";const last=new Date(y,m,0).getDate();return[start,period+"-"+String(last).padStart(2,"0")]};
+function finAggregate(months){
+  const ids=months.map(m=>m.period),movement=finStore().movements.filter(x=>ids.includes(String(x.date||"").slice(0,7)));
+  const sum=(key)=>months.reduce((n,m)=>n+finN(m[key]),0);
+  const movementIn=movement.filter(x=>x.type==="entrada").reduce((n,x)=>n+finN(x.amount),0);
+  const movementOut=movement.filter(x=>x.type==="saida").reduce((n,x)=>n+finN(x.amount),0);
+  const serviceCommission=sum("serviceCommission"),productCommission=sum("productCommission"),otherIncome=sum("otherIncome");
+  const reportedExpenses=sum("reportedExpenses");
+  const income=serviceCommission+productCommission+otherIncome+movementIn;
+  const expenses=reportedExpenses+movementOut;
+  return{
+    launches:sum("launches"),customers:sum("customers"),serviceCount:sum("serviceCount"),serviceGross:sum("serviceGross"),
+    productCount:sum("productCount"),productGross:sum("productGross"),
+    serviceCommission:serviceCommission,productCommission:productCommission,subscriptionCommission:sum("subscriptionCommission"),
+    otherIncome:otherIncome,reportedExpenses:reportedExpenses,movementIn:movementIn,movementOut:movementOut,
+    income:income,expenses:expenses,net:income-expenses,gross:sum("serviceGross")+sum("productGross"),
+    movements:movement,months:months
+  };
+}
+function finMergedItems(months,key){
+  const map=new Map();
+  months.forEach(m=>(Array.isArray(m[key])?m[key]:[]).forEach(x=>{
+    const id=String(x.name||"").trim().toLowerCase();
+    if(!id)return;
+    const item=map.get(id)||{name:x.name,qty:0,value:0,subscription:!!x.subscription};
+    item.qty+=finN(x.qty);item.value+=finN(x.value);item.subscription=item.subscription||!!x.subscription;
+    map.set(id,item);
+  }));
+  return [...map.values()].sort((a,b)=>b.value-a.value||b.qty-a.qty||a.name.localeCompare(b.name));
+}
+function finSubscriptionCount(months){
+  return months.reduce((n,m)=>n+(Array.isArray(m.serviceItems)?m.serviceItems.filter(x=>x.subscription||/\bass\b|assin/i.test(x.name||"")).reduce((q,x)=>q+finN(x.qty),0):0),0);
+}
+function finKpi(label,value,hint,cls){
+  return '<div class="finance-kpi '+(cls||'')+'"><div class="label">'+label+'</div><div class="value">'+value+'</div><div class="hint">'+(hint||'')+'</div></div>';
+}
+function finTable(items,empty,kind){
+  if(!items.length)return '<div class="finance-empty">'+(empty||"Nenhum item cadastrado neste período.")+'</div>';
+  return '<div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>Descrição</th><th>Qtd.</th><th>Valor vendido</th></tr></thead><tbody>'+
+    items.map(x=>'<tr><td>'+esc(x.name)+(x.subscription?'<br><span class="finance-pill">Assinatura</span>':'')+'</td><td>'+finInt(x.qty)+'</td><td>'+finBRL(x.value)+'</td></tr>').join("")+
+    '</tbody></table></div>';
+}
+function finChart(year,mode,selectedMonth){
+  const width=660,height=220,left=12,right=10,top=12,bottom=30,plotH=height-top-bottom,plotW=width-left-right;
+  const values=[];
+  for(let i=1;i<=12;i++){
+    const m=finMonthRecord(finPeriodId(year,i))||{};
+    values.push(mode==="volume"?{a:finN(m.serviceCount),b:finN(m.productCount)}:{a:finN(m.serviceGross),b:finN(m.productGross)});
+  }
+  const max=Math.max(1,...values.map(v=>v.a+v.b)),base=height-bottom,slot=plotW/12,barW=25;
+  let svg='<svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+(mode==="volume"?"Quantidade vendida por mês":"Vendas brutas por mês")+'">';
+  for(let g=0;g<=3;g++){
+    const y=top+plotH*g/3;
+    svg+='<line x1="'+left+'" y1="'+y+'" x2="'+(width-right)+'" y2="'+y+'" stroke="#ffffff17" stroke-width="1"/>';
+  }
+  values.forEach((v,i)=>{
+    const x=left+i*slot+(slot-barW)/2,ha=plotH*v.a/max,hb=plotH*v.b/max;
+    const chosen=selectedMonth!=="all"&&selectedMonth===String(i+1).padStart(2,"0");
+    svg+='<rect x="'+x+'" y="'+(base-ha)+'" width="'+barW+'" height="'+Math.max(0,ha)+'" rx="3" fill="#d6aa5c" opacity="'+(chosen?1:.82)+'"/>';
+    svg+='<rect x="'+x+'" y="'+(base-ha-hb)+'" width="'+barW+'" height="'+Math.max(0,hb)+'" rx="3" fill="#5fc08a" opacity="'+(chosen?1:.82)+'"/>';
+    if(chosen)svg+='<rect x="'+(x-3)+'" y="'+(top-3)+'" width="'+(barW+6)+'" height="'+(plotH+7)+'" rx="5" fill="none" stroke="#f1eee8" stroke-dasharray="3 3" opacity=".5"/>';
+    svg+='<text x="'+(x+barW/2)+'" y="'+(height-9)+'" text-anchor="middle" fill="'+(chosen?"#f1eee8":"#a29e94")+'" font-size="10">'+["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][i]+'</text>';
+  });
+  svg+='</svg>';
+  return svg;
+}
+function finDetailList(months){
+  const items=finMergedItems(months,"serviceItems");
+  const subscriptions=items.filter(x=>x.subscription||/\bass\b|assin/i.test(x.name));
+  const ordinary=items.filter(x=>!x.subscription&&!/\bass\b|assin/i.test(x.name));
+  return {all:items,subscriptions:subscriptions,ordinary:ordinary};
+}
+function finPrevMonths(){
+  if(FIN_MONTH!=="all"){
+    let y=FIN_YEAR,m=Number(FIN_MONTH)-1;if(m<1){m=12;y--}
+    const record=finMonthRecord(finPeriodId(y,m));
+    return record?[record]:[];
+  }
+  return finStore().months.filter(m=>m.period.startsWith(String(FIN_YEAR-1)+"-")).sort((a,b)=>a.period.localeCompare(b.period));
+}
+function finComparePanel(current,previous,label){
+  if(!previous.length)return '<section class="finance-panel"><h2>Comparação</h2><div class="hint">Ainda não há dados do período anterior para comparar com '+label+'. Conforme você cadastrar outros meses, a comparação aparece aqui.</div></section>';
+  const before=finAggregate(previous);
+  const metric=(name,a,b)=>{const diff=a-b,pct=b?((diff/b)*100):null;const sign=diff>0?"+":"";return '<div class="finance-compare-item"><small>'+name+'</small><strong>'+finBRL(a)+'</strong><small>Anterior: '+finBRL(b)+' · '+(pct===null?"sem base anterior":sign+pct.toFixed(1).replace(".",",")+"%")+'</small></div>'};
+  return '<section class="finance-panel"><h2>Comparação com '+label+'</h2><div class="finance-compare">'+
+    metric("Vendas brutas",current.gross,before.gross)+metric("Comissões avulsas + produtos",current.income,current.income-current.movementIn+before.movementIn)+
+    metric("Serviços vendidos",current.serviceCount,before.serviceCount)+metric("Produtos vendidos",current.productCount,before.productCount)+
+    '</div></section>';
+}
+function finMonthRows(months){
+  if(!months.length)return '<div class="finance-empty">Nenhum mês cadastrado. Use “Adicionar mês” para começar.</div>';
+  return '<div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>Mês</th><th>Serviços</th><th>Produtos</th><th>Comissões</th><th></th></tr></thead><tbody>'+
+    months.map(m=>'<tr><td>'+finMonthLabel(m.period)+'</td><td>'+finBRL(m.serviceGross)+'</td><td>'+finBRL(m.productGross)+'</td><td>'+finBRL(finN(m.serviceCommission)+finN(m.productCommission))+'</td><td><button class="finance-link" onclick="finEditMonth(\''+m.period+'\')">Editar</button></td></tr>').join("")+
+    '</tbody></table></div>';
+}
+function finMonthOptions(){
+  return FIN_MONTH_NAMES.map((name,i)=>'<option value="'+String(i+1).padStart(2,"0")+'" '+(FIN_MONTH===String(i+1).padStart(2,"0")?"selected":"")+'>'+name+'</option>').join("");
+}
+function finNewMonth(){
+  const period=FIN_MONTH==="all"?finPeriodId(FIN_YEAR,new Date().getMonth()+1):finPeriodId(FIN_YEAR,Number(FIN_MONTH));
+  const old=finMonthRecord(period);
+  FIN_FORM=old?{
+    period:old.period,launches:String(old.launches??""),customers:String(old.customers??""),
+    serviceCount:String(old.serviceCount??""),serviceGross:String(old.serviceGross??""),serviceCommission:String(old.serviceCommission??""),
+    productCount:String(old.productCount??""),productGross:String(old.productGross??""),productCommission:String(old.productCommission??""),
+    subscriptionCommission:String(old.subscriptionCommission??""),otherIncome:String(old.otherIncome??""),reportedExpenses:String(old.reportedExpenses??""),
+    serviceLines:finFormatLines(old.serviceItems),productLines:finFormatLines(old.productItems)
+  }:{
+    period:period,launches:"",customers:"",serviceCount:"",serviceGross:"",serviceCommission:"",
+    productCount:"",productGross:"",productCommission:"",subscriptionCommission:"",otherIncome:"",reportedExpenses:"",
+    serviceLines:"",productLines:""
+  };
+  render();
+}
+function finEditMonth(period){FIN_MONTH=period.slice(5,7);FIN_YEAR=Number(period.slice(0,4));finNewMonth()}
+function finFormField(key,label,type,half){
+  return '<label class="'+(half?'half':'')+'">'+label+'<input type="'+(type||'number')+'" value="'+esc(FIN_FORM[key]??"")+'" oninput="FIN_FORM.'+key+'=this.value" '+(type==="number"?'step="0.01"':'')+'></label>';
+}
+function finMonthFormView(){
+  const f=FIN_FORM;
+  $("#app").innerHTML='<div class="finance-page"><div class="row"><div><h1>'+(finMonthRecord(f.period)?"Editar mês":"Adicionar mês")+'</h1><div class="sub">Cadastre o fechamento mensal do relatório da barbearia.</div></div><button class="lnk" onclick="FIN_FORM=null;render()">Cancelar</button></div>'+
+  '<div class="finance-panel"><div class="finance-form-grid">'+
+  '<label class="full">Mês do relatório<input type="month" value="'+esc(f.period)+'" onchange="FIN_FORM.period=this.value"></label>'+
+  finFormField("launches","Lançamentos / agendamentos","number",true)+
+  finFormField("customers","Clientes atendidos","number",true)+
+  '<div class="finance-form-section full"><h2>Serviços</h2><div class="hint">Quantidade e valor bruto vendido no mês, separados da comissão.</div></div>'+
+  finFormField("serviceCount","Quantidade de serviços","number",true)+finFormField("serviceGross","Total vendido em serviços (R$)","number",true)+
+  finFormField("serviceCommission","Comissão de serviços avulsos (R$)","number",true)+
+  '<div class="finance-form-section full"><h2>Produtos</h2><div class="hint">Quantidade de unidades e valor bruto vendido.</div></div>'+
+  finFormField("productCount","Unidades de produtos","number",true)+finFormField("productGross","Total vendido em produtos (R$)","number",true)+
+  finFormField("productCommission","Comissão de produtos (R$)","number",true)+
+  '<div class="finance-form-section full"><h2>Assinaturas e ajustes</h2><div class="hint">A comissão de assinaturas fica separada das entradas confirmadas, pois no relatório ela aparece como previsão.</div></div>'+
+  finFormField("subscriptionCommission","Comissão prevista de assinaturas (R$)","number",true)+
+  finFormField("otherIncome","Outras entradas / extras (R$)","number",true)+
+  finFormField("reportedExpenses","Saídas informadas no relatório (R$)","number",true)+
+  '<div class="finance-form-section full"><h2>Detalhamento de serviços</h2><div class="hint">Uma linha por serviço, neste formato: Nome; quantidade; valor. Exemplo: Corte;69;4485,00. Se preencher a lista, as quantidades e valores acima serão recalculados pela soma das linhas.</div><textarea oninput="FIN_FORM.serviceLines=this.value" placeholder="Corte;69;4485,00&#10;Corte e Barba;14;1680,00">'+esc(f.serviceLines)+'</textarea></div>'+
+  '<div class="finance-form-section full"><h2>Detalhamento de produtos</h2><div class="hint">Uma linha por produto: Nome; quantidade; valor.</div><textarea oninput="FIN_FORM.productLines=this.value" placeholder="Shampoo;2;260,00">'+esc(f.productLines)+'</textarea></div>'+
+  '</div><div class="finance-actions"><button class="btn" onclick="finSaveMonth()">Salvar mês</button><button class="btn alt" onclick="FIN_FORM=null;render()">Cancelar</button></div></div></div>';
+}
+function finSaveMonth(){
+  const f=FIN_FORM;
+  if(!f||! /^\d{4}-\d{2}$/.test(f.period||"")){toast("Escolha o mês do relatório.");return}
+  const serviceItems=finParseLines(f.serviceLines),productItems=finParseLines(f.productLines);
+  const serviceCount=serviceItems.length?serviceItems.reduce((n,x)=>n+x.qty,0):Math.max(0,Math.round(finParseAmount(f.serviceCount)));
+  const serviceGross=serviceItems.length?serviceItems.reduce((n,x)=>n+x.value,0):Math.max(0,finParseAmount(f.serviceGross));
+  const productCount=productItems.length?productItems.reduce((n,x)=>n+x.qty,0):Math.max(0,Math.round(finParseAmount(f.productCount)));
+  const productGross=productItems.length?productItems.reduce((n,x)=>n+x.value,0):Math.max(0,finParseAmount(f.productGross));
+  const month={
+    period:f.period,launches:Math.max(0,Math.round(finParseAmount(f.launches))),customers:Math.max(0,Math.round(finParseAmount(f.customers))),
+    serviceCount:serviceCount,serviceGross:serviceGross,serviceCommission:Math.max(0,finParseAmount(f.serviceCommission)),
+    productCount:productCount,productGross:productGross,productCommission:Math.max(0,finParseAmount(f.productCommission)),
+    subscriptionCommission:Math.max(0,finParseAmount(f.subscriptionCommission)),otherIncome:Math.max(0,finParseAmount(f.otherIncome)),
+    reportedExpenses:Math.max(0,finParseAmount(f.reportedExpenses)),serviceItems:serviceItems,productItems:productItems,updatedAt:new Date().toISOString()
+  };
+  const months=finStore().months,idx=months.findIndex(x=>x.period===f.period);
+  if(idx>=0)months[idx]=month;else months.push(month);
+  months.sort((a,b)=>a.period.localeCompare(b.period));
+  FIN_YEAR=Number(f.period.slice(0,4));FIN_MONTH=f.period.slice(5,7);FIN_FORM=null;save();toast("Relatório mensal salvo.");render();
+}
+function finNewMovement(){
+  let date=iso();if(FIN_MONTH!=="all")date=finPeriodId(FIN_YEAR,Number(FIN_MONTH))+"-01";
+  FIN_MOV_FORM={date:date,type:"saida",category:"Compra",description:"",amount:""};render();
+}
+function finMovementFormView(){
+  const f=FIN_MOV_FORM;
+  $("#app").innerHTML='<div class="finance-page"><div class="row"><div><h1>Novo lançamento</h1><div class="sub">Registre uma entrada ou saída que queira acompanhar.</div></div><button class="lnk" onclick="FIN_MOV_FORM=null;render()">Cancelar</button></div>'+
+  '<div class="finance-panel"><label>Data<input type="date" value="'+esc(f.date)+'" onchange="FIN_MOV_FORM.date=this.value"></label>'+
+  '<label>Tipo<select onchange="FIN_MOV_FORM.type=this.value;render()"><option value="entrada" '+(f.type==="entrada"?"selected":"")+'>Entrada</option><option value="saida" '+(f.type==="saida"?"selected":"")+'>Saída</option></select></label>'+
+  '<label>Categoria<input value="'+esc(f.category)+'" oninput="FIN_MOV_FORM.category=this.value" placeholder="Ex.: Compra, vale, extra"></label>'+
+  '<label>Descrição<input value="'+esc(f.description)+'" oninput="FIN_MOV_FORM.description=this.value" placeholder="O que foi lançado?"></label>'+
+  '<label>Valor (R$)<input type="number" step="0.01" value="'+esc(f.amount)+'" oninput="FIN_MOV_FORM.amount=this.value"></label>'+
+  '<div class="finance-actions"><button class="btn" onclick="finSaveMovement()">Salvar lançamento</button><button class="btn alt" onclick="FIN_MOV_FORM=null;render()">Cancelar</button></div></div></div>';
+}
+function finSaveMovement(){
+  const f=FIN_MOV_FORM;
+  if(!f||!f.date||!String(f.description||"").trim()||finParseAmount(f.amount)<=0){toast("Preencha data, descrição e um valor maior que zero.");return}
+  finStore().movements.push({id:"fm"+Date.now(),date:f.date,type:f.type==="entrada"?"entrada":"saida",category:String(f.category||"Outros").trim(),description:String(f.description).trim(),amount:finParseAmount(f.amount)});
+  FIN_YEAR=Number(f.date.slice(0,4));FIN_MONTH=f.date.slice(5,7);FIN_MOV_FORM=null;save();toast("Lançamento salvo.");render();
+}
+function finDeleteMovement(id){
+  askC("Excluir este lançamento financeiro?",()=>{finStore().movements=finStore().movements.filter(x=>x.id!==id);save();render()});
+}
+function financeView(){
+  const store=finStore(),months=finMonthsInFilter(),total=finAggregate(months),years=[...new Set([new Date().getFullYear(),...store.months.map(x=>Number(x.period.slice(0,4)))])].filter(Boolean).sort((a,b)=>b-a);
+  if(FIN_FORM){finMonthFormView();return}
+  if(FIN_MOV_FORM){finMovementFormView();return}
+  const yearOptions=years.map(y=>'<option value="'+y+'" '+(FIN_YEAR===y?"selected":"")+'>'+y+'</option>').join("");
+  const tabs=[["resumo","Visão geral"],["servicos","Serviços"],["produtos","Produtos"],["assinaturas","Assinaturas"],["comissoes","Comissões"],["lancamentos","Lançamentos"]];
+  const tabHtml='<div class="tabs finance-tabs">'+tabs.map(([k,l])=>'<button class="'+(FIN_TAB===k?"on":"")+'" onclick="FIN_TAB=\''+k+'\';render()">'+l+'</button>').join("")+'</div>';
+  const header='<div class="finance-head"><div><h1>Financeiro</h1><div class="sub">Uma visão separada da gestão de clientes: vendas, comissões, produtos, serviços e resultado por período.</div></div><button class="btn" onclick="finNewMonth()">+ Adicionar mês</button></div>'+
+    '<div class="finance-filters"><label>Ano<select onchange="FIN_YEAR=Number(this.value);FIN_MONTH=\'all\';render()">'+yearOptions+'</select></label><label>Período<select onchange="FIN_MONTH=this.value;render()"><option value="all" '+(FIN_MONTH==="all"?"selected":"")+'>Ano inteiro</option>'+finMonthOptions()+'</select></label></div>'+
+    '<div class="finance-filter-caption">'+(FIN_MONTH==="all"?"Visão anual de "+FIN_YEAR:finMonthLabel(finPeriodId(FIN_YEAR,Number(FIN_MONTH))))+' · Valores importados dos relatórios mensais.</div>';
+  let body="";
+  if(FIN_TAB==="resumo"){
+    const subs=finSubscriptionCount(months);
+    body='<div class="finance-kpis">'+
+      finKpi("Lançamentos",finInt(total.launches),"Agendamentos registrados no período")+
+      finKpi("Clientes atendidos",finInt(total.customers),FIN_MONTH==="all"?"Soma mensal; o mesmo cliente pode aparecer em mais de um mês.":"Clientes informados no relatório")+
+      finKpi("Serviços vendidos",finInt(total.serviceCount),finBRL(total.serviceGross)+" em vendas")+
+      finKpi("Produtos vendidos",finInt(total.productCount),finBRL(total.productGross)+" em vendas")+
+      finKpi("Vendas brutas",finBRL(total.gross),"Serviços + produtos","primary")+
+      finKpi("Entradas / comissões",finBRL(total.income),"Comissões de serviços e produtos + extras","green")+
+      finKpi("Assinaturas previstas",finBRL(total.subscriptionCommission),"Comissão prevista, separada das entradas")+
+      finKpi("Saldo após saídas",finBRL(total.net),"Entradas menos saídas lançadas",total.net<0?"red":"green")+
+      '</div>'+
+      '<section class="finance-panel"><h2>Vendas por mês</h2><div class="hint">Comparação de vendas brutas de serviços e produtos ao longo de '+FIN_YEAR+'.</div><div class="finance-chart">'+finChart(FIN_YEAR,"revenue",FIN_MONTH)+'</div><div class="finance-legend"><span><i style="background:#d6aa5c"></i>Serviços</span><span><i style="background:#5fc08a"></i>Produtos</span></div></section>'+
+      '<section class="finance-panel"><h2>Volume vendido por mês</h2><div class="hint">Quantidade de serviços e unidades de produtos informadas em cada mês.</div><div class="finance-chart">'+finChart(FIN_YEAR,"volume",FIN_MONTH)+'</div><div class="finance-legend"><span><i style="background:#d6aa5c"></i>Serviços</span><span><i style="background:#5fc08a"></i>Produtos</span></div></section>'+
+      finComparePanel(total,finPrevMonths(),FIN_MONTH==="all"?"ano anterior":"mês anterior")+
+      '<section class="finance-panel"><div class="row"><div><h2>Meses cadastrados</h2><div class="hint">Cada mês guarda seu próprio resumo e detalhamento.</div></div><button class="finance-link" onclick="finNewMonth()">Adicionar</button></div>'+finMonthRows(months)+'</section>'+
+      '<div class="finance-panel"><div class="hint">Assinaturas: '+finInt(subs)+' serviços de assinatura listados no período. A comissão prevista fica separada das entradas confirmadas para não somar valores diferentes como se fossem a mesma coisa.</div></div>';
+  }else if(FIN_TAB==="servicos"){
+    const list=finMergedItems(months,"serviceItems"),subs=finSubscriptionCount(months),ordinary=list.filter(x=>!x.subscription&&!/\bass\b|assin/i.test(x.name)).reduce((n,x)=>n+x.qty,0);
+    body='<div class="finance-kpis">'+finKpi("Serviços vendidos",finInt(total.serviceCount),"Inclui avulsos e serviços de assinatura")+finKpi("Venda bruta",finBRL(total.serviceGross),"Valores de serviços informados")+finKpi("Serviços avulsos",finInt(ordinary),"Quantidade detalhada")+finKpi("Serviços de assinatura",finInt(subs),"Quantidade detalhada")+'</div>'+
+      '<section class="finance-panel"><h2>Serviços por tipo</h2><div class="hint">Ranking pela quantidade e pelo valor bruto vendido.</div>'+finTable(list,"Não há detalhamento de serviços neste período.")+'</section>';
+  }else if(FIN_TAB==="produtos"){
+    const list=finMergedItems(months,"productItems");
+    body='<div class="finance-kpis">'+finKpi("Unidades vendidas",finInt(total.productCount),"Quantidade de produtos")+finKpi("Venda bruta",finBRL(total.productGross),"Valor vendido em produtos")+finKpi("Comissão de produtos",finBRL(total.productCommission),"Comissão informada nos relatórios")+'</div>'+
+      '<section class="finance-panel"><h2>Produtos por tipo</h2><div class="hint">Ranking de produtos vendidos no período.</div>'+finTable(list,"Não há detalhamento de produtos neste período.")+'</section>';
+  }else if(FIN_TAB==="assinaturas"){
+    const list=finDetailList(months).subscriptions;
+    body='<div class="finance-kpis">'+finKpi("Serviços de assinatura",finInt(finSubscriptionCount(months)),"Quantidade detalhada no relatório")+finKpi("Comissão prevista",finBRL(total.subscriptionCommission),"Valor projetado pelo relatório")+'</div>'+
+      '<section class="finance-panel"><h2>Serviços realizados por assinatura</h2><div class="hint">Estes itens aparecem com valor de venda zero no relatório, por serem serviços vinculados às assinaturas.</div>'+finTable(list,"Não há itens de assinatura detalhados neste período.")+'</section>'+
+      '<section class="finance-panel"><h2>Como interpretar</h2><div class="hint">A comissão prevista de assinaturas é mostrada separadamente. Ela não é somada às entradas confirmadas enquanto não houver um valor efetivamente lançado.</div></section>';
+  }else if(FIN_TAB==="comissoes"){
+    const monthRows=months.map(m=>'<tr><td>'+finMonthLabel(m.period)+'</td><td>'+finBRL(m.serviceCommission)+'</td><td>'+finBRL(m.productCommission)+'</td><td>'+finBRL(m.subscriptionCommission)+'</td></tr>').join("");
+    body='<div class="finance-kpis">'+finKpi("Comissão serviços avulsos",finBRL(total.serviceCommission),"Relatório do mês")+finKpi("Comissão produtos",finBRL(total.productCommission),"Relatório do mês")+finKpi("Comissão prevista assinaturas",finBRL(total.subscriptionCommission),"Projeção separada")+finKpi("Comissões + extras",finBRL(total.income),"Entradas confirmadas + extras","primary")+'</div>'+
+      '<section class="finance-panel"><h2>Comissões por mês</h2><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>Mês</th><th>Serviços</th><th>Produtos</th><th>Assinaturas previstas</th></tr></thead><tbody>'+(monthRows||'<tr><td colspan="4">Sem dados no período.</td></tr>')+'</tbody></table></div></section>'+
+      '<section class="finance-panel"><div class="hint">A comissão prevista de assinaturas não está incluída em “Entradas / comissões”. Isso evita confundir uma previsão com uma entrada efetivamente lançada.</div></section>';
+  }else if(FIN_TAB==="lancamentos"){
+    const mov=total.movements.slice().sort((a,b)=>b.date.localeCompare(a.date));
+    const rows=mov.map(x=>'<tr><td>'+br(x.date)+'</td><td>'+esc(x.description)+'<br><span class="finance-pill">'+esc(x.category||"Outros")+'</span></td><td>'+(x.type==="entrada"?"Entrada":"Saída")+'</td><td>'+finBRL(x.amount)+'</td><td><button class="finance-link" onclick="finDeleteMovement(\''+x.id+'\')">Excluir</button></td></tr>').join("");
+    body='<div class="finance-kpis">'+finKpi("Entradas",finBRL(total.income),"Comissões + extras + entradas manuais","green")+finKpi("Saídas",finBRL(total.expenses),"Saídas do relatório + lançamentos","red")+finKpi("Saldo",finBRL(total.net),"Entradas menos saídas",total.net<0?"red":"green")+'</div>'+
+      '<section class="finance-panel"><div class="row"><div><h2>Movimentações manuais</h2><div class="hint">Compras, vales, extras e outras entradas ou saídas.</div></div><button class="btn" onclick="finNewMovement()">+ Lançamento</button></div>'+
+      (rows?'<div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="finance-empty">Nenhum lançamento manual neste período.</div>')+
+      '</section><section class="finance-panel"><h2>Saídas informadas no relatório</h2><div class="hint">'+finBRL(total.reportedExpenses)+' no período. Esse valor é importado do resumo mensal; despesas individuais podem ser incluídas em Movimentações manuais.</div></section>';
+  }
+  $("#app").innerHTML='<div class="finance-page">'+header+tabHtml+body+'</div>';
+}
+function finDeleteMonth(period){
+  askC("Excluir o relatório de "+finMonthLabel(period)+"? As movimentações manuais daquele mês serão mantidas.",()=>{finStore().months=finStore().months.filter(x=>x.period!==period);save();render()});
+}
+
+
 init();
 
 if ("serviceWorker" in navigator) {
