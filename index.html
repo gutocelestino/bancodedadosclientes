@@ -16,6 +16,11 @@
 <link rel="shortcut icon" type="image/png" href="./pwa-192.png?v=2">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
 <style>
+.app-backbar{display:flex;align-items:center;margin:0 0 10px;min-height:34px}
+.app-back-button{display:inline-flex;align-items:center;gap:7px;padding:3px 10px 3px 2px;border:0;background:transparent;color:var(--sub);font:600 13px Manrope,system-ui,sans-serif;cursor:pointer}
+.app-back-button:active{color:var(--gold)}
+.app-back-icon{display:grid;place-items:center;width:28px;height:28px;border:1px solid var(--bd);border-radius:50%;background:var(--card);color:var(--gold);font:400 27px/20px Manrope,system-ui,sans-serif;padding-bottom:3px}
+
 :root{--bg:#161512;--card:#1f1e1a;--mut:#2a2823;--fg:#f1eee8;--sub:#a29e94;--gold:#d6aa5c;--ok:#5fc08a;--bad:#e5694f;--bd:#ffffff14;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px Manrope,system-ui,sans-serif;color-scheme:dark}
@@ -638,7 +643,7 @@ function filterNoReturn(input){
   const next=$("#nrSearch");
   if(next){next.focus();next.setSelectionRange(pos,pos)}
 }
-function backToUnqualified(){goSub("naoqualificados")}
+function backToUnqualified(){if(NAV_READY&&NAV_INDEX>0){backNav();return}goSub("naoqualificados")}
 function newUnqualified(){
   UF={id:"c"+Date.now(),name:"",phone:"",notes:""};
   view="unqualifiedForm";
@@ -706,6 +711,86 @@ function setClientFilter(s){
 }
 function goSub(s){setClientFilter(s);scrollTo(0,0)}
 function goReturnTab(value){tab=value;go("retornos")}
+
+/* Navegação por histórico: guarda a rota atual, filtros e posição da tela */
+let NAV_HISTORY=[],NAV_INDEX=0,NAV_READY=false,NAV_RESTORING=false,NAV_KEY="",NAV_SWIPE=null;
+const navCopy=value=>value==null?value:JSON.parse(JSON.stringify(value));
+function navRouteKey(){
+  if(view==="clientes")return "clientes|"+(F.sub||"todos");
+  if(view==="retornos")return "retornos|"+(tab||"hoje");
+  if(view==="ficha"||view==="unqualifiedFicha")return view+"|"+(cur||"");
+  if(view==="form")return "form|"+((form&&form.id)||cur||"")+"|"+(FSEC||"");
+  if(view==="unqualifiedForm")return "unqualifiedForm|"+((UF&&UF.id)||"novo");
+  if(view==="crm")return "crm|"+((OF&&OF.id)||"lista");
+  if(view==="registrar")return "registrar|"+(RS||"novo");
+  return view;
+}
+function captureNavState(){
+  return {view,cur,tab,F:navCopy(F),form:navCopy(form),FSEC,OF:navCopy(OF),UF:navCopy(UF),
+    UNQ_Q,NORETURN_Q,FOPEN,clientSortUrgentFirst,RS,RNEW,REG_FASE,REG_TIPO,
+    RTXT:navCopy(RTXT),RSV:navCopy(RSV),RD,scrollY:window.scrollY||0};
+}
+function restoreNavState(state){
+  view=state.view;cur=state.cur;tab=state.tab;F=navCopy(state.F)||F;
+  form=navCopy(state.form);FSEC=state.FSEC;OF=navCopy(state.OF);UF=navCopy(state.UF);
+  UNQ_Q=state.UNQ_Q||"";NORETURN_Q=state.NORETURN_Q||"";FOPEN=!!state.FOPEN;
+  if(typeof state.clientSortUrgentFirst==="boolean")clientSortUrgentFirst=state.clientSortUrgentFirst;
+  RS=state.RS??null;RNEW=!!state.RNEW;REG_FASE=state.REG_FASE||"fixo";REG_TIPO=state.REG_TIPO||"avulso";
+  RTXT=navCopy(state.RTXT)||{name:"",phone:""};RSV=navCopy(state.RSV)||[];RD=state.RD||RD;
+}
+function renderBackControl(){
+  const app=$("#app");if(!app)return;
+  const old=app.querySelector(".app-backbar");if(old)old.remove();
+  if(NAV_INDEX<=0)return;
+  app.insertAdjacentHTML("afterbegin",'<div class="app-backbar"><button type="button" class="app-back-button" onclick="backNav()" aria-label="Voltar para a tela anterior"><span class="app-back-icon" aria-hidden="true">‹</span><span>Voltar</span></button></div>');
+}
+function trackNavRender(){
+  const snapshot=captureNavState(),key=navRouteKey();
+  if(!NAV_READY){
+    NAV_READY=true;NAV_HISTORY=[snapshot];NAV_INDEX=0;NAV_KEY=key;
+    history.replaceState(Object.assign({},history.state||{},{carteiraAppNav:true,carteiraAppNavIndex:0}),"",location.href);
+  }else if(NAV_RESTORING){
+    NAV_HISTORY[NAV_INDEX]=snapshot;NAV_KEY=key;NAV_RESTORING=false;
+  }else if(key!==NAV_KEY){
+    NAV_HISTORY=NAV_HISTORY.slice(0,NAV_INDEX+1);
+    NAV_HISTORY.push(snapshot);NAV_INDEX=NAV_HISTORY.length-1;NAV_KEY=key;
+    history.pushState(Object.assign({},history.state||{},{carteiraAppNav:true,carteiraAppNavIndex:NAV_INDEX}),"",location.href);
+  }else{
+    NAV_HISTORY[NAV_INDEX]=snapshot;
+  }
+  renderBackControl();
+}
+function backNav(){
+  if(!NAV_READY||NAV_INDEX<=0)return;
+  if(history.state&&history.state.carteiraAppNav&&history.state.carteiraAppNavIndex===NAV_INDEX){history.back();return;}
+  NAV_INDEX=Math.max(0,NAV_INDEX-1);
+  const state=NAV_HISTORY[NAV_INDEX];if(!state)return;
+  restoreNavState(state);NAV_RESTORING=true;render();setTimeout(()=>window.scrollTo(0,state.scrollY||0),40);
+}
+window.addEventListener("popstate",event=>{
+  if(!NAV_READY)return;
+  const index=event.state&&event.state.carteiraAppNav?event.state.carteiraAppNavIndex:null;
+  if(!Number.isInteger(index)||!NAV_HISTORY[index])return;
+  NAV_INDEX=index;const state=NAV_HISTORY[index];
+  restoreNavState(state);NAV_RESTORING=true;render();
+  setTimeout(()=>window.scrollTo(0,state.scrollY||0),40);
+});
+document.addEventListener("touchstart",event=>{
+  if(event.touches.length!==1||!NAV_READY||NAV_INDEX<=0)return;
+  const target=event.target;
+  if(target&&target.closest&&target.closest("input,textarea,select,a,nav,.photo-crop-overlay,.photo-viewer-overlay,#dlg,#lock,[contenteditable=true]"))return;
+  const touch=event.touches[0];if(touch.clientX>26)return;
+  NAV_SWIPE={x:touch.clientX,y:touch.clientY,index:NAV_INDEX};
+},{passive:true});
+document.addEventListener("touchend",event=>{
+  if(!NAV_SWIPE)return;
+  const start=NAV_SWIPE;NAV_SWIPE=null;
+  const touch=event.changedTouches&&event.changedTouches[0];if(!touch)return;
+  const dx=touch.clientX-start.x,dy=touch.clientY-start.y;
+  if(NAV_INDEX===start.index&&dx>72&&dx>Math.abs(dy)*1.35)backNav();
+},{passive:true});
+document.addEventListener("touchcancel",()=>{NAV_SWIPE=null},{passive:true});
+
 function render(){
 $("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"],["nao_retorno","Não retornaram"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
 let r=rows();const el=$("#app");
@@ -774,7 +859,7 @@ else if(view=="ficha"||view=="form"){fichaView(r)}
 else if(view=="crm"){crmView()}
 else if(view=="registrar"){regView()}
 else if(view=="dados"){el.innerHTML=`<h1>Importar e exportar</h1><div class="sub">Arquivos CSV (no Google Sheets: Arquivo → Fazer download → CSV).</div><div class="card" style="margin-top:14px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div style="margin-top:12px"><div class="nm">Restaurar backup</div><div class="sub" style="margin:4px 0 8px">Arquivo JSON gerado pelo Backup completo.</div><input type="file" accept=".json,application/json" onchange="restoreJson(this)"></div><div class="card"><div class="nm">Exportar clientes</div><div class="sub">${S.clients.length} clientes</div><div class="actions"><button class="btn" onclick="exportCsv()">Exportar CSV</button></div></div>`}
-else if(view=="ajustes"){ajView()}refreshPhotoUrls()}
+else if(view=="ajustes"){ajView()}trackNavRender();refreshPhotoUrls()}
 function render2(){const p=$("#q").selectionStart;render();const i=$("#q");i.focus();i.setSelectionRange(p,p)}
 function newC(){FSEC=null;form={id:"c"+Date.now(),name:"",phone:"",instagram:"",email:"",qual:"nao_avaliado",tipo:"avulso",fase:"fixo",services:[],tesoura:"nao_informado",brig:"nao_informado",freq:"",last:"",notes:"",visits:[],created:iso(),isNew:true};cur=form.id;view="form";render()}
 function fichaView(r){
@@ -811,7 +896,7 @@ function fichaView(r){
     el.innerHTML='<h1>'+(f.isNew?"Novo cliente":FSEC=="info"?"Editar informações":FSEC=="perfil"?"Editar perfil do cliente":"Editar cliente")+'</h1>'+
       '<div class="sub">'+(f.qual=="nao_qualificado"?"Cadastro simples de contato sem potencial.":"Só o nome é obrigatório. O resto você completa depois.")+'</div>'+
       fields+profile+
-      '<div class="actions"><button class="btn" onclick="saveForm()">Salvar</button><button class="btn alt" onclick="'+(f.isNew?"goClientes()":"cancelEditForm()")+'">Cancelar</button></div>';
+      '<div class="actions"><button class="btn" onclick="saveForm()">Salvar</button><button class="btn alt" onclick="'+(f.isNew?"cancelNewClient()":"cancelEditForm()")+'">Cancelar</button></div>';
     return;
   }
   if(!c){go("clientes");return}
@@ -819,7 +904,8 @@ function fichaView(r){
   return;
 }
 function goClientes(){go("clientes")}
-function cancelEditForm(){view=form&&form.returnView||'ficha';form=null;FSEC=null;render()}
+function cancelNewClient(){if(NAV_READY&&NAV_INDEX>0){backNav();return}goClientes()}
+function cancelEditForm(){if(NAV_READY&&NAV_INDEX>0){backNav();return}view=form&&form.returnView||'ficha';form=null;FSEC=null;render()}
 function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";f.services=svc(f);f.fase=f.fase=="novo"?"novo":"fixo";delete f.visa;delete f.days;const isNew=f.isNew;delete f.isNew;delete f.returnView;if(f.qual=="nao_qualificado"){f.semRetorno=false;delete f.semRetornoDesde}
 if(isNew)S.clients.push(f);else S.clients=S.clients.map(x=>x.id==f.id?f:x);save();cur=f.id;view=f.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;FSEC=null;render()}
 function exportCsv(){const h=["nome","telefone","instagram","email","qualificacao","tipo","tesoura","brigadeiro","frequencia_dias","ultimo_atendimento","observacoes"],
@@ -889,7 +975,7 @@ if(!c.last||RD>c.last)c.last=RD;if(c.semRetorno){c.semRetorno=false;delete c.sem
 function ficha2(c){const rc=S.clients.find(x=>x.id==c.id);
 if(rc.notes){rc.log=rc.log||[];rc.log.push({id:"n"+Date.now(),date:iso(),text:rc.notes});rc.notes="";save()}
 const w=wa(c),vs=[...c.visits].sort((a,b)=>b.date.localeCompare(a.date)),lg=[...(rc.log||[])].reverse(),sv=svc(rc);
-$("#app").innerHTML=`<div class="row"><button class="lnk" onclick="go('clientes')">← Clientes</button><button class="lnk" onclick="editC()">✎ Editar</button></div>
+$("#app").innerHTML=`<div class="row"><button class="lnk" onclick="backNav()">← Voltar</button><button class="lnk" onclick="editC()">✎ Editar</button></div>
 <div class="profile-head">
   <div class="profile-photo-wrap">
     <button type="button" class="avatar profile-photo" data-photo-path="${esc(c.photo||"")}" onclick="openClientPhoto('${c.id}')" aria-label="Abrir foto de ${esc(c.name)}">${initials(c.name)}</button>
