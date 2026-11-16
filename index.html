@@ -716,7 +716,7 @@ function goSub(s){setClientFilter(s);scrollTo(0,0)}
 function goReturnTab(value){tab=value;go("retornos")}
 
 /* Navegação por histórico: guarda a rota atual, filtros e posição da tela */
-let NAV_HISTORY=[],NAV_INDEX=0,NAV_READY=false,NAV_RESTORING=false,NAV_KEY="",NAV_SWIPE=null;
+let NAV_HISTORY=[],NAV_INDEX=0,NAV_READY=false,NAV_RESTORING=false,NAV_KEY="",NAV_SWIPE=null,NAV_SKIP_POPSTATE=false;
 const navCopy=value=>value==null?value:JSON.parse(JSON.stringify(value));
 function navRouteKey(){
   if(view==="clientes")return "clientes|"+(F.sub||"todos");
@@ -783,9 +783,27 @@ function backNav(source){
   NAV_LAST_MANUAL_BACK=Date.now();
   restoreNavIndex(NAV_INDEX);
 }
+function collapseSavedEditNav(clientId){
+  if(!NAV_READY||NAV_INDEX<1)return false;
+  const current=NAV_HISTORY[NAV_INDEX],previous=NAV_HISTORY[NAV_INDEX-1];
+  const editedId=current&&current.view==="form"&&((current.form&&current.form.id)||current.cur);
+  const previousIsProfile=previous&&(previous.view==="ficha"||previous.view==="unqualifiedFicha")&&previous.cur==clientId;
+  if(!current||!previousIsProfile||editedId!=clientId)return false;
+  const keepScrollY=Number(previous.scrollY)||0;
+  NAV_HISTORY=NAV_HISTORY.slice(0,NAV_INDEX);
+  NAV_INDEX=NAV_HISTORY.length-1;
+  NAV_KEY=navRouteKey();
+  NAV_RESTORING=false;
+  NAV_HISTORY[NAV_INDEX]=Object.assign(captureNavState(),{scrollY:keepScrollY});
+  NAV_SKIP_POPSTATE=true;
+  history.back();
+  setTimeout(()=>window.scrollTo(0,keepScrollY),40);
+  return true;
+}
 let NAV_LAST_MANUAL_BACK=0;
 window.addEventListener("popstate",event=>{
   if(!NAV_READY)return;
+  if(NAV_SKIP_POPSTATE){NAV_SKIP_POPSTATE=false;writeNavBrowserState();return;}
   // Se o gesto personalizado já voltou, ignora um eventual segundo popstate nativo.
   if(NAV_LAST_MANUAL_BACK&&Date.now()-NAV_LAST_MANUAL_BACK<500){
     NAV_LAST_MANUAL_BACK=0;writeNavBrowserState();return;
@@ -947,7 +965,7 @@ function goClientes(){go("clientes")}
 function cancelNewClient(){if(NAV_READY&&NAV_INDEX>0){backNav();return}goClientes()}
 function cancelEditForm(){if(NAV_READY&&NAV_INDEX>0){backNav();return}view=form&&form.returnView||'ficha';form=null;FSEC=null;render()}
 function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";f.services=svc(f);f.fase=f.fase=="novo"?"novo":"fixo";if(f.attendanceTotal!==undefined){const desired=Math.max(0,Math.floor(Number(f.attendanceTotal)||0));f.attendancesBase=desired-(Array.isArray(f.visits)?f.visits.length:0);delete f.attendanceTotal}delete f.visa;delete f.days;const isNew=f.isNew;delete f.isNew;delete f.returnView;if(f.qual=="nao_qualificado"){f.semRetorno=false;delete f.semRetornoDesde}
-if(isNew)S.clients.push(f);else S.clients=S.clients.map(x=>x.id==f.id?f:x);save();cur=f.id;view=f.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;FSEC=null;render()}
+if(isNew)S.clients.push(f);else S.clients=S.clients.map(x=>x.id==f.id?f:x);save();cur=f.id;view=f.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;FSEC=null;if(!isNew)collapseSavedEditNav(f.id);render()}
 function exportCsv(){const h=["nome","telefone","instagram","email","qualificacao","tipo","tesoura","brigadeiro","frequencia_dias","ultimo_atendimento","observacoes"],
 e=v=>'"'+String(v??"").replace(/"/g,'""')+'"',
 csv=[h.join(",")].concat(S.clients.filter(c=>c.qual!="nao_qualificado").map(c=>[c.name,c.phone,c.instagram,c.email,c.qual,c.tipo=="assinante"?"Assinante":"Cliente",c.tesoura,c.brig,c.freq,c.last,c.notes].map(e).join(","))).join("\n");
