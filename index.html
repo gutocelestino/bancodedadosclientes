@@ -151,6 +151,18 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 @media(min-width:800px){.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-section{padding:16px}}
 .dashboard-section .cards{display:block}
 .dashboard-section .tbl{display:none}
+
+/* Ações da ficha: etapa do cliente e retorno */
+.profile-head + .actions,.profile-head + .actions + .actions{margin-top:12px!important;max-width:620px}
+.profile-head + .actions button,.profile-head + .actions + .actions button{width:100%;min-height:56px;display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:11px 16px;border-radius:14px;font-size:14px;line-height:1.3;text-align:left;white-space:normal}
+.profile-head + .actions .profile-stage-primary{background:linear-gradient(135deg,#dfb96f,#c99a4e);border:1px solid #e8c987;color:#1b1608;box-shadow:0 5px 14px #d6aa5c20}
+.profile-head + .actions .profile-stage-reactivate{background:#1e2922;border:1px solid #52745e;color:#a0d0ae}
+.profile-head + .actions + .actions .profile-stage-secondary{background:#24221d;border:1px solid #8b7044;color:#d7b778}
+.profile-stage-primary:before,.profile-stage-secondary:before,.profile-stage-reactivate:before{width:32px;height:32px;min-width:32px;display:grid;place-items:center;border-radius:10px;font-size:18px;font-weight:700}
+.profile-stage-primary:before{content:"⇄";background:#1b16081c;color:#1b1608}
+.profile-stage-secondary:before{content:"◷";background:#d6aa5c1c;color:#d6aa5c}
+.profile-stage-reactivate:before{content:"↗";background:#5fc08a20;color:#8bd0a0}
+@media(max-width:560px){.profile-head + .actions button,.profile-head + .actions + .actions button{min-height:52px;padding:10px 13px;font-size:13px}}
 </style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -162,7 +174,7 @@ let cloudUser=null,cloudReady=false,cloudTimer=null,cloudQueue=Promise.resolve()
 const PHOTO_BUCKET="client-photos";
 let photoUrlCache={};
 let photoCrop=null;
-const Q={qualificado:"Qualificado",nao_qualificado:"Não qualificado",nao_avaliado:"Não avaliado"},
+const Q={qualificado:"Qualificado",nao_qualificado:"Desqualificado",nao_avaliado:"Não avaliado"},
 T={avulso:"Cliente",assinante:"Assinante"},
 YN={nao_informado:"Não informado",sim:"Sim",nao:"Não"},
 FQ=[["f15","Até 15 dias"],["f30","Até 30 dias"],["f60","Até 60 dias"],["f90","Até 90 dias"]],
@@ -633,9 +645,9 @@ function newUnqualified(){
 }
 function unqualifiedFormView(){
   $("#app").innerHTML=
-    '<div class="row"><button class="lnk" onclick="backToUnqualified()">← Não qualificados</button></div>'+
+    '<div class="row"><button class="lnk" onclick="backToUnqualified()">← Desqualificados</button></div>'+
     '<h1>Registrar contato</h1><div class="sub">Cadastro rápido, fora da carteira de clientes.</div>'+
-    '<div class="unqualified-warning"><span class="badge unqualified-badge">NÃO QUALIFICADO</span><strong>Não enviar mensagens para este contato.</strong><p>Este registro serve apenas para controle interno. Ele não entra na lista de clientes nem nos retornos.</p></div>'+
+    '<div class="unqualified-warning"><span class="badge unqualified-badge">DESQUALIFICADO</span><strong>Não enviar mensagens para este contato.</strong><p>Este registro serve apenas para controle interno. Ele não entra na lista de clientes nem nos retornos.</p></div>'+
     '<div class="card unqualified-form-card">'+
       '<label style="margin-top:0">Nome<input id="uqName" value="'+esc(UF.name)+'" oninput="UF.name=this.value" placeholder="Nome do contato"></label>'+
       '<label>Telefone / WhatsApp<input id="uqPhone" type="tel" value="'+esc(UF.phone)+'" oninput="UF.phone=this.value" placeholder="Telefone (opcional)"></label>'+
@@ -662,11 +674,11 @@ function saveUnqualified(){
     S.clients.push(contact);
   }
   save();cur=contact.id;UF=null;view="unqualifiedFicha";render();
-  toast("Contato salvo na lista de não qualificados.");
+  toast("Contato salvo na lista de desqualificados.");
 }
 function unqualifiedCard(c){
   return '<button class="card unqualified-card" onclick="open_(&quot;'+c.id+'&quot;)">'+
-    '<div class="row"><div style="min-width:0"><div class="nm">'+esc(c.name)+'</div><div class="sub" style="margin-top:4px">'+esc(c.phone||"Sem telefone")+'</div></div><span class="badge unqualified-badge">NÃO QUALIFICADO</span></div>'+
+    '<div class="row"><div style="min-width:0"><div class="nm">'+esc(c.name)+'</div><div class="sub" style="margin-top:4px">'+esc(c.phone||"Sem telefone")+'</div></div><span class="badge unqualified-badge">DESQUALIFICADO</span></div>'+
     (c.notes?'<div class="sub" style="margin-top:10px">'+esc(c.notes)+'</div>':"")+
   '</button>';
 }
@@ -674,16 +686,16 @@ function unqualifiedFichaView(r){
   const c=r.find(x=>x.id==cur&&x.qual=="nao_qualificado");
   if(!c){backToUnqualified();return}
   $("#app").innerHTML=
-    '<div class="row"><button class="lnk" onclick="backToUnqualified()">← Não qualificados</button><button class="lnk" onclick="editC()">✎ Editar</button></div>'+
-    '<div class="unqualified-warning"><span class="badge unqualified-badge">NÃO QUALIFICADO</span><strong>Não enviar mensagem nem registrar atendimento.</strong><p>Este contato não faz parte da carteira de clientes. Só reclassifique se houver uma nova avaliação.</p></div>'+
+    '<div class="row"><button class="lnk" onclick="backToUnqualified()">← Desqualificados</button><button class="lnk" onclick="editC()">✎ Editar</button></div>'+
+    '<div class="unqualified-warning"><span class="badge unqualified-badge">DESQUALIFICADO</span><strong>Não enviar mensagem nem registrar atendimento.</strong><p>Este contato não faz parte da carteira de clientes. Só reclassifique se houver uma nova avaliação.</p></div>'+
     '<h1>'+esc(c.name)+'</h1>'+
     '<div class="card">'+kv("Telefone",c.phone||"—")+kv("Observação",c.notes||"—")+'</div>'+
     '<div class="actions"><button class="btn" onclick="editC()">Reavaliar contato</button><button class="btn alt" onclick="backToUnqualified()">Voltar para a lista</button></div>';
 }
 
-function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span style="display:flex;align-items:center;gap:10px;min-width:0"><span class="avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${c.qual=="nao_qualificado"?'<span class="badge unqualified-badge">Não qualificado</span>':clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"&&c.qual!="nao_qualificado"?'<span class="badge subscriber">Assinante</span>':""}</span><span class="badge ${c.st}">${SL[c.st]}</span></div>
+function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span style="display:flex;align-items:center;gap:10px;min-width:0"><span class="avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${c.qual=="nao_qualificado"?'<span class="badge unqualified-badge">Desqualificado</span>':clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"&&c.qual!="nao_qualificado"?'<span class="badge subscriber">Assinante</span>':""}</span><span class="badge ${c.st}">${SL[c.st]}</span></div>
 <div class="sub" style="margin-top:6px">Último: ${br(c.last)} · Freq.: ${c.freq?c.freq+"d":"—"} · Previsto: ${br(c.nx)}</div></button>`}
-const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${c.qual=="nao_qualificado"?'<span class="badge unqualified-badge">Não qualificado</span>':clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"&&c.qual!="nao_qualificado"?'<span class="badge subscriber">Assinante</span>':""}</span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
+const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${c.qual=="nao_qualificado"?'<span class="badge unqualified-badge">Desqualificado</span>':clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"&&c.qual!="nao_qualificado"?'<span class="badge subscriber">Assinante</span>':""}</span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
 function open_(id){cur=id;const c=S.clients.find(x=>x.id==id);view=c&&c.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;render()}
 function go(v){view=v;form=null;OF=null;UF=null;if(v=="clientes")F.sub="todos";render();scrollTo(0,0)}
 function setClientFilter(s){
@@ -694,7 +706,7 @@ function setClientFilter(s){
 function goSub(s){setClientFilter(s);scrollTo(0,0)}
 function goReturnTab(value){tab=value;go("retornos")}
 function render(){
-$("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["nao_retorno","Não retornaram"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
+$("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"],["nao_retorno","Não retornaram"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
 let r=rows();const el=$("#app");
 if(view=="painel"){
 const clientes=r.filter(c=>c.qual!="nao_qualificado"&&!c.semRetorno),naoQualificados=r.filter(c=>c.qual=="nao_qualificado"),naoRetornaram=r.filter(c=>c.qual!="nao_qualificado"&&c.semRetorno);
@@ -705,7 +717,7 @@ const dashSection=(title,items,empty)=>'<section class="dashboard-section"><div 
 const stats=[["Clientes na carteira",clientes.length,"go('clientes')",""],["Novos clientes",novos.length,"goSub('novos')",""],["Assinantes",assinantes.length,"goSub('assinatura')",""],["Retorno hoje",m(c=>c.st=="hoje"),"goReturnTab('hoje')","hot"],["Atrasados",m(c=>c.st=="atrasado"),"goReturnTab('atrasado')",""],["Próximos 7 dias",m(c=>c.st=="proximo"),"goReturnTab('proximo')",""],["Não retornaram",naoRetornaram.length,"goSub('nao_retorno')",""]];
 el.innerHTML='<h1>Dashboard</h1><div class="sub">Hoje, '+br(iso())+'. Um resumo do que merece atenção.</div>'+
 '<div class="grid kp dashboard-kpis">'+stats.map(([label,value,action,hot])=>'<button class="stat '+hot+'" onclick="'+action+'"><small>'+label+'</small><div class="big">'+value+'</div></button>').join("")+'</div>'+
-(naoQualificados.length?'<button class="dashboard-alert" onclick="goSub(&#39;naoqualificados&#39;)"><span><strong><span class="badge unqualified-badge">ATENÇÃO</span> Contatos não qualificados</strong><p>Não enviar mensagens. Estes contatos ficam fora da carteira de clientes.</p></span></button>':"")+
+(naoQualificados.length?'<button class="dashboard-alert" onclick="goSub(&#39;naoqualificados&#39;)"><span><strong><span class="badge unqualified-badge">ATENÇÃO</span> Contatos desqualificados</strong><p>Não enviar mensagens. Estes contatos ficam fora da carteira de clientes.</p></span></button>':"")+
 '<div class="dashboard-grid">'+
 dashSection("Novos clientes para acompanhar",novos,"Nenhum novo cliente por enquanto.")+
 dashSection("Retornos de hoje",rr.filter(c=>c.st=="hoje"),"Ninguém previsto para hoje.")+
@@ -719,8 +731,8 @@ else if(view=="clientes"){
 const clientes=r.filter(c=>c.qual!="nao_qualificado"&&!c.semRetorno),naoQualificados=r.filter(c=>c.qual=="nao_qualificado"),naoRetornaram=r.filter(c=>c.qual!="nao_qualificado"&&c.semRetorno);
 const q=F.q.toLowerCase().trim(),d=q.replace(/\D/g,"");
 const matches=c=>!q||(c.name+" "+(c.instagram||"")+" "+(c.email||"")+" "+(c.notes||"")).toLowerCase().includes(q)||(d.length>=3&&dg(c.phone).includes(d));
-const tabs=[["todos","Todos"],["novos","Novos"],["fixos","Fixos"],["assinatura","Assinantes"],["naoqualificados","Não qualificados"],["nao_retorno","Não retornaram"]];
-const tabCount=k=>k=="todos"?clientes.length:k=="novos"?clientes.filter(c=>clientStage(c)=="novo").length:k=="fixos"?clientes.filter(c=>clientStage(c)=="fixo").length:k=="assinatura"?clientes.filter(c=>c.tipo=="assinante").length:k=="naoqualificados"?"":naoRetornaram.length;
+const tabs=[["todos","Todos"],["novos","Novos"],["fixos","Fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"],["nao_retorno","Não retornaram"]];
+const tabCount=k=>k=="todos"?clientes.length:k=="novos"?clientes.filter(c=>clientStage(c)=="novo").length:k=="fixos"?clientes.filter(c=>clientStage(c)=="fixo").length:k=="assinatura"?clientes.filter(c=>c.tipo=="assinante").length:k=="naoqualificados"?naoQualificados.length:naoRetornaram.length;
 const tabsHtml='<div class="tabs" style="margin-top:6px">'+tabs.map(([k,label])=>'<button class="'+(F.sub==k?"on":"")+'" onclick="setClientFilter(&#39;'+k+'&#39;)">'+label+' '+tabCount(k)+'</button>').join("")+'</div>';
 const opt=(o,v,e)=>'<option value="">'+e+'</option>'+Object.entries(o).map(([k,t])=>'<option value="'+k+'" '+(v==k?"selected":"")+'>'+t+'</option>').join("");
 if(F.sub=="nao_retorno"){
@@ -739,21 +751,21 @@ if(F.sub=="nao_retorno"){
 }else{
  const base=F.sub=="naoqualificados"?naoQualificados:clientes;
  const a=base.filter(c=>matches(c)&&(!F.qual||c.qual==F.qual)&&(!F.status||(F.status[0]=="f"?(c.freq>0&&c.freq<=+F.status.slice(1)):c.st==F.status))&&(F.sub=="todos"||(F.sub=="novos"&&clientStage(c)=="novo")||(F.sub=="fixos"&&clientStage(c)=="fixo")||(F.sub=="assinatura"&&c.tipo=="assinante")||(F.sub=="naoqualificados"&&c.qual=="nao_qualificado"))&&(!F.service||svc(c).includes(F.service))).sort((a,b)=>clientStatusRank(a)-clientStatusRank(b)||byNx(a,b)||a.name.localeCompare(b.name));
- el.innerHTML='<div class="row"><div><h1>Clientes</h1><div class="sub">'+a.length+' '+(F.sub=="assinatura"?"assinantes":F.sub=="naoqualificados"?"contatos não qualificados":"de "+clientes.length+" clientes ativos")+'</div></div>'+(F.sub=="naoqualificados"?'<button class="btn" onclick="newUnqualified()">+ Registrar contato</button>':'<button class="btn" onclick="newC()">+ Novo</button>')+'</div>'+
+ el.innerHTML='<div class="row"><div><h1>'+(F.sub=="naoqualificados"?"Desqualificados":"Clientes")+'</h1><div class="sub">'+(F.sub=="assinatura"?a.length+" assinantes":F.sub=="naoqualificados"?a.length+" contato"+(a.length==1?"":"s")+" desqualificado"+(a.length==1?"":"s"):a.length+" de "+clientes.length+" clientes ativos")+'</div></div>'+(F.sub=="naoqualificados"?'<button class="btn" onclick="newUnqualified()">+ Registrar contato</button>':'<button class="btn" onclick="newC()">+ Novo</button>')+'</div>'+
  tabsHtml+
  '<input style="margin-top:12px" placeholder="Nome, telefone, Instagram ou e-mail" value="'+esc(F.q)+'" oninput="F.q=this.value;render2()" id="q">'+
  '<div class="fbar"><button class="btn alt" onclick="FOPEN=!FOPEN;render()">⚙ Filtros'+(fcount()?" · "+fcount():"")+'</button><button class="client-sort-arrows" onclick="toggleClientSort()" title="Inverter ordem dos clientes" aria-label="Inverter ordem dos clientes"><span class="'+(clientSortUrgentFirst?"muted":"")+'">↑</span><span class="'+(clientSortUrgentFirst?"":"muted")+'">↓</span></button>'+fchips()+'</div>'+
  '<div class="fpanel" style="display:'+(FOPEN?"block":"none")+'"><div class="two flt"><select onchange="F.qual=this.value;render()">'+opt(Q,F.qual,"Qualificação")+'</select><select onchange="F.status=this.value;render()">'+freqOpts(F.status)+'</select><select onchange="F.service=this.value;render()"><option value="">Serviços</option>'+allClientServices().map(service=>'<option value="'+esc(service)+'" '+(F.service==service?"selected":"")+'>'+esc(service)+'</option>').join("")+'</select></div><div class="actions"><button class="btn alt" onclick="clearF()">Limpar filtros</button></div></div>'+
- '<div style="margin-top:14px">'+list(a,F.sub=="naoqualificados"?"Nenhum contato não qualificado encontrado.":"Nenhum cliente encontrado.")+'</div>';
+ '<div style="margin-top:14px">'+list(a,F.sub=="naoqualificados"?"Nenhum contato desqualificado encontrado.":"Nenhum cliente encontrado.")+'</div>';
 }
 }
 else if(view=="naoqualificados"){
  const q=UNQ_Q.toLowerCase().trim(),d=q.replace(/\D/g,"");
  const a=r.filter(c=>c.qual=="nao_qualificado"&&(!q||(c.name+" "+(c.phone||"")+" "+(c.notes||"")).toLowerCase().includes(q)||(d.length>=3&&dg(c.phone).includes(d)))).sort((x,y)=>(y.created||"").localeCompare(x.created||"")||x.name.localeCompare(y.name));
- el.innerHTML='<div class="row"><div><h1>Não qualificados</h1><div class="sub">'+a.length+' contato(s) fora da carteira de clientes.</div></div><button class="btn" onclick="newUnqualified()">+ Registrar contato</button></div>'+
+ el.innerHTML='<div class="row"><div><h1>Desqualificados</h1><div class="sub">'+a.length+' contato(s) fora da carteira de clientes.</div></div><button class="btn" onclick="newUnqualified()">+ Registrar contato</button></div>'+
  '<div class="unqualified-warning"><span class="badge unqualified-badge">ATENÇÃO</span><strong>Não enviar mensagens nem registrar atendimentos.</strong><p>Use esta lista apenas para controle interno. Estes contatos não fazem parte da carteira ativa.</p></div>'+
  '<input style="margin-top:10px" placeholder="Buscar nome, telefone ou observação" value="'+esc(UNQ_Q)+'" oninput="filterUnqualified(this)" id="uqSearch">'+
- '<div style="margin-top:14px">'+(a.length?a.map(unqualifiedCard).join(""):'<p class="empty">Nenhum contato não qualificado cadastrado.</p>')+'</div>';
+ '<div style="margin-top:14px">'+(a.length?a.map(unqualifiedCard).join(""):'<p class="empty">Nenhum contato desqualificado cadastrado.</p>')+'</div>';
 }
 else if(view=="unqualifiedForm"){unqualifiedFormView()}
 else if(view=="unqualifiedFicha"){unqualifiedFichaView(r)}
@@ -776,7 +788,7 @@ function fichaView(r){
       fields+=input("name","Nome completo")+input("phone","Telefone / WhatsApp","tel");
       if(f.qual=="nao_qualificado"&&FSEC!="info"){
         fields+='<div class="two">'+qualification+'</div>'+
-          '<div class="unqualified-warning"><span class="badge unqualified-badge">NÃO QUALIFICADO</span><strong>Este contato ficará fora da carteira de clientes.</strong><p>Não enviar mensagens nem registrar atendimentos enquanto estiver nesta categoria.</p>'+
+          '<div class="unqualified-warning"><span class="badge unqualified-badge">DESQUALIFICADO</span><strong>Este contato ficará fora da carteira de clientes.</strong><p>Não enviar mensagens nem registrar atendimentos enquanto estiver nesta categoria.</p>'+
           '<label>Observação (opcional)<textarea rows="3" oninput="FM.notes=this.value" placeholder="Por que este contato não foi qualificado?">'+esc(f.notes||"")+'</textarea></label></div>';
       }else{
         fields+=input("instagram","Instagram (@usuário ou link)")+input("email","E-mail","email")+
@@ -864,10 +876,10 @@ if(RNEW)return`<label>Nome<input id="rn" value="${esc(RTXT.name)}"></label><labe
 return`<label>Cliente<input id="rs" placeholder="Digite o nome ou o final do telefone" autocomplete="off" oninput="regSug()"></label><div id="sug"></div>`}
 function regFor(id){cur=id;RS=id;RNEW=false;RSV=[];view="registrar";render()}
 function regAdd(){let c=RS&&S.clients.find(x=>x.id==RS);
-if(c&&c.qual=="nao_qualificado"){toast("Este contato está na lista de não qualificados. Reavalie a qualificação antes de registrar atendimento.");return}
+if(c&&c.qual=="nao_qualificado"){toast("Este contato está na lista de desqualificados. Reavalie a qualificação antes de registrar atendimento.");return}
 if(!c){const n=$("#rn").value.trim(),p=$("#rp").value.trim(),d=dg(p);if(!n){alert("Informe o nome.");return}
 const blocked=S.clients.find(x=>x.qual=="nao_qualificado"&&((d.length>=8&&dg(x.phone).slice(-9)==d.slice(-9))||nz(x.name)==nz(n)));
-if(blocked){toast("Este contato está na lista de não qualificados. Reavalie-o antes de registrar atendimento.");return}
+if(blocked){toast("Este contato está na lista de desqualificados. Reavalie-o antes de registrar atendimento.");return}
 c=(d.length>=8&&S.clients.find(x=>x.qual!="nao_qualificado"&&dg(x.phone).slice(-9)==d.slice(-9)))||S.clients.find(x=>x.qual!="nao_qualificado"&&nz(x.name)==nz(n));
 if(!c){c={id:"c"+Date.now(),name:n,phone:p,instagram:"",email:"",qual:"nao_avaliado",tipo:REG_TIPO,fase:REG_FASE,freq:"",last:"",services:[],log:[],visits:[],created:iso()};S.clients.push(c)}else if(p&&!c.phone)c.phone=p}
 if(c.visits.some(v=>v.date==RD)){alert(c.name+" já foi registrado neste dia.");return}
@@ -890,7 +902,7 @@ $("#app").innerHTML=`<div class="row"><button class="lnk" onclick="go('clientes'
     <span class="badge ${c.st}">${SL[c.st]}</span> ${clientStage(c)=="assinante"?'<span class="badge subscriber">Assinante</span>':`<span class="badge ${clientStage(c)=="novo"?"new-client":"fixed-client"}">${clientStage(c)=="novo"?"Novo cliente":"Cliente fixo"}</span>`} ${c.semRetorno?'<span class="badge no-return">Não retornou</span>':""}
   </div>
 </div>
-${clientStage(c)=="assinante"||c.semRetorno?"":`<div class="actions" style="margin-top:8px"><button class="btn alt" onclick="toggleClientStage('${c.id}')">${clientStage(c)=="novo"?"Promover para cliente fixo":"Mover para novos clientes"}</button></div>`}<div class="actions" style="margin-top:8px">${c.semRetorno?`<button class="btn" onclick="reactivateClient('${c.id}')">Reativar cliente</button>`:`<button class="btn alt" onclick="moveToNoReturn('${c.id}')">Mover para Não retornaram</button>`}</div>
+${clientStage(c)=="assinante"||c.semRetorno?"":`<div class="actions" style="margin-top:8px"><button class="btn profile-stage-primary" onclick="toggleClientStage('${c.id}')">${clientStage(c)=="novo"?"Promover para cliente fixo":"Mover para novos clientes"}</button></div>`}<div class="actions" style="margin-top:8px">${c.semRetorno?`<button class="btn profile-stage-reactivate" onclick="reactivateClient('${c.id}')">Reativar cliente</button>`:`<button class="btn profile-stage-secondary" onclick="moveToNoReturn('${c.id}')">Mover para Não retornaram</button>`}</div>
 <div class="two" style="margin-top:20px"><div class="stat"><small>Última visita</small><div class="big">${br(c.last)}</div></div><div class="stat"><small>Próximo retorno</small><div class="big" style="color:var(--gold)">${br(c.nx)}</div></div></div>
 <div class="actions"><button class="btn" onclick="regFor('${c.id}')">+ Registrar atendimento</button>${w?`<a class="btn wa" style="text-decoration:none" href="${w}" target="_blank" rel="noopener">WhatsApp</a>`:""}</div>
 <div class="two info" style="margin-top:20px"><div class="card" style="margin:0;padding:6px 20px"><div class="row" style="padding:10px 0"><span class="nm">Informações</span><button class="btn alt" onclick="editC('info')">✎ Editar</button></div><div class="kvs">${kv("Telefone",c.phone||"—")}<div class="kv"><span>Instagram</span><b>${c.instagram?`<a href="https://www.instagram.com/${encodeURIComponent(igh(c.instagram))}/" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none">@${esc(igh(c.instagram))}</a>`:"—"}</b></div>${kv("E-mail",c.email||"—")}${kv("Qualificação",Q[c.qual]||"—")}</div></div>${c.qual=="nao_qualificado"?"":`<div class="card" style="margin:0;padding:6px 20px"><div class="row" style="padding:10px 0"><span class="nm">Perfil do cliente</span><button class="btn alt" onclick="editC('perfil')">✎ Editar</button></div><div class="kvs">${c.tipo=="assinante"?"":kv("Frequência de retorno",c.freq?c.freq+" dias":"—")}${kv("Já comprou produto?",rc.produto=="sim"?"Sim":"Não")}${kv("Serviços do cliente",sv.length?sv.join(", "):"—")}${c.tipo=="assinante"?"":kv("Atendimentos",c.visits.length)}</div></div>`}</div>
@@ -922,7 +934,7 @@ $("#app").innerHTML=`<h1>${o.isNew?"Nova oportunidade":"Editar oportunidade"}</h
 <div class="actions"><button class="btn" onclick="saveO()">Salvar</button><button class="btn alt" onclick="OF=null;render()">Cancelar</button>${o.isNew?"":`<button class="btn del" onclick="delO()">Excluir</button>`}</div>`}
 function oSug(){const v=$("#os").value.trim(),b=$("#osg");if(!v){b.innerHTML="";return}const d=dg(v),isN=d.length>0&&!/[a-zA-ZÀ-ÿ]/.test(v),q=nz(v).split(" ");
 b.innerHTML=S.clients.filter(c=>c.qual!="nao_qualificado"&&(isN?(d.length>=2&&dg(c.phone).includes(d)):q.every(w=>nz(c.name).includes(w)))).slice(0,6).map(c=>`<button class="card" style="margin:8px 0 0" onclick="linkO('${c.id}')"><div class="row"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(c.phone||"")}</span></div></button>`).join("")}
-function linkO(id){const c=S.clients.find(x=>x.id==id&&x.qual!="nao_qualificado");if(!c){toast("Esse contato está na lista de não qualificados.");return}OF.clientId=id;OF.name=c.name;OF.phone=c.phone||"";render()}
+function linkO(id){const c=S.clients.find(x=>x.id==id&&x.qual!="nao_qualificado");if(!c){toast("Esse contato está na lista de desqualificados.");return}OF.clientId=id;OF.name=c.name;OF.phone=c.phone||"";render()}
 function saveO(){const o=OF;if(!o.name.trim()){alert("Informe o nome.");return}o.name=o.name.trim();o.value=o.value?+o.value:"";const n=o.isNew;delete o.isNew;
 if(n)crm().push(o);else S.crm=crm().map(x=>x.id==o.id?o:x);OF=null;save();render()}
 function fuO(id){const o=crm().find(x=>x.id==id);o.lastfu=iso();save();setTimeout(render,300)}
@@ -962,7 +974,7 @@ $("#app").innerHTML=`<h1>Configurações</h1>
 ${PF?`<div style="margin-top:12px">${hp?`<input id="p0" type="password" inputmode="numeric" placeholder="PIN atual">`:""}${PF=="set"?`<input id="p1" type="password" inputmode="numeric" maxlength="6" placeholder="Novo PIN (4 a 6 números)"><input id="p2" type="password" inputmode="numeric" maxlength="6" placeholder="Repita o novo PIN">`:""}<div class="sub" id="pm" style="color:var(--bad);min-height:18px"></div><div class="actions" style="margin-top:6px"><button class="btn" onclick="savePin()">Salvar</button><button class="btn alt" onclick="PF=false;ajView()">Cancelar</button></div></div>`:`<div class="actions"><button class="btn" onclick="PF='set';ajView()">${hp?"Trocar PIN":"Criar PIN"}</button>${hp?`<button class="btn alt" onclick="PF='rm';ajView()">Remover PIN</button>`:""}</div>`}
 <div class="sub" style="margin-top:10px">O PIN esconde a tela em aparelhos compartilhados. Os dados continuam guardados no navegador.</div></div>
 <h2>Serviços oferecidos</h2><div class="card"><div class="sub">Aparecem como opções no cadastro e ao registrar atendimento. Toque num serviço para remover.</div><div class="chips">${svList().map((s,i)=>`<span class="chip on">${esc(s)}<b class="x" title="Remover" onclick="rmServ(${i})">✕</b></span>`).join("")}</div><div style="display:flex;gap:8px;margin-top:12px"><input id="ns" style="margin:0" placeholder="Novo serviço" onkeydown="if(event.key=='Enter')addServ()"><button class="btn" onclick="addServ()">Adicionar</button></div><div class="actions"><button class="btn alt" onclick="resetServ()">Restaurar lista padrão</button></div></div>
-<h2>Dados</h2><div class="card">${kv2("Clientes",S.clients.filter(c=>c.qual!="nao_qualificado").length)}${kv2("Contatos não qualificados",S.clients.filter(c=>c.qual=="nao_qualificado").length)}${kv2("Oportunidades no CRM",crm().length)}<div style="margin-top:12px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Arquivo CSV (no Google Sheets: Arquivo → Fazer download → CSV). Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div class="actions"><button class="btn alt" onclick="exportCsv()">Exportar clientes (CSV)</button><button class="btn alt" onclick="backupJson()">Backup completo (JSON)</button><button class="btn del" onclick="wipe()">Apagar todos os dados</button></div></div>`}
+<h2>Dados</h2><div class="card">${kv2("Clientes",S.clients.filter(c=>c.qual!="nao_qualificado").length)}${kv2("Contatos desqualificados",S.clients.filter(c=>c.qual=="nao_qualificado").length)}${kv2("Oportunidades no CRM",crm().length)}<div style="margin-top:12px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Arquivo CSV (no Google Sheets: Arquivo → Fazer download → CSV). Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div class="actions"><button class="btn alt" onclick="exportCsv()">Exportar clientes (CSV)</button><button class="btn alt" onclick="backupJson()">Backup completo (JSON)</button><button class="btn del" onclick="wipe()">Apagar todos os dados</button></div></div>`}
 function resetServ(){delete cfg().serv;save();ajView()}
 let FSEC=null;
 function editC(sec){FSEC=sec||null;form=JSON.parse(JSON.stringify(S.clients.find(x=>x.id==cur)));form.returnView=view;view="form";render()}
