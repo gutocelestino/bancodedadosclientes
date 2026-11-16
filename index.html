@@ -222,7 +222,7 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .finance-link{border:0;background:transparent;color:var(--gold);font:inherit;font-size:11px;padding:4px;cursor:pointer}
 .finance-chart-month{cursor:pointer;outline:none}.finance-chart-month:hover rect:not([fill="transparent"]){filter:brightness(1.16)}.finance-chart-month:focus-visible{outline:2px solid var(--gold)}.finance-service-filter{margin:14px 0;max-width:460px}.finance-service-filter label{margin:0}.finance-service-filter select{margin-top:5px}.finance-service-groups{display:flex;gap:8px;margin:14px 0 8px}.finance-service-groups button{flex:1;min-height:42px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff08;color:var(--text);font:inherit;font-weight:600;cursor:pointer}.finance-service-groups button.on{border-color:var(--gold);background:#d6aa5c20;color:var(--gold)}.finance-trend-bars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:18px 4px 10px}.finance-trend-item{min-width:0;display:flex;flex-direction:column;align-items:center;gap:7px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--text);padding:8px 5px;cursor:pointer;font:inherit}.finance-trend-item.selected{border-color:var(--gold);background:#d6aa5c12}.finance-trend-value{font-size:18px;font-weight:700;color:var(--gold)}.finance-trend-track{width:min(100%,70px);height:128px;border-radius:8px;background:#ffffff0b;display:flex;align-items:flex-end;overflow:hidden}.finance-trend-fill{display:block;width:100%;min-height:2px;border-radius:8px 8px 0 0;background:linear-gradient(180deg,#e8c27f,#b98745)}.finance-trend-month{font-size:12px;font-weight:600;text-align:center}.finance-trend-sub{font-size:10px;color:var(--muted);text-align:center;overflow-wrap:anywhere}.finance-chart-month{cursor:pointer;outline:none}
 @media(min-width:800px){.finance-page{max-width:1100px}.finance-filters{grid-template-columns:190px 210px;justify-content:start}.finance-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.finance-panel{padding:18px}.finance-form-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.finance-form-grid .half{grid-column:span 2}.finance-form-grid .full{grid-column:1/-1}}
-.finance-kpi-clickable{cursor:pointer;position:relative;transition:border-color .15s,transform .15s}.finance-kpi-clickable:hover,.finance-kpi-clickable:focus-visible{border-color:var(--gold);outline:none;transform:translateY(-1px)}.finance-kpi-more{display:block;color:var(--gold);font-size:10px;font-weight:700;margin-top:7px}.finance-detail-view>.row{align-items:flex-start;margin-bottom:12px}</style></head><body><main id="app"></main>
+.finance-kpi-clickable{cursor:pointer;position:relative;transition:border-color .15s,transform .15s}.finance-kpi-clickable:hover,.finance-kpi-clickable:focus-visible{border-color:var(--gold);outline:none;transform:translateY(-1px)}.finance-kpi-more{display:block;color:var(--gold);font-size:10px;font-weight:700;margin-top:7px}.finance-detail-view>.row{align-items:flex-start;margin-bottom:12px}.finance-chart{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y;scrollbar-width:thin;scrollbar-color:#d6aa5c #292824;padding-bottom:8px}.finance-chart svg{width:960px;min-width:960px;max-width:none;height:auto;display:block}.finance-chart-month{cursor:pointer;pointer-events:all}.finance-chart-month:focus{outline:none}.finance-chart-month:focus rect:last-of-type{stroke:#e7bd7a;stroke-width:2}.finance-detail-view .finance-panel{scroll-margin-top:16px}</style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="appRefresh" class="app-refresh" aria-live="polite" aria-hidden="true"><span class="app-refresh-mark">↓</span><span class="app-refresh-label">Puxe para atualizar</span></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -779,13 +779,13 @@ function navRouteKey(){
   if(view==="unqualifiedForm")return "unqualifiedForm|"+((UF&&UF.id)||"novo");
   if(view==="crm")return "crm|"+((OF&&OF.id)||"lista");
   if(view==="registrar")return "registrar|"+(RS||"novo");
-  if(view==="financeiro")return "financeiro|"+(FIN_TAB||"resumo");
+  if(view==="financeiro")return "financeiro|"+(FIN_TAB||"resumo")+"|"+(FIN_DETAIL_KEY||"");
   return view;
 }
 function captureNavState(){
   return {view,cur,tab,F:navCopy(F),form:navCopy(form),FSEC,OF:navCopy(OF),UF:navCopy(UF),
     UNQ_Q,NORETURN_Q,FOPEN,clientSortUrgentFirst,RS,RNEW,CLIENT_REG_OPEN,REG_FASE,REG_TIPO,
-    RTXT:navCopy(RTXT),RSV:navCopy(RSV),RD,FIN_TAB,FIN_YEAR,FIN_MONTH,FIN_FORM:navCopy(FIN_FORM),FIN_MOV_FORM:navCopy(FIN_MOV_FORM),scrollY:window.scrollY||0};
+    RTXT:navCopy(RTXT),RSV:navCopy(RSV),RD,FIN_TAB,FIN_YEAR,FIN_MONTH,FIN_FORM:navCopy(FIN_FORM),FIN_MOV_FORM:navCopy(FIN_MOV_FORM),FIN_DETAIL_KEY,FIN_SERVICE_FILTER,FIN_SERVICE_GROUP,FIN_SERVICE_DETAIL_PERIOD,scrollY:window.scrollY||0};
 }
 function restoreNavState(state){
   view=state.view;cur=state.cur;tab=state.tab;F=navCopy(state.F)||F;
@@ -794,7 +794,7 @@ function restoreNavState(state){
   if(typeof state.clientSortUrgentFirst==="boolean")clientSortUrgentFirst=state.clientSortUrgentFirst;
   RS=state.RS??null;RNEW=!!state.RNEW;CLIENT_REG_OPEN=!!state.CLIENT_REG_OPEN;REG_FASE=state.REG_FASE||"fixo";REG_TIPO=state.REG_TIPO||"avulso";
   RTXT=navCopy(state.RTXT)||{name:"",phone:""};RSV=navCopy(state.RSV)||[];RD=state.RD||RD;
-  FIN_TAB=state.FIN_TAB||"resumo";FIN_YEAR=Number(state.FIN_YEAR)||new Date().getFullYear();FIN_MONTH=state.FIN_MONTH||"all";FIN_FORM=navCopy(state.FIN_FORM);FIN_MOV_FORM=navCopy(state.FIN_MOV_FORM);
+  FIN_TAB=state.FIN_TAB||"resumo";FIN_YEAR=Number(state.FIN_YEAR)||new Date().getFullYear();FIN_MONTH=state.FIN_MONTH||"all";FIN_FORM=navCopy(state.FIN_FORM);FIN_MOV_FORM=navCopy(state.FIN_MOV_FORM);FIN_DETAIL_KEY=state.FIN_DETAIL_KEY||null;FIN_SERVICE_FILTER=state.FIN_SERVICE_FILTER||"all";FIN_SERVICE_GROUP=state.FIN_SERVICE_GROUP||"servicos";FIN_SERVICE_DETAIL_PERIOD=state.FIN_SERVICE_DETAIL_PERIOD||null;
 }
 function renderBackControl(){
   const app=$("#app");if(!app)return;
@@ -1347,7 +1347,7 @@ function finDetailView(months,total){
   const rows=months.slice().sort((a,b)=>a.period.localeCompare(b.period)).map(m=>'<tr><td>'+finMonthLabel(m.period)+'</td><td>'+d.metric(m)+'</td></tr>').join("");
   const itemRows=d.items&&d.items.length?finTable(d.items.map(x=>({name:x.name,qty:finServiceKind(x.name)==="servicos"&&FIN_DETAIL_KEY==="services"?finServiceUnits(x):x.qty,value:x.value,subscription:x.subscription})),"Não há itens detalhados para este período."):"";
   const extra=FIN_DETAIL_KEY==="income"?'<div class="finance-kpis">'+finKpi("Comissão de serviços",finBRL(total.serviceCommission),"")+finKpi("Comissão de produtos",finBRL(total.productCommission),"")+finKpi("Outras entradas",finBRL(total.otherIncome+total.movementIn),"")+'</div>':"";
-  return '<div class="finance-detail-view"><div class="row"><div><h1>'+d.title+'</h1><div class="sub">'+d.desc+'</div></div><button class="btn alt" onclick="FIN_DETAIL_KEY=null;render()">← Voltar</button></div>'+
+  return '<div class="finance-detail-view"><div class="row"><div><h1>'+d.title+'</h1><div class="sub">'+d.desc+'</div></div><button class="btn alt" onclick="backNav()">← Voltar</button></div>'+
     '<section class="finance-panel"><h2>Resumo do período</h2><div class="finance-kpis">'+finKpi("Total",FIN_DETAIL_KEY==="launches"?finInt(total.launches):FIN_DETAIL_KEY==="customers"?finInt(total.customers):FIN_DETAIL_KEY==="services"?finInt(finMonthGroupItems(months,"servicos").reduce((n,x)=>n+finServiceUnits(x),0)):FIN_DETAIL_KEY==="extras"?finInt(finMonthGroupItems(months,"extras").reduce((n,x)=>n+finServiceUnits(x),0)):FIN_DETAIL_KEY==="products"?finInt(total.productCount):FIN_DETAIL_KEY==="gross"?finBRL(total.gross):FIN_DETAIL_KEY==="income"?finBRL(total.income):finBRL(total.subscriptionCommission), "No período selecionado")+'</div><h2>Por mês</h2><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>Mês</th><th>'+(FIN_DETAIL_KEY==="gross"||FIN_DETAIL_KEY==="income"||FIN_DETAIL_KEY==="subscriptions"?"Valor":"Quantidade")+'</th></tr></thead><tbody>'+(rows||'<tr><td colspan="2">Sem dados neste período.</td></tr>')+'</tbody></table></div></section>'+extra+
     (itemRows?'<section class="finance-panel"><h2>Detalhamento por item</h2>'+itemRows+'</section>':"")+'</div>';
 }
@@ -1384,13 +1384,13 @@ function finSelectedServiceItems(months){
 }
 function finSelectChartMonth(period){const parts=String(period||"").split("-");if(parts.length!==2)return;FIN_SERVICE_DETAIL_PERIOD=period;FIN_YEAR=Number(parts[0]);FIN_MONTH=parts[1];render()}
 function finChart(year,mode,selectedMonth){
-  const width=660,height=245,left=18,right=10,top=28,bottom=34,plotH=height-top-bottom,plotW=width-left-right;
+  const width=960,height=320,left=28,right=18,top=38,bottom=48,plotH=height-top-bottom,plotW=width-left-right;
   const values=[];
   for(let i=1;i<=12;i++){
     const period=finPeriodId(year,i),m=finMonthRecord(period);
     values.push({a:finN(mode==="volume"?(m?finMonthServiceCount(m):0):(m?m.serviceGross:0)),b:finN(mode==="volume"?(m?m.productCount:0):(m?m.productGross:0)),period:period,record:!!m});
   }
-  const max=Math.max(1,...values.map(v=>v.a+v.b)),base=height-bottom,slot=plotW/12,barW=25;
+  const max=Math.max(1,...values.map(v=>v.a+v.b)),base=height-bottom,slot=plotW/12,barW=42;
   let svg='<svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+(mode==="volume"?"Quantidade de serviços e produtos por mês":"Vendas brutas por mês")+'">';
   for(let g=0;g<=3;g++){const y=top+plotH*g/3;svg+='<line x1="'+left+'" y1="'+y+'" x2="'+(width-right)+'" y2="'+y+'" stroke="#ffffff17" stroke-width="1"/>'}
   values.forEach((v,i)=>{
@@ -1398,12 +1398,12 @@ function finChart(year,mode,selectedMonth){
     const detail=mode==="volume"?"Serviços: "+finInt(v.a)+" · Produtos: "+finInt(v.b):"Serviços: "+finBRL(v.a)+" · Produtos: "+finBRL(v.b);
     svg+='<g class="finance-chart-month" role="button" tabindex="0" aria-label="'+finMonthLabel(v.period)+'. '+(v.record?detail:"Sem fechamento cadastrado")+'" onclick="finSelectChartMonth(\''+v.period+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();finSelectChartMonth(\''+v.period+'\')}">';
     svg+='<title>'+finMonthLabel(v.period)+' · '+(v.record?detail:"Sem fechamento cadastrado")+'. Clique para ver os detalhes.</title>';
-    svg+='<rect x="'+(x-5)+'" y="'+top+'" width="'+(barW+10)+'" height="'+(plotH+8)+'" fill="transparent"/>';
+    svg+='<rect x="'+(x-5)+'" y="'+top+'" width="'+(barW+22)+'" height="'+(plotH+18)+'" fill="transparent"/>';
     svg+='<rect x="'+x+'" y="'+(base-ha)+'" width="'+barW+'" height="'+Math.max(0,ha)+'" rx="3" fill="#d6aa5c" opacity="'+(chosen?1:.82)+'"/>';
     svg+='<rect x="'+x+'" y="'+(base-ha-hb)+'" width="'+barW+'" height="'+Math.max(0,hb)+'" rx="3" fill="#5fc08a" opacity="'+(chosen?1:.82)+'"/>';
-    svg+='<text x="'+(x+barW/2)+'" y="'+Math.max(13,base-ha-hb-8)+'" text-anchor="middle" fill="#f1eee8" font-size="9" font-weight="600">'+(v.record?(mode==="volume"?finInt(v.a+v.b):"R$"+Math.round(v.a+v.b)):"—")+'</text>';
-    if(chosen)svg+='<rect x="'+(x-3)+'" y="'+(top-3)+'" width="'+(barW+6)+'" height="'+(plotH+7)+'" rx="5" fill="none" stroke="#f1eee8" stroke-dasharray="3 3" opacity=".5"/>';
-    svg+='<text x="'+(x+barW/2)+'" y="'+(height-10)+'" text-anchor="middle" fill="'+(chosen?"#f1eee8":"#a29e94")+'" font-size="10">'+["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][i]+'</text></g>';
+    svg+='<text x="'+(x+barW/2)+'" y="'+Math.max(13,base-ha-hb-8)+'" text-anchor="middle" fill="#f1eee8" font-size="12" font-weight="600">'+(v.record?(mode==="volume"?finInt(v.a+v.b):"R$"+Math.round(v.a+v.b)):"—")+'</text>';
+    if(chosen)svg+='<rect x="'+(x-8)+'" y="'+(top-6)+'" width="'+(barW+16)+'" height="'+(plotH+14)+'" rx="5" fill="none" stroke="#f1eee8" stroke-dasharray="3 3" opacity=".5"/>';
+    svg+='<text x="'+(x+barW/2)+'" y="'+(height-10)+'" text-anchor="middle" fill="'+(chosen?"#f1eee8":"#a29e94")+'" font-size="13">'+["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][i]+'</text></g>';
   });
   return svg+'</svg>';
 }
