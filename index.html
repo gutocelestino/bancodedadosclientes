@@ -753,7 +753,6 @@ function trackNavRender(){
   }else if(NAV_RESTORING){
     NAV_KEY=key;NAV_RESTORING=false;writeNavBrowserState();
   }else if(key!==NAV_KEY){
-    if(NAV_HISTORY[NAV_INDEX])NAV_HISTORY[NAV_INDEX].scrollY=window.scrollY||0;
     NAV_HISTORY=NAV_HISTORY.slice(0,NAV_INDEX+1);
     NAV_HISTORY.push(snapshot);NAV_INDEX=NAV_HISTORY.length-1;NAV_KEY=key;
     history.pushState(Object.assign({},history.state||{},{carteiraAppNav:true,carteiraAppNavIndex:NAV_INDEX}),"",location.href);
@@ -826,6 +825,7 @@ document.addEventListener("touchcancel",()=>{NAV_SWIPE=null},{passive:true});
 function updateActiveNavSnapshot(){if(NAV_READY&&!NAV_RESTORING&&navRouteKey()===NAV_KEY)NAV_HISTORY[NAV_INDEX]=captureNavState()}
 document.addEventListener("input",updateActiveNavSnapshot);
 document.addEventListener("change",updateActiveNavSnapshot);
+window.addEventListener("scroll",()=>{if(NAV_READY&&NAV_HISTORY[NAV_INDEX])NAV_HISTORY[NAV_INDEX].scrollY=window.scrollY||0},{passive:true});
 
 function render(){
 $("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"],["nao_retorno","Não retornaram"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
@@ -1100,7 +1100,7 @@ ${PF?`<div style="margin-top:12px">${hp?`<input id="p0" type="password" inputmod
 <h2>Dados</h2><div class="card">${kv2("Clientes",S.clients.filter(c=>c.qual!="nao_qualificado").length)}${kv2("Contatos desqualificados",S.clients.filter(c=>c.qual=="nao_qualificado").length)}${kv2("Oportunidades no CRM",crm().length)}<div style="margin-top:12px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Arquivo CSV (no Google Sheets: Arquivo → Fazer download → CSV). Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div class="actions"><button class="btn alt" onclick="exportCsv()">Exportar clientes (CSV)</button><button class="btn alt" onclick="backupJson()">Backup completo (JSON)</button><button class="btn del" onclick="wipe()">Apagar todos os dados</button></div></div>`}
 function resetServ(){delete cfg().serv;save();ajView()}
 let FSEC=null;
-function editC(sec){FSEC=sec||null;form=JSON.parse(JSON.stringify(S.clients.find(x=>x.id==cur)));form.returnView=view;view="form";render()}
+function editC(sec){if(NAV_READY&&NAV_HISTORY[NAV_INDEX])NAV_HISTORY[NAV_INDEX].scrollY=window.scrollY||0;FSEC=sec||null;form=JSON.parse(JSON.stringify(S.clients.find(x=>x.id==cur)));form.returnView=view;view="form";render()}
 let DLGF=null,tt;
 function askC(msg,fn,lbl){DLGF=fn;const d=$("#dlg");d.innerHTML=`<div class="dbox"><div class="nm" style="margin-bottom:14px">${esc(msg)}</div><div class="actions" style="margin-top:0;justify-content:flex-end"><button class="btn alt" onclick="dlgClose()">Cancelar</button><button class="btn" style="background:var(--bad);color:#fff" onclick="dlgOk()">${lbl||"Excluir"}</button></div></div>`;d.classList.add("on")}
 function dlgClose(){DLGF=null;$("#dlg").classList.remove("on")}
