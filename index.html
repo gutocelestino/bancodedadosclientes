@@ -200,7 +200,7 @@ function reactivateClient(id){
   c.semRetorno=false;delete c.semRetornoDesde;
   save();toast("Cliente voltou para a carteira ativa.");render();
 }
-function noReturnGroup(c){return c.fase=="novo"?"Novos que não retornaram":"Fixos que pararam de voltar"}
+function noReturnGroup(c){return c.fase=="novo"?"Novo cliente":"Cliente fixo"}
 function noReturnCard(c){
   const group=noReturnGroup(c);
   return '<button class="card no-return-card" onclick="open_(\''+c.id+'\')"><div class="row"><span class="nm">'+esc(c.name)+'</span><span class="badge">'+group+'</span></div><div class="sub" style="margin-top:6px">'+esc(c.phone||"Sem telefone")+' · Última visita: '+br(c.last)+' · Na lista desde: '+br(c.semRetornoDesde)+'</div></button>';
