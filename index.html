@@ -700,16 +700,48 @@ else if(view=="dados"){el.innerHTML=`<h1>Importar e exportar</h1><div class="sub
 else if(view=="ajustes"){ajView()}refreshPhotoUrls()}
 function render2(){const p=$("#q").selectionStart;render();const i=$("#q");i.focus();i.setSelectionRange(p,p)}
 function newC(){FSEC=null;form={id:"c"+Date.now(),name:"",phone:"",instagram:"",email:"",qual:"nao_avaliado",tipo:"avulso",fase:"fixo",services:[],tesoura:"nao_informado",brig:"nao_informado",freq:"",last:"",notes:"",visits:[],created:iso(),isNew:true};cur=form.id;view="form";render()}
-function fichaView(r){const el=$("#app"),c=r.find(x=>x.id==cur);
-if(view=="form"){const f=form,o=(m,v)=>Object.entries(m).map(([k,t])=>`<option value="${k}" ${v==k?"selected":""}>${t}</option>`).join(""),i=(k,l,t="text")=>`<label>${l}<input type="${t}" value="${esc(f[k])}" oninput="FM.${k}=this.value"></label>`;
-el.innerHTML=`<h1>${f.isNew?"Novo cliente":FSEC=="info"?"Editar informações":FSEC=="perfil"?"Editar perfil do cliente":"Editar cliente"}</h1><div class="sub">Só o nome é obrigatório. O resto você completa depois.</div>${FSEC=="perfil"?"":`${i("name","Nome completo")}${i("phone","Telefone / WhatsApp","tel")}${i("instagram","Instagram (@usuário ou link)")}${i("email","E-mail","email")}
-<div class="two"><label>Qualificação<select onchange="FM.qual=this.value;render()">${o(Q,f.qual)}</select></label><label class="subscriber-toggle"><input type="checkbox" ${f.tipo=="assinante"?"checked":""} onchange="FM.tipo=this.checked?'assinante':'avulso';render()"><span>É assinante?</span></label>${f.tipo=="assinante"?"":`<label>Etapa no CRM<select onchange="FM.fase=this.value"><option value="fixo" ${(f.fase||"fixo")=="fixo"?"selected":""}>Cliente fixo</option><option value="novo" ${f.fase=="novo"?"selected":""}>Novo cliente</option></select></label>`}</div>`}${f.qual=="nao_qualificado"||FSEC=="info"?"":`<h2>Perfil do cliente</h2><div class="two">
-<label>Já comprou produto?<select onchange="FM.produto=this.value">${o({sim:"Sim",nao:"Não"},f.produto||"nao")}</select></label>
-${f.tipo=="assinante"?"":i("freq","Frequência de retorno (dias)","number")+i("last","Último atendimento","date")}<div style="grid-column:1/-1"><label>Serviços do cliente</label><div class="sub" style="margin:2px 0 8px">Marque os serviços que ele costuma fazer. Os atendimentos registrados também entram automaticamente.</div><div class="chips">${svList().map(s=>`<button type="button" class="chip ${svc(f).includes(s)?"on":""}" onclick="togForm(this,'${s}')">${s}</button>`).join("")}</div></div></div>`}
-
-<div class="actions"><button class="btn" onclick="saveForm()">Salvar</button><button class="btn alt" onclick="${f.isNew?"go('clientes')":"cancelEditForm()"}">Cancelar</button></div>`;return}
-if(!c){go("clientes");return}
-ficha2(c);return}
+function fichaView(r){
+  const el=$("#app"),c=r.find(x=>x.id==cur);
+  if(view=="form"){
+    const f=form;
+    const input=(key,label,type)=>'<label>'+label+'<input type="'+(type||"text")+'" value="'+esc(f[key])+'" oninput="FM.'+key+'=this.value"></label>';
+    const options=(obj,value)=>Object.entries(obj).map(([key,label])=>'<option value="'+key+'" '+(value==key?"selected":"")+'>'+label+'</option>').join("");
+    const qualification='<label>Qualificação<select onchange="FM.qual=this.value;render()">'+options(Q,f.qual)+'</select></label>';
+    let fields="";
+    if(FSEC!="perfil"){
+      fields+=input("name","Nome completo")+input("phone","Telefone / WhatsApp","tel");
+      if(f.qual=="nao_qualificado"&&FSEC!="info"){
+        fields+='<div class="two">'+qualification+'</div>'+
+          '<div class="unqualified-warning"><span class="badge unqualified-badge">NÃO QUALIFICADO</span><strong>Este contato ficará fora da carteira de clientes.</strong><p>Não enviar mensagens nem registrar atendimentos enquanto estiver nesta categoria.</p>'+
+          '<label>Observação (opcional)<textarea rows="3" oninput="FM.notes=this.value" placeholder="Por que este contato não foi qualificado?">'+esc(f.notes||"")+'</textarea></label></div>';
+      }else{
+        fields+=input("instagram","Instagram (@usuário ou link)")+input("email","E-mail","email")+
+          '<div class="two">'+qualification+
+          '<label class="subscriber-toggle"><input type="checkbox" '+(f.tipo=="assinante"?"checked":"")+' onchange="FM.tipo=this.checked?&#39;assinante&#39;:&#39;avulso&#39;;render()"><span>É assinante?</span></label>'+
+          (f.tipo=="assinante"?"":'<label>Etapa no CRM<select onchange="FM.fase=this.value"><option value="fixo" '+((f.fase||"fixo")=="fixo"?"selected":"") +'>Cliente fixo</option><option value="novo" '+(f.fase=="novo"?"selected":"") +'>Novo cliente</option></select></label>')+
+          '</div>';
+      }
+    }
+    let profile="";
+    if(f.qual!="nao_qualificado"&&FSEC!="info"){
+      profile='<h2>Perfil do cliente</h2><div class="two">'+
+        '<label>Já comprou produto?<select onchange="FM.produto=this.value">'+options({sim:"Sim",nao:"Não"},f.produto||"nao")+'</select></label>'+
+        (f.tipo=="assinante"?"":input("freq","Frequência de retorno (dias)","number")+input("last","Último atendimento","date"))+
+        '<div style="grid-column:1/-1"><label>Serviços do cliente</label><div class="sub" style="margin:2px 0 8px">Marque os serviços que ele costuma fazer. Os atendimentos registrados também entram automaticamente.</div><div class="chips">'+
+        svList().map(service=>'<button type="button" class="chip '+(svc(f).includes(service)?"on":"")+'" onclick="togForm(this,&#39;'+service+'&#39;)">'+service+'</button>').join("")+
+        '</div></div></div>';
+    }
+    el.innerHTML='<h1>'+(f.isNew?"Novo cliente":FSEC=="info"?"Editar informações":FSEC=="perfil"?"Editar perfil do cliente":"Editar cliente")+'</h1>'+
+      '<div class="sub">'+(f.qual=="nao_qualificado"?"Cadastro simples de contato sem potencial.":"Só o nome é obrigatório. O resto você completa depois.")+'</div>'+
+      fields+profile+
+      '<div class="actions"><button class="btn" onclick="saveForm()">Salvar</button><button class="btn alt" onclick="'+(f.isNew?"goClientes()":"cancelEditForm()")+'">Cancelar</button></div>';
+    return;
+  }
+  if(!c){go("clientes");return}
+  ficha2(c);
+  return;
+}
+function goClientes(){go("clientes")}
 function cancelEditForm(){view=form&&form.returnView||'ficha';form=null;FSEC=null;render()}
 function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";f.services=svc(f);f.fase=f.fase=="novo"?"novo":"fixo";delete f.visa;delete f.days;const isNew=f.isNew;delete f.isNew;delete f.returnView;
 if(isNew)S.clients.push(f);else S.clients=S.clients.map(x=>x.id==f.id?f:x);save();cur=f.id;view=f.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;FSEC=null;render()}
