@@ -1380,6 +1380,7 @@ function finComparePanel(current,previous,label){
   return '<section class="finance-panel"><h2>Comparação com '+label+'</h2><div class="finance-compare">'+
     metric("Vendas brutas",current.gross,before.gross,true)+metric("Entradas confirmadas",current.income,before.income,true)+
     metric("Serviços vendidos",current.serviceCount,before.serviceCount,false)+metric("Produtos vendidos",current.productCount,before.productCount,false)+
+    metric("Lançamentos",current.launches,before.launches,false)+metric("Clientes atendidos",current.customers,before.customers,false)+
     '</div></section>';
 }
 function finMonthRows(months){
