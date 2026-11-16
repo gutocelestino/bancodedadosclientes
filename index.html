@@ -129,6 +129,24 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .subscriber-toggle{display:flex;align-items:center;gap:10px;min-height:42px;margin-top:12px;color:var(--sub)}
 .subscriber-toggle input{width:18px;height:18px;margin:0;flex:none;accent-color:var(--gold)}
 .subscriber-toggle span{font-size:12px}
+
+.dashboard-kpis .stat{min-height:104px;display:flex;flex-direction:column;justify-content:space-between}
+.dashboard-alert{width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;padding:15px 16px;text-align:left;background:#e5694f12;border:1px solid #e5694f55;border-left:4px solid var(--bad);border-radius:14px;color:var(--fg);cursor:pointer}
+.dashboard-alert strong{display:block;font-size:14px}
+.dashboard-alert p{margin:4px 0 0;color:var(--sub);font-size:12px;line-height:1.5}
+.dashboard-alert-count{flex:none;background:#e5694f20;color:var(--bad);border-radius:99px;padding:5px 10px;font-size:13px;font-weight:700}
+.dashboard-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px}
+.dashboard-section{min-width:0;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px}
+.dashboard-section .row{margin-bottom:8px}
+.dashboard-section h2{margin:0;color:var(--fg);font-size:13px;letter-spacing:.02em;text-transform:none}
+.dashboard-section .cards .card{margin-bottom:8px}
+.unqualified-warning{background:#e5694f12;border:1px solid #e5694f55;border-left:4px solid var(--bad);border-radius:14px;padding:14px 16px;margin:14px 0;color:var(--fg)}
+.unqualified-warning strong{display:block;font-size:14px;margin:5px 0}
+.unqualified-warning p{color:var(--sub);font-size:12px;line-height:1.55;margin:4px 0 0}
+.unqualified-badge{background:#e5694f24;color:var(--bad);font-size:10px;font-weight:700;letter-spacing:.04em}
+.unqualified-card{border-left:3px solid var(--bad);background:linear-gradient(90deg,#e5694f10,transparent 75%)}
+.unqualified-form-card{margin-top:14px}
+@media(min-width:800px){.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-section{padding:16px}}
 </style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -148,7 +166,7 @@ FO=["em_dia","sem_frequencia","atrasado","hoje","proximo"],
 freqOpts=v=>`<option value="">Frequência: todas</option>`+[...FO.map(k=>[k,SL[k]]),...FQ].map(([k,l])=>`<option value="${k}" ${v==k?"selected":""}>${l}</option>`).join(""),
 ff=(c,v)=>!v||(v[0]=="f"?(c.freq>0&&c.freq<=+v.slice(1)):c.st==v),
 SL={sem_frequencia:"Sem frequência",atrasado:"Atrasado",hoje:"Retorno hoje",proximo:"Próximos 7 dias",em_dia:"Em dia"};
-let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",service:"",sub:"todos"},form=null;
+let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",service:"",sub:"todos"},form=null,UNQ_Q="";
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const iso=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const U=s=>{const[a,b,c]=s.split("-").map(Number);return Date.UTC(a,b-1,c)};
