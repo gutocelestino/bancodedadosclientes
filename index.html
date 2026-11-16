@@ -704,7 +704,7 @@ function unqualifiedFichaView(r){
 function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span style="display:flex;align-items:center;gap:10px;min-width:0"><span class="avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${c.qual=="nao_qualificado"?'<span class="badge unqualified-badge">Desqualificado</span>':clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"&&c.qual!="nao_qualificado"?'<span class="badge subscriber">Assinante</span>':""}</span><span class="badge ${c.st}">${SL[c.st]}</span></div>
 <div class="sub" style="margin-top:6px">Último: ${br(c.last)} · Freq.: ${c.freq?c.freq+"d":"—"} · Previsto: ${br(c.nx)}</div></button>`}
 const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${c.qual=="nao_qualificado"?'<span class="badge unqualified-badge">Desqualificado</span>':clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"&&c.qual!="nao_qualificado"?'<span class="badge subscriber">Assinante</span>':""}</span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
-function open_(id){cur=id;const c=S.clients.find(x=>x.id==id);view=c&&c.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;render()}
+function open_(id){cur=id;CLIENT_REG_OPEN=false;RS=null;RSV=[];const c=S.clients.find(x=>x.id==id);view=c&&c.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;render()}
 function go(v){view=v;form=null;OF=null;UF=null;if(v=="clientes")F.sub="todos";render();scrollTo(0,0)}
 function setClientFilter(s){
   F.sub=s;F.q="";
@@ -729,7 +729,7 @@ function navRouteKey(){
 }
 function captureNavState(){
   return {view,cur,tab,F:navCopy(F),form:navCopy(form),FSEC,OF:navCopy(OF),UF:navCopy(UF),
-    UNQ_Q,NORETURN_Q,FOPEN,clientSortUrgentFirst,RS,RNEW,REG_FASE,REG_TIPO,
+    UNQ_Q,NORETURN_Q,FOPEN,clientSortUrgentFirst,RS,RNEW,CLIENT_REG_OPEN,REG_FASE,REG_TIPO,
     RTXT:navCopy(RTXT),RSV:navCopy(RSV),RD,scrollY:window.scrollY||0};
 }
 function restoreNavState(state){
@@ -737,7 +737,7 @@ function restoreNavState(state){
   form=navCopy(state.form);FSEC=state.FSEC;OF=navCopy(state.OF);UF=navCopy(state.UF);
   UNQ_Q=state.UNQ_Q||"";NORETURN_Q=state.NORETURN_Q||"";FOPEN=!!state.FOPEN;
   if(typeof state.clientSortUrgentFirst==="boolean")clientSortUrgentFirst=state.clientSortUrgentFirst;
-  RS=state.RS??null;RNEW=!!state.RNEW;REG_FASE=state.REG_FASE||"fixo";REG_TIPO=state.REG_TIPO||"avulso";
+  RS=state.RS??null;RNEW=!!state.RNEW;CLIENT_REG_OPEN=!!state.CLIENT_REG_OPEN;REG_FASE=state.REG_FASE||"fixo";REG_TIPO=state.REG_TIPO||"avulso";
   RTXT=navCopy(state.RTXT)||{name:"",phone:""};RSV=navCopy(state.RSV)||[];RD=state.RD||RD;
 }
 function renderBackControl(){
