@@ -145,6 +145,8 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .unqualified-warning p{color:var(--sub);font-size:12px;line-height:1.55;margin:4px 0 0}
 .unqualified-badge{background:#e5694f24;color:var(--bad);font-size:10px;font-weight:700;letter-spacing:.04em}
 .unqualified-card{border-left:3px solid var(--bad);background:linear-gradient(90deg,#e5694f10,transparent 75%)}
+.no-return-card{border-left:3px solid var(--gold);background:linear-gradient(90deg,#d6aa5c10,transparent 75%)}
+.badge.no-return{background:#d6aa5c22;color:var(--gold)}
 .unqualified-form-card{margin-top:14px}
 @media(min-width:800px){.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-section{padding:16px}}
 .dashboard-section .cards{display:block}
@@ -201,7 +203,7 @@ function reactivateClient(id){
 function noReturnGroup(c){return c.fase=="novo"?"Novos que não retornaram":"Fixos que pararam de voltar"}
 function noReturnCard(c){
   const group=noReturnGroup(c);
-  return '<button class="card unqualified-card" onclick="open_(\''+c.id+'\')"><div class="row"><span class="nm">'+esc(c.name)+'</span><span class="badge">'+group+'</span></div><div class="sub" style="margin-top:6px">'+esc(c.phone||"Sem telefone")+' · Última visita: '+br(c.last)+'</div></button>';
+  return '<button class="card no-return-card" onclick="open_(\''+c.id+'\')"><div class="row"><span class="nm">'+esc(c.name)+'</span><span class="badge">'+group+'</span></div><div class="sub" style="margin-top:6px">'+esc(c.phone||"Sem telefone")+' · Última visita: '+br(c.last)+' · Na lista desde: '+br(c.semRetornoDesde)+'</div></button>';
 }
 const byNx=(a,b)=>(a.nx||"").localeCompare(b.nx||"");
 function clientStatusRank(c){
@@ -706,7 +708,7 @@ dashSection("Atrasados",rr.filter(c=>c.st=="atrasado").sort(byNx),"Nenhum client
 dashSection("Próximos 7 dias",rr.filter(c=>c.st=="proximo").sort(byNx),"Nada nos próximos 7 dias.")+
 '</div>';
 }
-else if(view=="retornos"){r=r.filter(c=>c.qual=="qualificado"&&c.tipo!="assinante");const w=r.filter(c=>c.nx).sort(byNx),L={hoje:r.filter(c=>c.st=="hoje"),atrasado:w.filter(c=>c.st=="atrasado"),proximo:w.filter(c=>c.st=="proximo"),todos:w,sem_frequencia:r.filter(c=>c.st=="sem_frequencia"),em_dia:w.filter(c=>c.st=="em_dia"),f15:r.filter(c=>ff(c,"f15")).sort(byNx),f30:r.filter(c=>ff(c,"f30")).sort(byNx),f60:r.filter(c=>ff(c,"f60")).sort(byNx),f90:r.filter(c=>ff(c,"f90")).sort(byNx)},N={hoje:"Hoje",atrasado:"Atrasados",proximo:"7 dias",todos:"Todos",sem_frequencia:"Sem frequência",em_dia:"Em dia",f15:"Até 15 dias",f30:"Até 30 dias",f60:"Até 60 dias",f90:"Até 90 dias"};
+else if(view=="retornos"){r=r.filter(c=>c.qual=="qualificado"&&c.tipo!="assinante"&&!c.semRetorno);const w=r.filter(c=>c.nx).sort(byNx),L={hoje:r.filter(c=>c.st=="hoje"),atrasado:w.filter(c=>c.st=="atrasado"),proximo:w.filter(c=>c.st=="proximo"),todos:w,sem_frequencia:r.filter(c=>c.st=="sem_frequencia"),em_dia:w.filter(c=>c.st=="em_dia"),f15:r.filter(c=>ff(c,"f15")).sort(byNx),f30:r.filter(c=>ff(c,"f30")).sort(byNx),f60:r.filter(c=>ff(c,"f60")).sort(byNx),f90:r.filter(c=>ff(c,"f90")).sort(byNx)},N={hoje:"Hoje",atrasado:"Atrasados",proximo:"7 dias",todos:"Todos",sem_frequencia:"Sem frequência",em_dia:"Em dia",f15:"Até 15 dias",f30:"Até 30 dias",f60:"Até 60 dias",f90:"Até 90 dias"};
 el.innerHTML=`<h1>Retornos</h1><div class="tabs" style="flex-wrap:wrap;overflow:visible">${["hoje","atrasado","proximo","todos"].map(k=>`<button class="${tab==k?"on":""}" onclick="tab='${k}';render()">${N[k]} ${L[k].length}</button>`).join("")}<select class="chipsel${["hoje","atrasado","proximo","todos"].includes(tab)?"":" on"}" onchange="if(this.value){tab=this.value;render()}"><option value="">Filtros</option>${Object.keys(N).slice(4).map(k=>`<option value="${k}" ${tab==k?"selected":""}>${N[k]} ${L[k].length}</option>`).join("")}</select></div>${list(L[tab],"Nenhum cliente nesta lista.")}`}
 else if(view=="clientes"){
 const clientes=r.filter(c=>c.qual!="nao_qualificado"&&!c.semRetorno),naoQualificados=r.filter(c=>c.qual=="nao_qualificado"),naoRetornaram=r.filter(c=>c.qual!="nao_qualificado"&&c.semRetorno);
@@ -880,7 +882,7 @@ $("#app").innerHTML=`<div class="row"><button class="lnk" onclick="go('clientes'
   </div>
   <div>
     <h1 style="font-size:36px;margin:0 0 8px">${esc(c.name)}</h1>
-    <span class="badge ${c.st}">${SL[c.st]}</span> ${clientStage(c)=="assinante"?'<span class="badge subscriber">Assinante</span>':`<span class="badge ${clientStage(c)=="novo"?"new-client":"fixed-client"}">${clientStage(c)=="novo"?"Novo cliente":"Cliente fixo"}</span>`} ${c.semRetorno?'<span class="badge unqualified-badge">Não retornou</span>':""}
+    <span class="badge ${c.st}">${SL[c.st]}</span> ${clientStage(c)=="assinante"?'<span class="badge subscriber">Assinante</span>':`<span class="badge ${clientStage(c)=="novo"?"new-client":"fixed-client"}">${clientStage(c)=="novo"?"Novo cliente":"Cliente fixo"}</span>`} ${c.semRetorno?'<span class="badge no-return">Não retornou</span>':""}
   </div>
 </div>
 ${clientStage(c)=="assinante"?"":`<div class="actions" style="margin-top:8px"><button class="btn alt" onclick="toggleClientStage('${c.id}')">${clientStage(c)=="novo"?"Promover para cliente fixo":"Mover para novos clientes"}</button></div>`}<div class="actions" style="margin-top:8px">${c.semRetorno?`<button class="btn" onclick="reactivateClient('${c.id}')">Reativar cliente</button>`:`<button class="btn alt" onclick="moveToNoReturn('${c.id}')">Mover para Não retornaram</button>`}</div>
