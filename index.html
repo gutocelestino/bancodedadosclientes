@@ -718,7 +718,7 @@ const dashSection=(title,items,empty)=>'<section class="dashboard-section"><div 
 const stats=[["Clientes na carteira",clientes.length,"go('clientes')",""],["Novos clientes",novos.length,"goSub('novos')",""],["Assinantes",assinantes.length,"goSub('assinatura')",""],["Retorno hoje",m(c=>c.st=="hoje"),"goReturnTab('hoje')","hot"],["Atrasados",m(c=>c.st=="atrasado"),"goReturnTab('atrasado')",""],["Próximos 7 dias",m(c=>c.st=="proximo"),"goReturnTab('proximo')",""],["Não retornaram",naoRetornaram.length,"goSub('nao_retorno')",""]];
 el.innerHTML='<h1>Dashboard</h1><div class="sub">Hoje, '+br(iso())+'. Um resumo do que merece atenção.</div>'+
 '<div class="grid kp dashboard-kpis">'+stats.map(([label,value,action,hot])=>'<button class="stat '+hot+'" onclick="'+action+'"><small>'+label+'</small><div class="big">'+value+'</div></button>').join("")+'</div>'+
-(naoQualificados.length?'<button class="dashboard-alert" onclick="goSub(&#39;naoqualificados&#39;)"><span><strong><span class="badge unqualified-badge">ATENÇÃO</span> Contatos desqualificados</strong><p>Não enviar mensagens. Estes contatos ficam fora da carteira de clientes.</p></span></button>':"")+
+
 '<div class="dashboard-grid">'+
 dashSection("Novos clientes para acompanhar",novos,"Nenhum novo cliente por enquanto.")+
 dashSection("Retornos de hoje",rr.filter(c=>c.st=="hoje"),"Ninguém previsto para hoje.")+
