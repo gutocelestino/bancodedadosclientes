@@ -590,6 +590,13 @@ function removeClientPhoto(id){
 
 
 let UF=null;
+function filterUnqualified(input){
+  const pos=input.selectionStart||0;
+  UNQ_Q=input.value;
+  render();
+  const next=$("#uqSearch");
+  if(next){next.focus();next.setSelectionRange(pos,pos)}
+}
 function backToUnqualified(){go("naoqualificados")}
 function newUnqualified(){
   UF={id:"c"+Date.now(),name:"",phone:"",notes:""};
@@ -689,7 +696,7 @@ else if(view=="naoqualificados"){
  const a=r.filter(c=>c.qual=="nao_qualificado"&&(!q||(c.name+" "+(c.phone||"")+" "+(c.notes||"")).toLowerCase().includes(q)||(d.length>=3&&dg(c.phone).includes(d)))).sort((x,y)=>(y.created||"").localeCompare(x.created||"")||x.name.localeCompare(y.name));
  el.innerHTML='<div class="row"><div><h1>Não qualificados</h1><div class="sub">'+a.length+' contato(s) fora da carteira de clientes.</div></div><button class="btn" onclick="newUnqualified()">+ Registrar contato</button></div>'+
  '<div class="unqualified-warning"><span class="badge unqualified-badge">ATENÇÃO</span><strong>Não enviar mensagens nem registrar atendimentos.</strong><p>Use esta lista apenas para controle interno. Estes contatos não fazem parte da carteira ativa.</p></div>'+
- '<input style="margin-top:10px" placeholder="Buscar nome, telefone ou observação" value="'+esc(UNQ_Q)+'" oninput="UNQ_Q=this.value;render()" id="uqSearch">'+
+ '<input style="margin-top:10px" placeholder="Buscar nome, telefone ou observação" value="'+esc(UNQ_Q)+'" oninput="filterUnqualified(this)" id="uqSearch">'+
  '<div style="margin-top:14px">'+(a.length?a.map(unqualifiedCard).join(""):'<p class="empty">Nenhum contato não qualificado cadastrado.</p>')+'</div>';
 }
 else if(view=="unqualifiedForm"){unqualifiedFormView()}
