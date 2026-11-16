@@ -160,7 +160,7 @@ let cloudUser=null,cloudReady=false,cloudTimer=null,cloudQueue=Promise.resolve()
 const PHOTO_BUCKET="client-photos";
 let photoUrlCache={};
 let photoCrop=null;
-const Q={qualificado:"Qualificado",nao_qualificado:"Sem potencial",nao_avaliado:"Não avaliado"},
+const Q={qualificado:"Qualificado",nao_qualificado:"Não qualificado",nao_avaliado:"Não avaliado"},
 T={avulso:"Cliente",assinante:"Assinante"},
 YN={nao_informado:"Não informado",sim:"Sim",nao:"Não"},
 FQ=[["f15","Até 15 dias"],["f30","Até 30 dias"],["f60","Até 60 dias"],["f90","Até 90 dias"]],
@@ -168,7 +168,7 @@ FO=["em_dia","sem_frequencia","atrasado","hoje","proximo"],
 freqOpts=v=>`<option value="">Frequência: todas</option>`+[...FO.map(k=>[k,SL[k]]),...FQ].map(([k,l])=>`<option value="${k}" ${v==k?"selected":""}>${l}</option>`).join(""),
 ff=(c,v)=>!v||(v[0]=="f"?(c.freq>0&&c.freq<=+v.slice(1)):c.st==v),
 SL={sem_frequencia:"Sem frequência",atrasado:"Atrasado",hoje:"Retorno hoje",proximo:"Próximos 7 dias",em_dia:"Em dia"};
-let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",service:"",sub:"todos"},form=null,UNQ_Q="";
+let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",service:"",sub:"todos"},form=null,UNQ_Q="",NORETURN_Q="";
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const iso=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const U=s=>{const[a,b,c]=s.split("-").map(Number);return Date.UTC(a,b-1,c)};
@@ -180,11 +180,28 @@ const rows=()=>S.clients.map(c=>({...c,nx:next(c),st:status(c)}));
 const clientStage=c=>!c?"fixo":c.tipo=="assinante"?"assinante":c.fase=="novo"?"novo":"fixo";
 function toggleClientStage(id){
   const c=S.clients.find(x=>x.id==id);
-  if(!c||c.tipo=="assinante")return;
+  if(!c||c.tipo=="assinante"||c.semRetorno)return;
   c.fase=clientStage(c)=="novo"?"fixo":"novo";
   save();
   toast(c.fase=="fixo"?"Cliente movido para Clientes fixos.":"Cliente voltou para Novos clientes.");
   render();
+}
+function moveToNoReturn(id){
+  const c=S.clients.find(x=>x.id==id);
+  if(!c||c.qual=="nao_qualificado")return;
+  c.semRetorno=true;c.semRetornoDesde=iso();
+  save();toast("Cliente movido para Não retornaram.");render();
+}
+function reactivateClient(id){
+  const c=S.clients.find(x=>x.id==id);
+  if(!c)return;
+  c.semRetorno=false;delete c.semRetornoDesde;
+  save();toast("Cliente voltou para a carteira ativa.");render();
+}
+function noReturnGroup(c){return c.fase=="novo"?"Novos que não retornaram":"Fixos que pararam de voltar"}
+function noReturnCard(c){
+  const group=noReturnGroup(c);
+  return '<button class="card unqualified-card" onclick="open_(\''+c.id+'\')"><div class="row"><span class="nm">'+esc(c.name)+'</span><span class="badge">'+group+'</span></div><div class="sub" style="margin-top:6px">'+esc(c.phone||"Sem telefone")+' · Última visita: '+br(c.last)+'</div></button>';
 }
 const byNx=(a,b)=>(a.nx||"").localeCompare(b.nx||"");
 function clientStatusRank(c){
