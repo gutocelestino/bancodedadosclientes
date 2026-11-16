@@ -220,6 +220,7 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .finance-empty{padding:22px 10px;text-align:center;color:var(--sub);font-size:13px;line-height:1.5}
 .finance-row-actions{display:flex;gap:9px;justify-content:flex-end}
 .finance-link{border:0;background:transparent;color:var(--gold);font:inherit;font-size:11px;padding:4px;cursor:pointer}
+.finance-chart-month{cursor:pointer;outline:none}.finance-chart-month:hover rect:not([fill="transparent"]){filter:brightness(1.16)}.finance-chart-month:focus-visible{outline:2px solid var(--gold)}.finance-service-filter{margin:14px 0;max-width:460px}.finance-service-filter label{margin:0}.finance-service-filter select{margin-top:5px}
 @media(min-width:800px){.finance-page{max-width:1100px}.finance-filters{grid-template-columns:190px 210px;justify-content:start}.finance-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.finance-panel{padding:18px}.finance-form-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.finance-form-grid .half{grid-column:span 2}.finance-form-grid .full{grid-column:1/-1}}
 </style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="appRefresh" class="app-refresh" aria-live="polite" aria-hidden="true"><span class="app-refresh-mark">↓</span><span class="app-refresh-label">Puxe para atualizar</span></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
@@ -241,7 +242,7 @@ freqOpts=v=>`<option value="">Frequência: todas</option>`+[...FO.map(k=>[k,SL[k
 ff=(c,v)=>!v||(v[0]=="f"?(c.freq>0&&c.freq<=+v.slice(1)):c.st==v),
 SL={sem_frequencia:"Sem frequência",atrasado:"Atrasado",hoje:"Retorno hoje",proximo:"Próximos 7 dias",em_dia:"Em dia"};
 let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",service:"",sub:"todos"},form=null,UNQ_Q="",NORETURN_Q="";
-let FIN_TAB="resumo",FIN_YEAR=new Date().getFullYear(),FIN_MONTH="all",FIN_FORM=null,FIN_MOV_FORM=null;
+let FIN_TAB="resumo",FIN_YEAR=new Date().getFullYear(),FIN_MONTH="all",FIN_FORM=null,FIN_MOV_FORM=null,FIN_SERVICE_FILTER="all";
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const iso=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const U=s=>{const[a,b,c]=s.split("-").map(Number);return Date.UTC(a,b-1,c)};
@@ -1335,12 +1336,18 @@ function finTable(items,empty,kind){
     items.map(x=>'<tr><td>'+esc(x.name)+(x.subscription?'<br><span class="finance-pill">Assinatura</span>':'')+'</td><td>'+finInt(x.qty)+'</td><td>'+finBRL(x.value)+'</td></tr>').join("")+
     '</tbody></table></div>';
 }
+function finSelectChartMonth(period){
+  const parts=String(period||"").split("-");
+  if(parts.length!==2)return;
+  FIN_YEAR=Number(parts[0]);FIN_MONTH=parts[1];
+  render();
+}
 function finChart(year,mode,selectedMonth){
   const width=660,height=220,left=12,right=10,top=12,bottom=30,plotH=height-top-bottom,plotW=width-left-right;
   const values=[];
   for(let i=1;i<=12;i++){
-    const m=finMonthRecord(finPeriodId(year,i))||{};
-    values.push(mode==="volume"?{a:finN(m.serviceCount),b:finN(m.productCount)}:{a:finN(m.serviceGross),b:finN(m.productGross)});
+    const period=finPeriodId(year,i),m=finMonthRecord(period)||{};
+    values.push({a:finN(mode==="volume"?m.serviceCount:m.serviceGross),b:finN(mode==="volume"?m.productCount:m.productGross),period:period,record:!!finMonthRecord(period)});
   }
   const max=Math.max(1,...values.map(v=>v.a+v.b)),base=height-bottom,slot=plotW/12,barW=25;
   let svg='<svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+(mode==="volume"?"Quantidade vendida por mês":"Vendas brutas por mês")+'">';
@@ -1351,13 +1358,84 @@ function finChart(year,mode,selectedMonth){
   values.forEach((v,i)=>{
     const x=left+i*slot+(slot-barW)/2,ha=plotH*v.a/max,hb=plotH*v.b/max;
     const chosen=selectedMonth!=="all"&&selectedMonth===String(i+1).padStart(2,"0");
+    const details=v.record?(mode==="volume"?"Serviços: "+finInt(v.a)+" · Produtos: "+finInt(v.b):"Serviços: "+finBRL(v.a)+" · Produtos: "+finBRL(v.b)):"Sem fechamento cadastrado";
+    svg+='<g class="finance-chart-month" role="button" tabindex="0" aria-label="'+finMonthLabel(v.period)+'. '+details+'" onclick="finSelectChartMonth(\''+v.period+'\')">';
+    svg+='<title>'+finMonthLabel(v.period)+' · '+details+'. Clique para ver os detalhes.</title>';
+    svg+='<rect x="'+(x-5)+'" y="'+top+'" width="'+(barW+10)+'" height="'+(plotH+8)+'" fill="transparent"/>';
     svg+='<rect x="'+x+'" y="'+(base-ha)+'" width="'+barW+'" height="'+Math.max(0,ha)+'" rx="3" fill="#d6aa5c" opacity="'+(chosen?1:.82)+'"/>';
     svg+='<rect x="'+x+'" y="'+(base-ha-hb)+'" width="'+barW+'" height="'+Math.max(0,hb)+'" rx="3" fill="#5fc08a" opacity="'+(chosen?1:.82)+'"/>';
     if(chosen)svg+='<rect x="'+(x-3)+'" y="'+(top-3)+'" width="'+(barW+6)+'" height="'+(plotH+7)+'" rx="5" fill="none" stroke="#f1eee8" stroke-dasharray="3 3" opacity=".5"/>';
     svg+='<text x="'+(x+barW/2)+'" y="'+(height-9)+'" text-anchor="middle" fill="'+(chosen?"#f1eee8":"#a29e94")+'" font-size="10">'+["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][i]+'</text>';
+    svg+='</g>';
   });
   svg+='</svg>';
   return svg;
+}
+function finSelectedMonthDetail(){
+  if(FIN_MONTH==="all")return '<section class="finance-panel"><h2>Detalhes dos gráficos</h2><div class="hint">Toque em uma das barras para selecionar o mês e consultar a quantidade exata de serviços, produtos, valores vendidos e o detalhamento de cada item.</div></section>';
+  const period=finPeriodId(FIN_YEAR,Number(FIN_MONTH)),m=finMonthRecord(period);
+  if(!m)return '<section class="finance-panel"><div class="row"><h2>Detalhes de '+finMonthLabel(period)+'</h2><button class="finance-link" onclick="FIN_MONTH=\'all\';render()">Limpar seleção</button></div><div class="finance-empty">Não existe fechamento cadastrado para este mês.</div></section>';
+  const services=Array.isArray(m.serviceItems)?m.serviceItems:[],products=Array.isArray(m.productItems)?m.productItems:[];
+  return '<section class="finance-panel"><div class="row"><div><h2>Detalhes de '+finMonthLabel(period)+'</h2><div class="hint">Valores e quantidades registrados neste fechamento.</div></div><button class="finance-link" onclick="FIN_MONTH=\'all\';render()">Ver ano todo</button></div>'+
+    '<div class="finance-kpis">'+finKpi("Serviços",finInt(m.serviceCount),finBRL(m.serviceGross)+" vendidos")+finKpi("Produtos",finInt(m.productCount),finBRL(m.productGross)+" vendidos")+'</div>'+
+    '<h2>Serviços do mês</h2>'+finTable(services,"Não há detalhamento de serviços neste fechamento.")+
+    '<h2 style="margin-top:18px">Produtos do mês</h2>'+finTable(products,"Não há detalhamento de produtos neste fechamento.")+'</section>';
+}
+function finServiceTrendPeriods(){
+  let anchor;
+  if(FIN_MONTH!=="all")anchor=finPeriodId(FIN_YEAR,Number(FIN_MONTH));
+  else{
+    const available=finStore().months.filter(m=>String(m.period||"").startsWith(String(FIN_YEAR)+"-")).map(m=>m.period).sort();
+    anchor=available.length?available[available.length-1]:finPeriodId(FIN_YEAR,FIN_YEAR===new Date().getFullYear()?new Date().getMonth()+1:12);
+  }
+  const parts=anchor.split("-").map(Number);
+  return [-2,-1,0].map(offset=>{
+    const d=new Date(Date.UTC(parts[0],parts[1]-1+offset,1));
+    return String(d.getUTCFullYear())+"-"+String(d.getUTCMonth()+1).padStart(2,"0");
+  });
+}
+function finServiceMetric(period){
+  const m=finMonthRecord(period);
+  if(!m)return{qty:0,value:0,available:false,record:false};
+  if(FIN_SERVICE_FILTER==="all")return{qty:finN(m.serviceCount),value:finN(m.serviceGross),available:true,record:true};
+  if(!Array.isArray(m.serviceItems)||!m.serviceItems.length)return{qty:0,value:0,available:false,record:true};
+  const key=String(FIN_SERVICE_FILTER).trim().toLowerCase();
+  const matches=m.serviceItems.filter(x=>String(x.name||"").trim().toLowerCase()===key);
+  return{qty:matches.reduce((n,x)=>n+finN(x.qty),0),value:matches.reduce((n,x)=>n+finN(x.value),0),available:true,record:true};
+}
+function finServiceTrendChart(){
+  const periods=finServiceTrendPeriods(),data=periods.map(period=>({period:period,...finServiceMetric(period)}));
+  const width=660,height=220,left=35,right=25,top=22,bottom=38,plotH=height-top-bottom,slot=(width-left-right)/3,barW=66;
+  const max=Math.max(1,...data.filter(x=>x.available).map(x=>x.qty));
+  let svg='<svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Comparação da quantidade de serviços nos últimos três meses">';
+  for(let g=0;g<=3;g++){
+    const y=top+plotH*g/3;
+    svg+='<line x1="'+left+'" y1="'+y+'" x2="'+(width-right)+'" y2="'+y+'" stroke="#ffffff17" stroke-width="1"/>';
+  }
+  data.forEach((v,i)=>{
+    const x=left+i*slot+(slot-barW)/2,h=v.available?plotH*v.qty/max:0,base=height-bottom;
+    const label=v.available?finInt(v.qty):"—";
+    const description=!v.record?"Sem fechamento cadastrado":!v.available?"Fechamento sem detalhamento deste serviço":finInt(v.qty)+" vendas · "+finBRL(v.value);
+    svg+='<g class="finance-chart-month" role="button" tabindex="0" aria-label="'+finMonthLabel(v.period)+'. '+description+'" onclick="finSelectChartMonth(\''+v.period+'\')">';
+    svg+='<title>'+finMonthLabel(v.period)+' · '+description+'. Clique para abrir o mês.</title>';
+    svg+='<rect x="'+(left+i*slot+8)+'" y="'+top+'" width="'+(slot-16)+'" height="'+(plotH+8)+'" fill="transparent"/>';
+    svg+='<rect x="'+x+'" y="'+(base-h)+'" width="'+barW+'" height="'+Math.max(0,h)+'" rx="6" fill="#d6aa5c" opacity="'+(v.available?".9":".2")+'"/>';
+    svg+='<text x="'+(x+barW/2)+'" y="'+Math.max(14,base-h-8)+'" text-anchor="middle" fill="#f1eee8" font-size="12" font-weight="600">'+label+'</text>';
+    svg+='<text x="'+(x+barW/2)+'" y="'+(height-12)+'" text-anchor="middle" fill="#a29e94" font-size="11">'+finMonthLabel(v.period).split(" ")[0].slice(0,3)+'</text>';
+    svg+='</g>';
+  });
+  svg+='</svg>';
+  return svg;
+}
+function finServiceTrendTable(){
+  const periods=finServiceTrendPeriods();
+  return '<div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>Mês</th><th>Quantidade</th><th>Valor vendido</th><th>Dados</th></tr></thead><tbody>'+
+    periods.map(period=>{
+      const v=finServiceMetric(period);
+      const status=!v.record?"Sem fechamento":!v.available?"Sem detalhamento":"Disponível";
+      return '<tr><td>'+finMonthLabel(period)+'</td><td>'+ (v.available?finInt(v.qty):"—")+'</td><td>'+(v.available?finBRL(v.value):"—")+'</td><td><span class="finance-pill">'+status+'</span></td></tr>';
+    }).join("")+
+    '</tbody></table></div>';
 }
 function finDetailList(months){
   const items=finMergedItems(months,"serviceItems");
@@ -1501,14 +1579,20 @@ function financeView(){
       '</div>'+
       '<section class="finance-panel"><h2>Vendas por mês</h2><div class="hint">Comparação de vendas brutas de serviços e produtos ao longo de '+FIN_YEAR+'.</div><div class="finance-chart">'+finChart(FIN_YEAR,"revenue",FIN_MONTH)+'</div><div class="finance-legend"><span><i style="background:#d6aa5c"></i>Serviços</span><span><i style="background:#5fc08a"></i>Produtos</span></div></section>'+
       '<section class="finance-panel"><h2>Volume vendido por mês</h2><div class="hint">Quantidade de serviços e unidades de produtos informadas em cada mês.</div><div class="finance-chart">'+finChart(FIN_YEAR,"volume",FIN_MONTH)+'</div><div class="finance-legend"><span><i style="background:#d6aa5c"></i>Serviços</span><span><i style="background:#5fc08a"></i>Produtos</span></div></section>'+
-      finComparePanel(total,finPrevMonths(),FIN_MONTH==="all"?"ano anterior":"mês anterior")+
+      finSelectedMonthDetail()+finComparePanel(total,finPrevMonths(),FIN_MONTH==="all"?"ano anterior":"mês anterior")+
       '<section class="finance-panel"><h2>Como ler os números</h2><div class="hint">Venda bruta é o valor total vendido em serviços e produtos. Entradas são as comissões e extras informados no relatório, sem confundir esse valor com o total vendido. A comissão prevista de assinaturas fica separada para não misturar projeção com dinheiro confirmado. Na visão anual, clientes atendidos é a soma dos números mensais; a mesma pessoa pode aparecer em mais de um mês.</div></section>'+
       '<section class="finance-panel"><div class="row"><div><h2>Meses cadastrados</h2><div class="hint">Cada mês guarda seu próprio resumo e detalhamento.</div></div><button class="finance-link" onclick="finNewMonth()">Adicionar</button></div>'+finMonthRows(months)+'</section>'+
       '<div class="finance-panel"><div class="hint">Assinaturas: '+finInt(subs)+' serviços de assinatura listados no período. A comissão prevista fica separada das entradas confirmadas para não somar valores diferentes como se fossem a mesma coisa.</div></div>';
   }else if(FIN_TAB==="servicos"){
-    const list=finMergedItems(months,"serviceItems"),subs=finSubscriptionCount(months),ordinary=list.filter(x=>!x.subscription&&!/\bass\b|assin/i.test(x.name)).reduce((n,x)=>n+x.qty,0);
-    body='<div class="finance-kpis">'+finKpi("Serviços vendidos",finInt(total.serviceCount),"Inclui avulsos e serviços de assinatura")+finKpi("Venda bruta",finBRL(total.serviceGross),"Valores de serviços informados")+finKpi("Serviços avulsos",finInt(ordinary),"Quantidade detalhada")+finKpi("Serviços de assinatura",finInt(subs),"Quantidade detalhada")+'</div>'+
-      '<section class="finance-panel"><h2>Serviços por tipo</h2><div class="hint">Ranking pela quantidade e pelo valor bruto vendido.</div>'+finTable(list,"Não há detalhamento de serviços neste período.")+'</section>';
+    const list=finMergedItems(months,"serviceItems"),allServices=finMergedItems(finStore().months,"serviceItems");
+    const filteredList=FIN_SERVICE_FILTER==="all"?list:list.filter(x=>String(x.name||"").trim().toLowerCase()===String(FIN_SERVICE_FILTER).trim().toLowerCase());
+    const selectedQty=FIN_SERVICE_FILTER==="all"?total.serviceCount:filteredList.reduce((n,x)=>n+finN(x.qty),0);
+    const selectedValue=FIN_SERVICE_FILTER==="all"?total.serviceGross:filteredList.reduce((n,x)=>n+finN(x.value),0);
+    const serviceOptions='<option value="all" '+(FIN_SERVICE_FILTER==="all"?"selected":"")+'>Todos os serviços</option>'+allServices.map(x=>'<option value="'+esc(x.name)+'" '+(String(FIN_SERVICE_FILTER).toLowerCase()===String(x.name).toLowerCase()?"selected":"")+'>'+esc(x.name)+'</option>').join("");
+    body='<div class="finance-service-filter"><label>Filtrar por serviço<select onchange="FIN_SERVICE_FILTER=this.value;render()">'+serviceOptions+'</select></label><div class="hint" style="margin-top:6px">Escolha um serviço para acompanhar suas vendas individualmente, incluindo os serviços extras cadastrados nos relatórios.</div></div>'+
+      '<div class="finance-kpis">'+finKpi(FIN_SERVICE_FILTER==="all"?"Serviços vendidos":"Quantidade do serviço",finInt(selectedQty),FIN_SERVICE_FILTER==="all"?"Quantidade informada nos fechamentos":"Quantidade do serviço selecionado")+finKpi("Valor vendido",finBRL(selectedValue),FIN_SERVICE_FILTER==="all"?"Venda bruta de todos os serviços":"Venda bruta do serviço selecionado")+'</div>'+
+      '<section class="finance-panel"><h2>Comparação dos últimos 3 meses</h2><div class="hint">'+(FIN_SERVICE_FILTER==="all"?"Quantidade total de serviços por mês.":"Quantidade de "+esc(FIN_SERVICE_FILTER)+" realizada em cada mês.")+' Toque em uma barra para abrir o fechamento daquele mês.</div><div class="finance-chart">'+finServiceTrendChart()+'</div><div class="finance-legend"><span><i style="background:#d6aa5c"></i>Quantidade realizada</span></div>'+finServiceTrendTable()+'</section>'+
+      '<section class="finance-panel"><h2>Serviços por tipo</h2><div class="hint">'+(FIN_SERVICE_FILTER==="all"?"Ranking pela quantidade e pelo valor bruto vendido.":"Detalhamento do serviço selecionado no período do filtro.")+'</div>'+finTable(filteredList,"Não há detalhamento deste serviço no período selecionado.")+'</section>';
   }else if(FIN_TAB==="produtos"){
     const list=finMergedItems(months,"productItems");
     body='<div class="finance-kpis">'+finKpi("Unidades vendidas",finInt(total.productCount),"Quantidade de produtos")+finKpi("Venda bruta",finBRL(total.productGross),"Valor vendido em produtos")+finKpi("Comissão de produtos",finBRL(total.productCommission),"Comissão informada nos relatórios")+'</div>'+
