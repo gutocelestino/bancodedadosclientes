@@ -222,7 +222,7 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .finance-link{border:0;background:transparent;color:var(--gold);font:inherit;font-size:11px;padding:4px;cursor:pointer}
 .finance-chart-month{cursor:pointer;outline:none}.finance-chart-month:hover rect:not([fill="transparent"]){filter:brightness(1.16)}.finance-chart-month:focus-visible{outline:2px solid var(--gold)}.finance-service-filter{margin:14px 0;max-width:460px}.finance-service-filter label{margin:0}.finance-service-filter select{margin-top:5px}.finance-service-groups{display:flex;gap:8px;margin:14px 0 8px}.finance-service-groups button{flex:1;min-height:42px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff08;color:var(--text);font:inherit;font-weight:600;cursor:pointer}.finance-service-groups button.on{border-color:var(--gold);background:#d6aa5c20;color:var(--gold)}.finance-trend-bars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:18px 4px 10px}.finance-trend-item{min-width:0;display:flex;flex-direction:column;align-items:center;gap:7px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--text);padding:8px 5px;cursor:pointer;font:inherit}.finance-trend-item.selected{border-color:var(--gold);background:#d6aa5c12}.finance-trend-value{font-size:18px;font-weight:700;color:var(--gold)}.finance-trend-track{width:min(100%,70px);height:128px;border-radius:8px;background:#ffffff0b;display:flex;align-items:flex-end;overflow:hidden}.finance-trend-fill{display:block;width:100%;min-height:2px;border-radius:8px 8px 0 0;background:linear-gradient(180deg,#e8c27f,#b98745)}.finance-trend-month{font-size:12px;font-weight:600;text-align:center}.finance-trend-sub{font-size:10px;color:var(--muted);text-align:center;overflow-wrap:anywhere}.finance-chart-month{cursor:pointer;outline:none}
 @media(min-width:800px){.finance-page{max-width:1100px}.finance-filters{grid-template-columns:190px 210px;justify-content:start}.finance-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.finance-panel{padding:18px}.finance-form-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.finance-form-grid .half{grid-column:span 2}.finance-form-grid .full{grid-column:1/-1}}
-.finance-kpi-clickable{cursor:pointer;position:relative;transition:border-color .15s,transform .15s}.finance-kpi-clickable:hover,.finance-kpi-clickable:focus-visible{border-color:var(--gold);outline:none;transform:translateY(-1px)}.finance-kpi-more{display:block;color:var(--gold);font-size:10px;font-weight:700;margin-top:7px}.finance-detail-view>.row{align-items:flex-start;margin-bottom:12px}.finance-chart{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y;scrollbar-width:thin;scrollbar-color:#d6aa5c #292824;padding-bottom:8px}.finance-chart svg{width:960px;min-width:960px;max-width:none;height:auto;display:block}.finance-chart-month{cursor:pointer;pointer-events:all}.finance-chart-month:focus{outline:none}.finance-chart-month:focus rect:last-of-type{stroke:#e7bd7a;stroke-width:2}.finance-detail-view .finance-panel{scroll-margin-top:16px}</style></head><body><main id="app"></main>
+.finance-kpi-clickable{cursor:pointer;position:relative;transition:border-color .15s,transform .15s}.finance-kpi-clickable:hover,.finance-kpi-clickable:focus-visible{border-color:var(--gold);outline:none;transform:translateY(-1px)}.finance-kpi-more{display:block;color:var(--gold);font-size:10px;font-weight:700;margin-top:7px}.finance-detail-view>.row{align-items:flex-start;margin-bottom:12px}.finance-chart{width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y;scrollbar-width:thin;scrollbar-color:#d6aa5c #292824}.finance-chart svg{width:1080px;min-width:1080px;max-width:none;height:330px;display:block}.finance-chart-month{cursor:pointer;outline:none;touch-action:pan-x pan-y}.finance-chart-month:active{opacity:.82}.finance-chart{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y;scrollbar-width:thin;scrollbar-color:#d6aa5c #292824;padding-bottom:8px}.finance-chart svg{width:960px;min-width:960px;max-width:none;height:auto;display:block}.finance-chart-month{cursor:pointer;pointer-events:all}.finance-chart-month:focus{outline:none}.finance-chart-month:focus rect:last-of-type{stroke:#e7bd7a;stroke-width:2}.finance-detail-view .finance-panel{scroll-margin-top:16px}</style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="appRefresh" class="app-refresh" aria-live="polite" aria-hidden="true"><span class="app-refresh-mark">↓</span><span class="app-refresh-label">Puxe para atualizar</span></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -1382,7 +1382,14 @@ function finSelectedServiceItems(months){
   if(FIN_SERVICE_FILTER!=="all")items=items.filter(item=>finNormalizeServiceName(item.name)===finNormalizeServiceName(FIN_SERVICE_FILTER));
   return items;
 }
-function finSelectChartMonth(period){const parts=String(period||"").split("-");if(parts.length!==2)return;FIN_SERVICE_DETAIL_PERIOD=period;FIN_YEAR=Number(parts[0]);FIN_MONTH=parts[1];render()}
+function finSelectChartMonth(period){
+  const parts=String(period||"").split("-");if(parts.length!==2)return;
+  const scrollTop=window.scrollY||document.documentElement.scrollTop||0;
+  const scrollLeft=window.scrollX||0;
+  FIN_SERVICE_DETAIL_PERIOD=period;FIN_YEAR=Number(parts[0]);FIN_MONTH=parts[1];
+  render();
+  requestAnimationFrame(()=>{window.scrollTo({top:scrollTop,left:scrollLeft,behavior:"instant"});requestAnimationFrame(()=>window.scrollTo({top:scrollTop,left:scrollLeft,behavior:"instant"}))});
+}
 function finChart(year,mode,selectedMonth){
   const width=960,height=320,left=28,right=18,top=38,bottom=48,plotH=height-top-bottom,plotW=width-left-right;
   const values=[];
@@ -1396,7 +1403,7 @@ function finChart(year,mode,selectedMonth){
   values.forEach((v,i)=>{
     const x=left+i*slot+(slot-barW)/2,ha=plotH*v.a/max,hb=plotH*v.b/max,chosen=selectedMonth!=="all"&&selectedMonth===String(i+1).padStart(2,"0");
     const detail=mode==="volume"?"Serviços: "+finInt(v.a)+" · Produtos: "+finInt(v.b):"Serviços: "+finBRL(v.a)+" · Produtos: "+finBRL(v.b);
-    svg+='<g class="finance-chart-month" role="button" tabindex="0" aria-label="'+finMonthLabel(v.period)+'. '+(v.record?detail:"Sem fechamento cadastrado")+'" onclick="finSelectChartMonth(\''+v.period+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();finSelectChartMonth(\''+v.period+'\')}">';
+    svg+='<g class="finance-chart-month" aria-label="'+finMonthLabel(v.period)+'. '+(v.record?detail:"Sem fechamento cadastrado")+'" onclick="finSelectChartMonth(\''+v.period+'\')">';
     svg+='<title>'+finMonthLabel(v.period)+' · '+(v.record?detail:"Sem fechamento cadastrado")+'. Clique para ver os detalhes.</title>';
     svg+='<rect x="'+(x-5)+'" y="'+top+'" width="'+(barW+22)+'" height="'+(plotH+18)+'" fill="transparent"/>';
     svg+='<rect x="'+x+'" y="'+(base-ha)+'" width="'+barW+'" height="'+Math.max(0,ha)+'" rx="3" fill="#d6aa5c" opacity="'+(chosen?1:.82)+'"/>';
@@ -1419,6 +1426,35 @@ function finServiceTrendPeriods(){
   if(!anchor){const available=finStore().months.filter(m=>String(m.period||"").startsWith(String(FIN_YEAR)+"-")).map(m=>m.period).sort();anchor=available.length?available[available.length-1]:finPeriodId(FIN_YEAR,FIN_YEAR===new Date().getFullYear()?new Date().getMonth()+1:12)}
   const parts=anchor.split("-").map(Number);
   return [-2,-1,0].map(offset=>{const d=new Date(Date.UTC(parts[0],parts[1]-1+offset,1));return String(d.getUTCFullYear())+"-"+String(d.getUTCMonth()+1).padStart(2,"0")});
+}
+function finMonthlyCategoryChart(kind){
+  const products=kind==="products";
+  const periods=Array.from({length:12},(_,i)=>finPeriodId(FIN_YEAR,i+1));
+  const data=periods.map(period=>{
+    const m=finMonthRecord(period);
+    if(!m)return{period,record:false,qty:0,value:0};
+    if(products){
+      const items=Array.isArray(m.productItems)?m.productItems:[];
+      return{period,record:true,qty:items.reduce((n,x)=>n+finN(x.qty),0)||finN(m.productCount),value:items.reduce((n,x)=>n+finN(x.value),0)||finN(m.productGross)};
+    }
+    let items=Array.isArray(m.serviceItems)?m.serviceItems:[];
+    items=items.filter(x=>finServiceKind(x.name)===FIN_SERVICE_GROUP);
+    if(FIN_SERVICE_FILTER!=="all")items=items.filter(x=>finNormalizeServiceName(x.name)===finNormalizeServiceName(FIN_SERVICE_FILTER));
+    return{period,record:true,qty:items.reduce((n,x)=>n+finServiceUnits(x),0),value:items.reduce((n,x)=>n+finN(x.value),0)};
+  });
+  const max=Math.max(1,...data.map(x=>x.qty)),width=1080,height=330,left=26,right=18,top=40,bottom=54,plotH=height-top-bottom,slot=(width-left-right)/12,barW=48,base=height-bottom;
+  let svg='<svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Quantidade mensal de '+(products?"produtos":FIN_SERVICE_GROUP==="servicos"?"serviços principais":"serviços extras")+'">';
+  for(let g=0;g<=4;g++){const y=top+plotH*g/4;svg+='<line x1="'+left+'" y1="'+y+'" x2="'+(width-right)+'" y2="'+y+'" stroke="#ffffff17"/>'}
+  data.forEach((v,i)=>{
+    const x=left+i*slot+(slot-barW)/2,h=plotH*v.qty/max,selected=FIN_MONTH===String(i+1).padStart(2,"0");
+    const label=v.record?finInt(v.qty):"—",month=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][i];
+    svg+='<g class="finance-chart-month" onclick="finSelectChartMonth(\''+v.period+'\')"><title>'+finMonthLabel(v.period)+' · '+label+' · '+finBRL(v.value)+'. Toque para ver detalhes.</title>';
+    svg+='<rect x="'+(x-10)+'" y="'+(top-5)+'" width="'+(barW+20)+'" height="'+(plotH+32)+'" fill="transparent"/>';
+    svg+='<rect x="'+x+'" y="'+(base-h)+'" width="'+barW+'" height="'+Math.max(v.qty?4:0,h)+'" rx="5" fill="'+(selected?"#e8c27f":"#d6aa5c")+'" opacity="'+(v.record?1:.25)+'"/>';
+    svg+='<text x="'+(x+barW/2)+'" y="'+Math.max(18,base-h-10)+'" text-anchor="middle" fill="#f1eee8" font-size="13" font-weight="700">'+label+'</text>';
+    svg+='<text x="'+(x+barW/2)+'" y="'+(height-15)+'" text-anchor="middle" fill="'+(selected?"#f1eee8":"#a29e94")+'" font-size="13">'+month+'</text></g>';
+  });
+  return '<div class="finance-chart">'+svg+'</svg></div><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>Mês</th><th>Quantidade</th><th>Valor vendido</th></tr></thead><tbody>'+data.map(v=>'<tr><td>'+finMonthLabel(v.period)+'</td><td>'+(v.record?finInt(v.qty):"—")+'</td><td>'+(v.record?finBRL(v.value):"—")+'</td></tr>').join("")+'</tbody></table></div>';
 }
 function finServiceMetric(period){
   const m=finMonthRecord(period);if(!m)return{qty:0,value:0,available:false,record:false};
@@ -1605,12 +1641,13 @@ function financeView(){
     body='<div class="finance-service-groups"><button class="'+(FIN_SERVICE_GROUP==="servicos"?"on":"")+'" onclick="FIN_SERVICE_GROUP=\'servicos\';FIN_SERVICE_FILTER=\'all\';FIN_SERVICE_DETAIL_PERIOD=null;render()">Serviços</button><button class="'+(FIN_SERVICE_GROUP==="extras"?"on":"")+'" onclick="FIN_SERVICE_GROUP=\'extras\';FIN_SERVICE_FILTER=\'all\';FIN_SERVICE_DETAIL_PERIOD=null;render()">Serviços extras</button></div>'+
       '<div class="finance-service-filter"><label>Filtrar '+(FIN_SERVICE_GROUP==="servicos"?"serviço":"serviço extra")+'<select onchange="FIN_SERVICE_FILTER=this.value;FIN_SERVICE_DETAIL_PERIOD=null;render()">'+options+'</select></label><div class="hint" style="margin-top:6px">Selecione um item para acompanhar a quantidade e o valor vendido mês a mês.</div></div>'+
       '<div class="finance-kpis">'+finKpi(FIN_SERVICE_FILTER==="all"?(FIN_SERVICE_GROUP==="servicos"?"Serviços realizados":"Serviços extras realizados"):"Quantidade realizada",finInt(FIN_SERVICE_FILTER==="all"?allCategoryQty:selectedQty),finInt(FIN_SERVICE_FILTER==="all"?periodItems.length:selectedItems.length)+" tipos de serviço no detalhamento")+finKpi("Valor vendido",finBRL(FIN_SERVICE_FILTER==="all"?allCategoryValue:selectedValue),"Total no período selecionado")+'</div>'+
-      '<section class="finance-panel"><h2>Comparação dos últimos 3 meses</h2><div class="hint">'+(FIN_SERVICE_FILTER==="all"?"Quantidade total da categoria por mês.":"Quantidade de "+esc(FIN_SERVICE_FILTER)+" em cada mês.")+' Os números aparecem acima das barras. Clique em qualquer mês para abrir o detalhamento.</div>'+finServiceTrendChart()+finServiceTrendTable()+'</section>'+
+      '<section class="finance-panel"><h2>Quantidade por mês · '+(FIN_SERVICE_GROUP==="servicos"?"Serviços principais":"Serviços extras")+'</h2><div class="hint">Veja os 12 meses do ano, arraste o gráfico para os lados e toque em uma barra para abrir os detalhes daquele mês. O valor vendido aparece na tabela abaixo.</div>'+finMonthlyCategoryChart("services")+'</section>'+
       finServiceMonthDetail()+
       '<section class="finance-panel"><h2>'+(FIN_SERVICE_GROUP==="servicos"?"Serviços principais":"Serviços extras")+' por tipo</h2><div class="hint">A quantidade do combo Corte e Barba é contabilizada como dois serviços. O valor vendido continua sendo o valor total do combo.</div>'+finTable(selectedItems.map(x=>({name:x.name,qty:finServiceUnits(x),value:x.value,subscription:x.subscription})),"Não há itens desta categoria no período selecionado.")+'</section>';
   }else if(FIN_TAB==="produtos"){
     const list=finMergedItems(months,"productItems");
     body='<div class="finance-kpis">'+finKpi("Unidades vendidas",finInt(total.productCount),"Quantidade de produtos")+finKpi("Venda bruta",finBRL(total.productGross),"Valor vendido em produtos")+finKpi("Comissão de produtos",finBRL(total.productCommission),"Comissão informada nos relatórios")+'</div>'+
+      '<section class="finance-panel"><h2>Quantidade de produtos por mês</h2><div class="hint">Veja os 12 meses do ano, arraste o gráfico para os lados e toque em uma barra para abrir os detalhes daquele mês.</div>'+finMonthlyCategoryChart("products")+'</section>'+finSelectedMonthDetail()+
       '<section class="finance-panel"><h2>Produtos por tipo</h2><div class="hint">Ranking de produtos vendidos no período.</div>'+finTable(list,"Não há detalhamento de produtos neste período.")+'</section>';
   }else if(FIN_TAB==="assinaturas"){
     const list=finDetailList(months).subscriptions;
