@@ -80,11 +80,14 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 /* Fotos dos clientes */
 .avatar{width:42px;height:42px;min-width:42px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;background:var(--mut);border:1px solid var(--bd);color:var(--gold);font-weight:600;font-size:14px;vertical-align:middle}
 .avatar img{width:100%;height:100%;object-fit:cover}
-.profile-photo{width:104px;height:104px;min-width:104px;font-size:30px}
-.photo-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}
-.photo-actions input{display:none}
+.profile-photo-wrap{position:relative;display:inline-block;flex:none}
+.profile-photo{width:104px;height:104px;min-width:104px;font-size:30px;padding:0;cursor:pointer;overflow:hidden}
+.profile-photo:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.photo-camera-btn{position:absolute;right:-3px;bottom:-3px;width:34px;height:34px;display:grid;place-items:center;margin:0;border:2px solid var(--bg);border-radius:50%;background:var(--gold);color:#1b1608;cursor:pointer;box-shadow:0 2px 8px #0008}
+.photo-camera-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.photo-camera-input{display:none}
 .profile-head{display:flex;align-items:center;gap:16px;margin:18px 0 10px}
-@media(max-width:420px){.profile-photo{width:82px;height:82px;min-width:82px}.profile-head h1{font-size:30px!important}}
+@media(max-width:420px){.profile-photo{width:82px;height:82px;min-width:82px}.photo-camera-btn{width:30px;height:30px}.profile-head h1{font-size:30px!important}}
 
 
 /* Foto na tabela desktop */
@@ -105,6 +108,15 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .photo-crop-actions{display:flex;gap:8px;margin-top:18px}
 .photo-crop-actions button{flex:1}
 @media(max-height:620px){.photo-crop-card{max-height:98vh;padding:12px}.photo-crop-viewport{width:min(64vw,230px);margin:8px auto}.photo-crop-title{font-size:24px}}
+/* Visualização ampliada da foto do cliente */
+.photo-viewer-overlay{position:fixed;inset:0;z-index:160;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:56px 18px 28px;background:#080807f5;backdrop-filter:blur(8px)}
+.photo-viewer-overlay.on{display:flex}
+.photo-viewer-image{display:block;max-width:min(100%,900px);max-height:calc(100vh - 150px);width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 14px 50px #0009}
+.photo-viewer-close{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:18px;width:42px;height:42px;display:grid;place-items:center;border:1px solid #ffffff2b;border-radius:50%;background:#ffffff16;color:#fff;font-size:28px;line-height:1;cursor:pointer}
+.photo-viewer-caption{color:#fff;font-size:14px;text-align:center}
+.photo-viewer-remove{margin-top:2px;border:0;background:none;color:#d6aa5c;font:inherit;font-size:13px;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+@media(max-width:600px){.photo-viewer-overlay{padding:56px 12px 24px}.photo-viewer-image{max-width:100%;max-height:calc(100vh - 140px)}}
+
 /* Ordenação por situação dos clientes */
 .client-sort-arrows{display:inline-flex;align-items:center;justify-content:center;gap:1px;height:38px;min-width:38px;padding:0 9px;background:var(--card);border:1px solid var(--bd);border-radius:12px;color:var(--gold);font:300 18px/1 Manrope,system-ui,sans-serif;cursor:pointer}
 .client-sort-arrows span{display:inline-block;opacity:1}
@@ -118,7 +130,7 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .subscriber-toggle input{width:18px;height:18px;margin:0;flex:none;accent-color:var(--gold)}
 .subscriber-toggle span{font-size:12px}
 </style></head><body><main id="app"></main>
-<nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div>
+<nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://zkfgobmgwxbklwgwlhyu.supabase.co";
@@ -290,6 +302,47 @@ async function refreshPhotoUrls(){
       console.error("Erro ao carregar foto:",error);
     }
   }
+}
+
+
+/* Abre a foto do cliente em tamanho maior */
+async function openClientPhoto(id){
+  const client=S.clients.find(item=>item.id==id);
+  if(!client||!client.photo)return;
+  const path=client.photo;
+  try{
+    let url;
+    const cached=photoUrlCache[path];
+    if(cached&&cached.expires>Date.now()){
+      url=cached.url;
+    }else{
+      const {data,error}=await sb.storage.from(PHOTO_BUCKET).createSignedUrl(path,3600);
+      if(error)throw error;
+      url=data.signedUrl;
+      photoUrlCache[path]={url,expires:Date.now()+3300000};
+    }
+    if(client.photo!==path)return;
+    const modal=$("#photoViewer");
+    modal.innerHTML=
+      '<button type="button" class="photo-viewer-close" aria-label="Fechar" onclick="closeClientPhoto(event)">×</button>'+
+      '<img class="photo-viewer-image" src="'+esc(url)+'" alt="Foto de '+esc(client.name)+'" onclick="event.stopPropagation()">'+
+      '<div class="photo-viewer-caption">'+esc(client.name)+'</div>'+
+      '<button type="button" class="photo-viewer-remove" onclick="event.stopPropagation();closeClientPhoto();removeClientPhoto(\''+id+'\')">Remover foto</button>';
+    modal.classList.add("on");
+    modal.setAttribute("aria-hidden","false");
+  }catch(error){
+    console.error("Erro ao abrir foto:",error);
+    toast("Não consegui abrir a foto. Confira sua conexão.");
+  }
+}
+function closeClientPhoto(event){
+  if(event&&event.target!==event.currentTarget&&
+     !event.target.classList.contains("photo-viewer-close"))return;
+  const modal=$("#photoViewer");
+  if(!modal)return;
+  modal.classList.remove("on");
+  modal.setAttribute("aria-hidden","true");
+  modal.innerHTML="";
 }
 
 // Abre o editor para enquadrar a foto antes do envio
@@ -626,16 +679,17 @@ if(rc.notes){rc.log=rc.log||[];rc.log.push({id:"n"+Date.now(),date:iso(),text:rc
 const w=wa(c),vs=[...c.visits].sort((a,b)=>b.date.localeCompare(a.date)),lg=[...(rc.log||[])].reverse(),sv=svc(rc);
 $("#app").innerHTML=`<div class="row"><button class="lnk" onclick="go('clientes')">← Clientes</button><button class="lnk" onclick="editC()">✎ Editar</button></div>
 <div class="profile-head">
-  <span class="avatar profile-photo" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span>
+  <div class="profile-photo-wrap">
+    <button type="button" class="avatar profile-photo" data-photo-path="${esc(c.photo||"")}" onclick="openClientPhoto('${c.id}')" aria-label="Abrir foto de ${esc(c.name)}">${initials(c.name)}</button>
+    <label class="photo-camera-btn" for="photo-${c.id}" title="${c.photo?"Trocar foto":"Adicionar foto"}" aria-label="${c.photo?"Trocar foto":"Adicionar foto"}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    </label>
+    <input class="photo-camera-input" id="photo-${c.id}" type="file" accept="image/jpeg,image/png,image/webp" onchange="openPhotoCrop(this,'${c.id}')">
+  </div>
   <div>
     <h1 style="font-size:36px;margin:0 0 8px">${esc(c.name)}</h1>
     <span class="badge ${c.st}">${SL[c.st]}</span> <span class="badge ${clientStage(c)=="novo"?"new-client":"fixed-client"}">${clientStage(c)=="novo"?"Novo cliente":"Cliente fixo"}</span> ${c.tipo=="assinante"?'<span class="badge subscriber">Assinante</span>':""}
   </div>
-</div>
-<div class="photo-actions">
-  <label class="btn alt" for="photo-${c.id}">${c.photo?"Trocar foto":"Adicionar foto"}</label>
-  <input id="photo-${c.id}" type="file" accept="image/jpeg,image/png,image/webp" onchange="openPhotoCrop(this,'${c.id}')">
-  ${c.photo?`<button class="btn alt" onclick="removeClientPhoto('${c.id}')">Remover foto</button>`:""}
 </div>
 <div class="actions" style="margin-top:8px"><button class="btn alt" onclick="toggleClientStage('${c.id}')">${clientStage(c)=="novo"?"Promover para cliente fixo":"Mover para novos clientes"}</button></div>
 <div class="two" style="margin-top:20px"><div class="stat"><small>Última visita</small><div class="big">${br(c.last)}</div></div><div class="stat"><small>Próximo retorno</small><div class="big" style="color:var(--gold)">${br(c.nx)}</div></div></div>
