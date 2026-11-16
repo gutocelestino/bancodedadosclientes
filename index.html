@@ -1378,7 +1378,7 @@ function finComparePanel(current,previous,label){
   const before=finAggregate(previous);
   const metric=(name,a,b,money)=>{const diff=a-b,pct=b?((diff/b)*100):null;const sign=diff>0?"+":"";const fmt=money?finBRL:finInt;return '<div class="finance-compare-item"><small>'+name+'</small><strong>'+fmt(a)+'</strong><small>Anterior: '+fmt(b)+' · '+(pct===null?"sem base anterior":sign+pct.toFixed(1).replace(".",",")+"%")+'</small></div>'};
   return '<section class="finance-panel"><h2>Comparação com '+label+'</h2><div class="finance-compare">'+
-    metric("Vendas brutas",current.gross,before.gross,true)+metric("Comissões avulsas + produtos",current.income,before.income,true)+
+    metric("Vendas brutas",current.gross,before.gross,true)+metric("Entradas confirmadas",current.income,before.income,true)+
     metric("Serviços vendidos",current.serviceCount,before.serviceCount,false)+metric("Produtos vendidos",current.productCount,before.productCount,false)+
     '</div></section>';
 }
@@ -1501,6 +1501,7 @@ function financeView(){
       '<section class="finance-panel"><h2>Vendas por mês</h2><div class="hint">Comparação de vendas brutas de serviços e produtos ao longo de '+FIN_YEAR+'.</div><div class="finance-chart">'+finChart(FIN_YEAR,"revenue",FIN_MONTH)+'</div><div class="finance-legend"><span><i style="background:#d6aa5c"></i>Serviços</span><span><i style="background:#5fc08a"></i>Produtos</span></div></section>'+
       '<section class="finance-panel"><h2>Volume vendido por mês</h2><div class="hint">Quantidade de serviços e unidades de produtos informadas em cada mês.</div><div class="finance-chart">'+finChart(FIN_YEAR,"volume",FIN_MONTH)+'</div><div class="finance-legend"><span><i style="background:#d6aa5c"></i>Serviços</span><span><i style="background:#5fc08a"></i>Produtos</span></div></section>'+
       finComparePanel(total,finPrevMonths(),FIN_MONTH==="all"?"ano anterior":"mês anterior")+
+      '<section class="finance-panel"><h2>Como ler os números</h2><div class="hint">Venda bruta é o valor total vendido em serviços e produtos. Entradas são as comissões e extras informados no relatório, sem confundir esse valor com o total vendido. A comissão prevista de assinaturas fica separada para não misturar projeção com dinheiro confirmado. Na visão anual, clientes atendidos é a soma dos números mensais; a mesma pessoa pode aparecer em mais de um mês.</div></section>'+
       '<section class="finance-panel"><div class="row"><div><h2>Meses cadastrados</h2><div class="hint">Cada mês guarda seu próprio resumo e detalhamento.</div></div><button class="finance-link" onclick="finNewMonth()">Adicionar</button></div>'+finMonthRows(months)+'</section>'+
       '<div class="finance-panel"><div class="hint">Assinaturas: '+finInt(subs)+' serviços de assinatura listados no período. A comissão prevista fica separada das entradas confirmadas para não somar valores diferentes como se fossem a mesma coisa.</div></div>';
   }else if(FIN_TAB==="servicos"){
