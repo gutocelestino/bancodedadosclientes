@@ -1,4 +1,4 @@
-const CACHE_NAME = "carteira-pwa-v8";
+const CACHE_NAME = "carteira-pwa-v9";
 const APP_SCOPE = self.registration.scope;
 const APP_ROOT = new URL("./", APP_SCOPE);
 
