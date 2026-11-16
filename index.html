@@ -748,9 +748,10 @@ function trackNavRender(){
   const snapshot=captureNavState(),key=navRouteKey();
   if(!NAV_READY){
     NAV_READY=true;NAV_HISTORY=[snapshot];NAV_INDEX=0;NAV_KEY=key;
-    history.replaceState(Object.assign({},history.state||{},{carteiraAppNav:true,carteiraAppNavIndex:0}),"",location.href);
+    history.replaceState({carteiraAppNav:true,carteiraAppNavIndex:0},"",location.href);
+    history.pushState({carteiraAppNav:true,carteiraAppNavIndex:0,carteiraAppNavGuard:true},"",location.href);
   }else if(NAV_RESTORING){
-    NAV_KEY=key;NAV_RESTORING=false;
+    NAV_KEY=key;NAV_RESTORING=false;writeNavBrowserState();
   }else if(key!==NAV_KEY){
     if(NAV_HISTORY[NAV_INDEX])NAV_HISTORY[NAV_INDEX].scrollY=window.scrollY||0;
     NAV_HISTORY=NAV_HISTORY.slice(0,NAV_INDEX+1);
@@ -761,34 +762,65 @@ function trackNavRender(){
   }
   renderBackControl();
 }
-function backNav(){
-  if(!NAV_READY||NAV_INDEX<=0)return;
-  if(history.state&&history.state.carteiraAppNav&&history.state.carteiraAppNavIndex===NAV_INDEX){history.back();return;}
-  NAV_INDEX=Math.max(0,NAV_INDEX-1);
-  const state=NAV_HISTORY[NAV_INDEX];if(!state)return;
-  restoreNavState(state);NAV_RESTORING=true;render();setTimeout(()=>window.scrollTo(0,state.scrollY||0),40);
+function writeNavBrowserState(){
+  if(!NAV_READY)return;
+  const state=Object.assign({},history.state||{},{carteiraAppNav:true,carteiraAppNavIndex:NAV_INDEX});
+  history.replaceState(state,"",location.href);
 }
+function restoreNavIndex(index){
+  if(!Number.isInteger(index)||index<0||index>=NAV_HISTORY.length)return false;
+  NAV_INDEX=index;
+  const state=NAV_HISTORY[index];if(!state)return false;
+  restoreNavState(state);NAV_RESTORING=true;render();writeNavBrowserState();
+  setTimeout(()=>window.scrollTo(0,state.scrollY||0),40);
+  return true;
+}
+function backNav(source){
+  if(!NAV_READY||NAV_INDEX<=0)return;
+  NAV_INDEX--;
+  NAV_LAST_MANUAL_BACK=Date.now();
+  restoreNavIndex(NAV_INDEX);
+}
+let NAV_LAST_MANUAL_BACK=0;
 window.addEventListener("popstate",event=>{
   if(!NAV_READY)return;
-  const index=event.state&&event.state.carteiraAppNav?event.state.carteiraAppNavIndex:null;
-  if(!Number.isInteger(index)||!NAV_HISTORY[index])return;
-  NAV_INDEX=index;const state=NAV_HISTORY[index];
-  restoreNavState(state);NAV_RESTORING=true;render();
-  setTimeout(()=>window.scrollTo(0,state.scrollY||0),40);
+  // Se o gesto personalizado já voltou, ignora um eventual segundo popstate nativo.
+  if(NAV_LAST_MANUAL_BACK&&Date.now()-NAV_LAST_MANUAL_BACK<500){
+    NAV_LAST_MANUAL_BACK=0;writeNavBrowserState();return;
+  }
+  NAV_LAST_MANUAL_BACK=0;
+  const requested=event.state&&event.state.carteiraAppNav?event.state.carteiraAppNavIndex:null;
+  // Usa o índice do navegador apenas quando ele aponta claramente para uma etapa anterior.
+  // Estados ausentes ou dessincronizados voltam exatamente uma tela no histórico interno.
+  const target=Number.isInteger(requested)&&requested<NAV_INDEX?requested:NAV_INDEX-1;
+  if(target>=0){
+    restoreNavIndex(target);
+  }else{
+    // Na primeira tela, mantém o app aberto em vez de deixar o gesto fechar a navegação.
+    history.pushState({carteiraAppNav:true,carteiraAppNavIndex:0,carteiraAppNavGuard:true},"",location.href);
+  }
 });
 document.addEventListener("touchstart",event=>{
   if(event.touches.length!==1||!NAV_READY||NAV_INDEX<=0)return;
   const target=event.target;
   if(target&&target.closest&&target.closest("input,textarea,select,a,nav,.photo-crop-overlay,.photo-viewer-overlay,#dlg,#lock,[contenteditable=true]"))return;
-  const touch=event.touches[0];if(touch.clientX>26)return;
-  NAV_SWIPE={x:touch.clientX,y:touch.clientY,index:NAV_INDEX};
+  const touch=event.touches[0];if(touch.clientX>34)return;
+  NAV_SWIPE={x:touch.clientX,y:touch.clientY,index:NAV_INDEX,claimed:false};
 },{passive:true});
+document.addEventListener("touchmove",event=>{
+  if(!NAV_SWIPE||!event.touches.length)return;
+  const touch=event.touches[0],dx=touch.clientX-NAV_SWIPE.x,dy=touch.clientY-NAV_SWIPE.y;
+  if(dx>18&&dx>Math.abs(dy)*1.15){
+    NAV_SWIPE.claimed=true;
+    if(event.cancelable)event.preventDefault();
+  }
+},{passive:false});
 document.addEventListener("touchend",event=>{
   if(!NAV_SWIPE)return;
   const start=NAV_SWIPE;NAV_SWIPE=null;
   const touch=event.changedTouches&&event.changedTouches[0];if(!touch)return;
   const dx=touch.clientX-start.x,dy=touch.clientY-start.y;
-  if(NAV_INDEX===start.index&&dx>72&&dx>Math.abs(dy)*1.35)backNav();
+  if(NAV_INDEX===start.index&&dx>72&&dx>Math.abs(dy)*1.35)backNav("gesture");
 },{passive:true});
 document.addEventListener("touchcancel",()=>{NAV_SWIPE=null},{passive:true});
 function updateActiveNavSnapshot(){if(NAV_READY&&!NAV_RESTORING&&navRouteKey()===NAV_KEY)NAV_HISTORY[NAV_INDEX]=captureNavState()}
