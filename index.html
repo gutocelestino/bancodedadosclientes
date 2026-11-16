@@ -1329,7 +1329,7 @@ function finSubscriptionCount(months){
 }
 function finKpi(label,value,hint,cls,detailKey){
   const clickable=!!detailKey;
-  return '<div class="finance-kpi '+(cls||'')+(clickable?' finance-kpi-clickable':'')+'" '+(clickable?'role="button" tabindex="0" onclick="finOpenDetail(\\''+detailKey+'\\')" onkeydown="if(event.key===\\'Enter\\'||event.key===\\' \\'){event.preventDefault();finOpenDetail(\\''+detailKey+'\\')} "':'')+'><div class="label">'+label+'</div><div class="value">'+value+'</div><div class="hint">'+(hint||'')+(clickable?'<span class="finance-kpi-more">Ver detalhes →</span>':'')+'</div></div>';
+  return '<div class="finance-kpi '+(cls||'')+(clickable?' finance-kpi-clickable':'')+'" '+(clickable?'role="button" tabindex="0" onclick="finOpenDetail(&quot;'+detailKey+'&quot;)"':'')+'><div class="label">'+label+'</div><div class="value">'+value+'</div><div class="hint">'+(hint||'')+(clickable?'<span class="finance-kpi-more">Ver detalhes →</span>':'')+'</div></div>';
 }
 function finOpenDetail(key){FIN_DETAIL_KEY=key;render()}
 function finDetailView(months,total){
