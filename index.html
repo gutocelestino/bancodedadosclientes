@@ -588,6 +588,64 @@ function removeClientPhoto(id){
   },"Remover foto");
 }
 
+
+let UF=null;
+function backToUnqualified(){go("naoqualificados")}
+function newUnqualified(){
+  UF={id:"c"+Date.now(),name:"",phone:"",notes:""};
+  view="unqualifiedForm";
+  render();
+}
+function unqualifiedFormView(){
+  $("#app").innerHTML=
+    '<div class="row"><button class="lnk" onclick="backToUnqualified()">← Não qualificados</button></div>'+
+    '<h1>Registrar contato</h1><div class="sub">Cadastro rápido, fora da carteira de clientes.</div>'+
+    '<div class="unqualified-warning"><span class="badge unqualified-badge">NÃO QUALIFICADO</span><strong>Não enviar mensagens para este contato.</strong><p>Este registro serve apenas para controle interno. Ele não entra na lista de clientes nem nos retornos.</p></div>'+
+    '<div class="card unqualified-form-card">'+
+      '<label style="margin-top:0">Nome<input id="uqName" value="'+esc(UF.name)+'" oninput="UF.name=this.value" placeholder="Nome do contato"></label>'+
+      '<label>Telefone / WhatsApp<input id="uqPhone" type="tel" value="'+esc(UF.phone)+'" oninput="UF.phone=this.value" placeholder="Telefone (opcional)"></label>'+
+      '<label>Observação (opcional)<textarea rows="3" oninput="UF.notes=this.value" placeholder="Por que este contato não foi qualificado?">'+esc(UF.notes)+'</textarea></label>'+
+      '<div class="actions"><button class="btn" onclick="saveUnqualified()">Salvar contato</button><button class="btn alt" onclick="backToUnqualified()">Cancelar</button></div>'+
+    '</div>';
+}
+function saveUnqualified(){
+  if(!UF)return;
+  const name=(UF.name||"").trim(),phone=(UF.phone||"").trim(),digits=dg(phone);
+  if(!name){toast("Informe o nome do contato.");$("#uqName")?.focus();return}
+  const same=c=>nz(c.name)==nz(name)||(digits.length>=8&&dg(c.phone).length>=8&&dg(c.phone).slice(-9)==digits.slice(-9));
+  const existing=S.clients.find(same);
+  if(existing&&existing.qual!="nao_qualificado"){
+    toast("Já existe um cadastro na carteira. Abra a ficha dele e altere a qualificação, se necessário.");
+    return;
+  }
+  let contact=existing;
+  if(contact){
+    if(phone)contact.phone=phone;
+    if(UF.notes.trim())contact.notes=UF.notes.trim();
+  }else{
+    contact={id:UF.id,name:name,phone:phone,instagram:"",email:"",qual:"nao_qualificado",tipo:"avulso",fase:"fixo",freq:"",last:"",services:[],notes:UF.notes.trim(),log:[],visits:[],created:iso()};
+    S.clients.push(contact);
+  }
+  save();cur=contact.id;UF=null;view="unqualifiedFicha";render();
+  toast("Contato salvo na lista de não qualificados.");
+}
+function unqualifiedCard(c){
+  return '<button class="card unqualified-card" onclick="open_(&quot;'+c.id+'&quot;)">'+
+    '<div class="row"><div style="min-width:0"><div class="nm">'+esc(c.name)+'</div><div class="sub" style="margin-top:4px">'+esc(c.phone||"Sem telefone")+'</div></div><span class="badge unqualified-badge">NÃO QUALIFICADO</span></div>'+
+    (c.notes?'<div class="sub" style="margin-top:10px">'+esc(c.notes)+'</div>':"")+
+  '</button>';
+}
+function unqualifiedFichaView(r){
+  const c=r.find(x=>x.id==cur&&x.qual=="nao_qualificado");
+  if(!c){backToUnqualified();return}
+  $("#app").innerHTML=
+    '<div class="row"><button class="lnk" onclick="backToUnqualified()">← Não qualificados</button><button class="lnk" onclick="editC()">✎ Editar</button></div>'+
+    '<div class="unqualified-warning"><span class="badge unqualified-badge">NÃO QUALIFICADO</span><strong>Não enviar mensagem nem registrar atendimento.</strong><p>Este contato não faz parte da carteira de clientes. Só reclassifique se houver uma nova avaliação.</p></div>'+
+    '<h1>'+esc(c.name)+'</h1>'+
+    '<div class="card">'+kv("Telefone",c.phone||"—")+kv("Observação",c.notes||"—")+'</div>'+
+    '<div class="actions"><button class="btn" onclick="editC()">Reavaliar contato</button><button class="btn alt" onclick="backToUnqualified()">Voltar para a lista</button></div>';
+}
+
 function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span style="display:flex;align-items:center;gap:10px;min-width:0"><span class="avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"?'<span class="badge subscriber">Assinante</span>':""}</span><span class="badge ${c.st}">${SL[c.st]}</span></div>
 <div class="sub" style="margin-top:6px">Último: ${br(c.last)} · Freq.: ${c.freq?c.freq+"d":"—"} · Previsto: ${br(c.nx)}</div></button>`}
 const list=(a,e)=>a.length?`<div class="cards">${a.map(card).join("")}</div><div class="tbl"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Último</th><th>Freq.</th><th>Previsto</th><th>Situação</th></tr></thead><tbody>${a.map(c=>`<tr class="r" onclick="open_('${c.id}')"><td><span class="client-name-cell"><span class="avatar table-avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"?'<span class="badge subscriber">Assinante</span>':""}</span></td><td class="p">${esc(c.phone||"—")}</td><td>${br(c.last)}</td><td>${c.freq?c.freq+"d":"—"}</td><td>${br(c.nx)}</td><td><span class="badge ${c.st}">${SL[c.st]}</span></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${e}</p>`;
