@@ -707,11 +707,12 @@ el.innerHTML=`<h1>${f.isNew?"Novo cliente":FSEC=="info"?"Editar informações":F
 <label>Já comprou produto?<select onchange="FM.produto=this.value">${o({sim:"Sim",nao:"Não"},f.produto||"nao")}</select></label>
 ${f.tipo=="assinante"?"":i("freq","Frequência de retorno (dias)","number")+i("last","Último atendimento","date")}<div style="grid-column:1/-1"><label>Serviços do cliente</label><div class="sub" style="margin:2px 0 8px">Marque os serviços que ele costuma fazer. Os atendimentos registrados também entram automaticamente.</div><div class="chips">${svList().map(s=>`<button type="button" class="chip ${svc(f).includes(s)?"on":""}" onclick="togForm(this,'${s}')">${s}</button>`).join("")}</div></div></div>`}
 
-<div class="actions"><button class="btn" onclick="saveForm()">Salvar</button><button class="btn alt" onclick="${f.isNew?"go('clientes')":"view='ficha';render()"}">Cancelar</button></div>`;return}
+<div class="actions"><button class="btn" onclick="saveForm()">Salvar</button><button class="btn alt" onclick="${f.isNew?"go('clientes')":"cancelEditForm()"}">Cancelar</button></div>`;return}
 if(!c){go("clientes");return}
 ficha2(c);return}
-function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";f.services=svc(f);f.fase=f.fase=="novo"?"novo":"fixo";delete f.visa;delete f.days;const isNew=f.isNew;delete f.isNew;
-if(isNew)S.clients.push(f);else S.clients=S.clients.map(x=>x.id==f.id?f:x);save();cur=f.id;view="ficha";form=null;FSEC=null;render()}
+function cancelEditForm(){view=form&&form.returnView||'ficha';form=null;FSEC=null;render()}
+function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";f.services=svc(f);f.fase=f.fase=="novo"?"novo":"fixo";delete f.visa;delete f.days;const isNew=f.isNew;delete f.isNew;delete f.returnView;
+if(isNew)S.clients.push(f);else S.clients=S.clients.map(x=>x.id==f.id?f:x);save();cur=f.id;view=f.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;FSEC=null;render()}
 function exportCsv(){const h=["nome","telefone","instagram","email","qualificacao","tipo","tesoura","brigadeiro","frequencia_dias","ultimo_atendimento","observacoes"],
 e=v=>'"'+String(v??"").replace(/"/g,'""')+'"',
 csv=[h.join(",")].concat(S.clients.map(c=>[c.name,c.phone,c.instagram,c.email,c.qual,c.tipo=="assinante"?"Assinante":"Cliente",c.tesoura,c.brig,c.freq,c.last,c.notes].map(e).join(","))).join("\n");
@@ -865,7 +866,7 @@ ${PF?`<div style="margin-top:12px">${hp?`<input id="p0" type="password" inputmod
 <h2>Dados</h2><div class="card">${kv2("Clientes",S.clients.length)}${kv2("Oportunidades no CRM",crm().length)}<div style="margin-top:12px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Arquivo CSV (no Google Sheets: Arquivo → Fazer download → CSV). Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div class="actions"><button class="btn alt" onclick="exportCsv()">Exportar clientes (CSV)</button><button class="btn alt" onclick="backupJson()">Backup completo (JSON)</button><button class="btn del" onclick="wipe()">Apagar todos os dados</button></div></div>`}
 function resetServ(){delete cfg().serv;save();ajView()}
 let FSEC=null;
-function editC(sec){FSEC=sec||null;form=JSON.parse(JSON.stringify(S.clients.find(x=>x.id==cur)));view="form";render()}
+function editC(sec){FSEC=sec||null;form=JSON.parse(JSON.stringify(S.clients.find(x=>x.id==cur)));form.returnView=view;view="form";render()}
 let DLGF=null,tt;
 function askC(msg,fn,lbl){DLGF=fn;const d=$("#dlg");d.innerHTML=`<div class="dbox"><div class="nm" style="margin-bottom:14px">${esc(msg)}</div><div class="actions" style="margin-top:0;justify-content:flex-end"><button class="btn alt" onclick="dlgClose()">Cancelar</button><button class="btn" style="background:var(--bad);color:#fff" onclick="dlgOk()">${lbl||"Excluir"}</button></div></div>`;d.classList.add("on")}
 function dlgClose(){DLGF=null;$("#dlg").classList.remove("on")}
