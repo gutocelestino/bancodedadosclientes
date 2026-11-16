@@ -651,7 +651,7 @@ function newUnqualified(){
 }
 function unqualifiedFormView(){
   $("#app").innerHTML=
-    '<div class="row"><button class="lnk" onclick="backToUnqualified()">← Desqualificados</button></div>'+
+    '<div class="row" style="justify-content:flex-end"><span></span></div>'+
     '<h1>Registrar contato</h1><div class="sub">Cadastro rápido, fora da carteira de clientes.</div>'+
     '<div class="unqualified-warning"><span class="badge unqualified-badge">DESQUALIFICADO</span><strong>Não enviar mensagens para este contato.</strong><p>Este registro serve apenas para controle interno. Ele não entra na lista de clientes nem nos retornos.</p></div>'+
     '<div class="card unqualified-form-card">'+
@@ -692,11 +692,11 @@ function unqualifiedFichaView(r){
   const c=r.find(x=>x.id==cur&&x.qual=="nao_qualificado");
   if(!c){backToUnqualified();return}
   $("#app").innerHTML=
-    '<div class="row"><button class="lnk" onclick="backToUnqualified()">← Desqualificados</button><button class="lnk" onclick="editC()">✎ Editar</button></div>'+
+    '<div class="row" style="justify-content:flex-end"><button class="lnk" onclick="editC()">✎ Editar</button></div>'+
     '<div class="unqualified-warning"><span class="badge unqualified-badge">DESQUALIFICADO</span><strong>Não enviar mensagem nem registrar atendimento.</strong><p>Este contato não faz parte da carteira de clientes. Só reclassifique se houver uma nova avaliação.</p></div>'+
     '<h1>'+esc(c.name)+'</h1>'+
     '<div class="card">'+kv("Telefone",c.phone||"—")+kv("Observação",c.notes||"—")+'</div>'+
-    '<div class="actions"><button class="btn" onclick="editC()">Reavaliar contato</button><button class="btn alt" onclick="backToUnqualified()">Voltar para a lista</button></div>';
+    '<div class="actions"><button class="btn" onclick="editC()">Reavaliar contato</button></div>';
 }
 
 function card(c){return`<button class="card" onclick="open_('${c.id}')"><div class="row"><span style="display:flex;align-items:center;gap:10px;min-width:0"><span class="avatar" data-photo-path="${esc(c.photo||"")}">${initials(c.name)}</span><span class="nm">${esc(c.name)}</span>${c.qual=="nao_qualificado"?'<span class="badge unqualified-badge">Desqualificado</span>':clientStage(c)=="novo"?'<span class="badge new-client">Novo</span>':""}${c.tipo=="assinante"&&c.qual!="nao_qualificado"?'<span class="badge subscriber">Assinante</span>':""}</span><span class="badge ${c.st}">${SL[c.st]}</span></div>
@@ -750,8 +750,9 @@ function trackNavRender(){
     NAV_READY=true;NAV_HISTORY=[snapshot];NAV_INDEX=0;NAV_KEY=key;
     history.replaceState(Object.assign({},history.state||{},{carteiraAppNav:true,carteiraAppNavIndex:0}),"",location.href);
   }else if(NAV_RESTORING){
-    NAV_HISTORY[NAV_INDEX]=snapshot;NAV_KEY=key;NAV_RESTORING=false;
+    NAV_KEY=key;NAV_RESTORING=false;
   }else if(key!==NAV_KEY){
+    if(NAV_HISTORY[NAV_INDEX])NAV_HISTORY[NAV_INDEX].scrollY=window.scrollY||0;
     NAV_HISTORY=NAV_HISTORY.slice(0,NAV_INDEX+1);
     NAV_HISTORY.push(snapshot);NAV_INDEX=NAV_HISTORY.length-1;NAV_KEY=key;
     history.pushState(Object.assign({},history.state||{},{carteiraAppNav:true,carteiraAppNavIndex:NAV_INDEX}),"",location.href);
@@ -790,6 +791,9 @@ document.addEventListener("touchend",event=>{
   if(NAV_INDEX===start.index&&dx>72&&dx>Math.abs(dy)*1.35)backNav();
 },{passive:true});
 document.addEventListener("touchcancel",()=>{NAV_SWIPE=null},{passive:true});
+function updateActiveNavSnapshot(){if(NAV_READY&&!NAV_RESTORING&&navRouteKey()===NAV_KEY)NAV_HISTORY[NAV_INDEX]=captureNavState()}
+document.addEventListener("input",updateActiveNavSnapshot);
+document.addEventListener("change",updateActiveNavSnapshot);
 
 function render(){
 $("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"],["nao_retorno","Não retornaram"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
@@ -975,7 +979,7 @@ if(!c.last||RD>c.last)c.last=RD;if(c.semRetorno){c.semRetorno=false;delete c.sem
 function ficha2(c){const rc=S.clients.find(x=>x.id==c.id);
 if(rc.notes){rc.log=rc.log||[];rc.log.push({id:"n"+Date.now(),date:iso(),text:rc.notes});rc.notes="";save()}
 const w=wa(c),vs=[...c.visits].sort((a,b)=>b.date.localeCompare(a.date)),lg=[...(rc.log||[])].reverse(),sv=svc(rc);
-$("#app").innerHTML=`<div class="row"><button class="lnk" onclick="backNav()">← Voltar</button><button class="lnk" onclick="editC()">✎ Editar</button></div>
+$("#app").innerHTML=`<div class="row" style="justify-content:flex-end"><button class="lnk" onclick="editC()">✎ Editar</button></div>
 <div class="profile-head">
   <div class="profile-photo-wrap">
     <button type="button" class="avatar profile-photo" data-photo-path="${esc(c.photo||"")}" onclick="openClientPhoto('${c.id}')" aria-label="Abrir foto de ${esc(c.name)}">${initials(c.name)}</button>
