@@ -170,9 +170,14 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 @media(max-width:560px){.profile-head + .actions button,.profile-head + .actions + .actions button{min-height:52px;padding:10px 13px;font-size:13px}}
 .profile-head + .actions .profile-stage-secondary{background:#24221d;border:1px solid #8b7044;color:#d7b778}
 @media(max-width:600px){input,select,textarea{font-size:16px}}
+.app-refresh{position:fixed;z-index:180;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translate(-50%,-150%);display:flex;align-items:center;gap:9px;padding:10px 16px;border:1px solid #d6aa5c66;border-radius:999px;background:#242119;color:var(--fg);font-size:12px;font-weight:600;box-shadow:0 8px 24px #0005;opacity:0;pointer-events:none;transition:transform .18s ease,opacity .18s ease;white-space:nowrap}
+.app-refresh.on{transform:translate(-50%,0);opacity:1}
+.app-refresh-mark{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#d6aa5c22;color:var(--gold);font-size:16px}
+.app-refresh.loading .app-refresh-mark{animation:app-refresh-spin .7s linear infinite}
+@keyframes app-refresh-spin{to{transform:rotate(360deg)}}
 .client-reg-panel{border-color:#d6aa5c66;background:linear-gradient(135deg,#242119,#1f1e1a)}
 </style></head><body><main id="app"></main>
-<nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
+<nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="appRefresh" class="app-refresh" aria-live="polite" aria-hidden="true"><span class="app-refresh-mark">↓</span><span class="app-refresh-label">Puxe para atualizar</span></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://zkfgobmgwxbklwgwlhyu.supabase.co";
@@ -190,7 +195,7 @@ FO=["em_dia","sem_frequencia","atrasado","hoje","proximo"],
 freqOpts=v=>`<option value="">Frequência: todas</option>`+[...FO.map(k=>[k,SL[k]]),...FQ].map(([k,l])=>`<option value="${k}" ${v==k?"selected":""}>${l}</option>`).join(""),
 ff=(c,v)=>!v||(v[0]=="f"?(c.freq>0&&c.freq<=+v.slice(1)):c.st==v),
 SL={sem_frequencia:"Sem frequência",atrasado:"Atrasado",hoje:"Retorno hoje",proximo:"Próximos 7 dias",em_dia:"Em dia"};
-let S={clients:[]},view="clientes",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",service:"",sub:"todos"},form=null,UNQ_Q="",NORETURN_Q="";
+let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",service:"",sub:"todos"},form=null,UNQ_Q="",NORETURN_Q="";
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const iso=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const U=s=>{const[a,b,c]=s.split("-").map(Number);return Date.UTC(a,b-1,c)};
@@ -844,13 +849,83 @@ document.addEventListener("touchend",event=>{
   if(NAV_INDEX===start.index&&dx>72&&dx>Math.abs(dy)*1.35)backNav("gesture");
 },{passive:true});
 document.addEventListener("touchcancel",()=>{NAV_SWIPE=null},{passive:true});
+
+/* Atualização do app por gesto de puxar para baixo no topo da tela */
+let APP_PULL=null,APP_REFRESH_BUSY=false,APP_REFRESH_HIDE=null;
+function appRefreshIndicator(label,loading){
+  const el=$("#appRefresh");if(!el)return;
+  el.querySelector(".app-refresh-label").textContent=label;
+  el.classList.toggle("loading",!!loading);
+  el.classList.add("on");el.setAttribute("aria-hidden","false");
+}
+function hideAppRefresh(){
+  const el=$("#appRefresh");if(!el)return;
+  el.classList.remove("on","loading");el.setAttribute("aria-hidden","true");
+}
+async function refreshAppNow(){
+  if(APP_REFRESH_BUSY)return;
+  APP_REFRESH_BUSY=true;clearTimeout(APP_REFRESH_HIDE);
+  appRefreshIndicator("Verificando atualizações…",true);
+  try{
+    if(navigator.onLine===false)throw new Error("offline");
+    if("serviceWorker" in navigator){
+      const registration=await navigator.serviceWorker.getRegistration("./");
+      if(registration){
+        await registration.update();
+        const worker=registration.installing||registration.waiting;
+        if(worker&&worker.state!=="activated"&&worker.state!=="redundant"){
+          await new Promise(resolve=>{
+            let finished=false;
+            const done=()=>{if(finished)return;finished=true;clearTimeout(timer);worker.removeEventListener("statechange",check);resolve()};
+            const check=()=>{if(worker.state==="activated"||worker.state==="redundant")done()};
+            const timer=setTimeout(done,3500);
+            worker.addEventListener("statechange",check);
+            check();
+          });
+        }
+      }
+    }
+    appRefreshIndicator("Atualizado! Recarregando…",true);
+    setTimeout(()=>window.location.reload(),250);
+  }catch(error){
+    appRefreshIndicator(error&&error.message==="offline"?"Sem conexão. Tente novamente quando estiver online.":"Não consegui verificar agora. Tente novamente.",false);
+    APP_REFRESH_BUSY=false;
+    APP_REFRESH_HIDE=setTimeout(hideAppRefresh,2600);
+  }
+}
+document.addEventListener("touchstart",event=>{
+  if(event.touches.length!==1||APP_REFRESH_BUSY||window.scrollY>1)return;
+  if(view==="form"||view==="unqualifiedForm"||OF||UF||CLIENT_REG_OPEN)return;
+  const target=event.target;
+  if(target&&target.closest&&target.closest("input,textarea,select,a,button,nav,.photo-crop-overlay,.photo-viewer-overlay,#dlg,#lock,[contenteditable=true]"))return;
+  const touch=event.touches[0];
+  APP_PULL={startY:touch.clientY,startX:touch.clientX,claimed:false};
+},{passive:true});
+document.addEventListener("touchmove",event=>{
+  if(!APP_PULL||!event.touches.length||APP_REFRESH_BUSY)return;
+  const touch=event.touches[0],dy=touch.clientY-APP_PULL.startY,dx=touch.clientX-APP_PULL.startX;
+  if(dy>16&&dy>Math.abs(dx)*1.25&&window.scrollY<=1){
+    APP_PULL.claimed=true;
+    appRefreshIndicator(dy>=76?"Solte para atualizar":"Puxe para atualizar",false);
+    if(event.cancelable)event.preventDefault();
+  }else if(Math.abs(dx)>30||dy<0){APP_PULL=null;hideAppRefresh()}
+},{passive:false});
+document.addEventListener("touchend",event=>{
+  if(!APP_PULL)return;
+  const start=APP_PULL;APP_PULL=null;
+  const touch=event.changedTouches&&event.changedTouches[0];if(!touch)return;
+  const dy=touch.clientY-start.startY,dx=touch.clientX-start.startX;
+  if(start.claimed&&dy>=76&&dy>Math.abs(dx)*1.25&&window.scrollY<=1)refreshAppNow();
+  else hideAppRefresh();
+},{passive:true});
+document.addEventListener("touchcancel",()=>{APP_PULL=null;hideAppRefresh()},{passive:true});
 function updateActiveNavSnapshot(){if(NAV_READY&&!NAV_RESTORING&&navRouteKey()===NAV_KEY)NAV_HISTORY[NAV_INDEX]=captureNavState()}
 document.addEventListener("input",updateActiveNavSnapshot);
 document.addEventListener("change",updateActiveNavSnapshot);
 window.addEventListener("scroll",()=>{if(NAV_READY&&NAV_HISTORY[NAV_INDEX])NAV_HISTORY[NAV_INDEX].scrollY=window.scrollY||0},{passive:true});
 
 function render(){
-$("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
+$("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"],["nao_retorno","Não retornaram"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
 let r=rows();const el=$("#app");
 if(view=="painel"){
 const clientes=r.filter(c=>c.qual!="nao_qualificado"&&!c.semRetorno),naoQualificados=r.filter(c=>c.qual=="nao_qualificado"),naoRetornaram=r.filter(c=>c.qual!="nao_qualificado"&&c.semRetorno);
@@ -858,7 +933,7 @@ const rr=clientes.filter(c=>c.tipo!="assinante"),m=f=>rr.filter(f).length;
 const novos=clientes.filter(c=>clientStage(c)=="novo").sort((a,b)=>(b.created||"").localeCompare(a.created||""));
 const assinantes=clientes.filter(c=>c.tipo=="assinante");
 const dashSection=(title,items,empty)=>'<section class="dashboard-section"><div class="row"><h2>'+title+'</h2><span class="badge">'+items.length+'</span></div>'+list(items.slice(0,5),empty)+'</section>';
-const stats=[["Clientes na carteira",clientes.length,"go('clientes')",""],["Novos clientes",novos.length,"goSub('novos')",""],["Assinantes",assinantes.length,"goSub('assinatura')",""],["Retorno hoje",m(c=>c.st=="hoje"),"goReturnTab('hoje')","hot"],["Atrasados",m(c=>c.st=="atrasado"),"goReturnTab('atrasado')",""],["Próximos 7 dias",m(c=>c.st=="proximo"),"goReturnTab('proximo')",""],["Não retornaram",naoRetornaram.length,"goSub('nao_retorno')",""]];
+const stats=[["Clientes na carteira",clientes.length,"go('clientes')",""],["Novos clientes",novos.length,"goSub('novos')",""],["Assinantes",assinantes.length,"goSub('assinatura')",""],["Retorno hoje",m(c=>c.st=="hoje"),"goReturnTab('hoje')","hot"],["Atrasados",m(c=>c.st=="atrasado"),"goReturnTab('atrasado')",""],["Próximos 7 dias",m(c=>c.st=="proximo"),"goReturnTab('proximo')",""]];
 el.innerHTML='<h1>Dashboard</h1><div class="sub">Hoje, '+br(iso())+'. Um resumo do que merece atenção.</div>'+
 '<div class="grid kp dashboard-kpis">'+stats.map(([label,value,action,hot])=>'<button class="stat '+hot+'" onclick="'+action+'"><small>'+label+'</small><div class="big">'+value+'</div></button>').join("")+'</div>'+
 
@@ -875,7 +950,7 @@ else if(view=="clientes"){
 const clientes=r.filter(c=>c.qual!="nao_qualificado"&&!c.semRetorno),naoQualificados=r.filter(c=>c.qual=="nao_qualificado"),naoRetornaram=r.filter(c=>c.qual!="nao_qualificado"&&c.semRetorno);
 const q=F.q.toLowerCase().trim(),d=q.replace(/\D/g,"");
 const matches=c=>!q||(c.name+" "+(c.instagram||"")+" "+(c.email||"")+" "+(c.notes||"")).toLowerCase().includes(q)||(d.length>=3&&dg(c.phone).includes(d));
-const tabs=[["todos","Todos"],["novos","Novos"],["fixos","Fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"]];
+const tabs=[["todos","Todos"],["novos","Novos"],["fixos","Fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"],["nao_retorno","Não retornaram"]];
 const tabCount=k=>k=="todos"?clientes.length:k=="novos"?clientes.filter(c=>clientStage(c)=="novo").length:k=="fixos"?clientes.filter(c=>clientStage(c)=="fixo").length:k=="assinatura"?clientes.filter(c=>c.tipo=="assinante").length:k=="naoqualificados"?naoQualificados.length:naoRetornaram.length;
 const tabsHtml='<div class="tabs" style="margin-top:6px">'+tabs.map(([k,label])=>'<button class="'+(F.sub==k?"on":"")+'" onclick="setClientFilter(&#39;'+k+'&#39;)">'+label+' '+tabCount(k)+'</button>').join("")+'</div>';
 const opt=(o,v,e)=>'<option value="">'+e+'</option>'+Object.entries(o).map(([k,t])=>'<option value="'+k+'" '+(v==k?"selected":"")+'>'+t+'</option>').join("");
@@ -978,7 +1053,7 @@ clientes:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 
 retornos:'<path d="M8 2v4M16 2v4M3 10h18M21 12V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/><circle cx="17" cy="17" r="4"/><path d="M17 15.5V17l1 1"/>',
 crm:'<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/>',registrar:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',adicionar:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6 1 0 2 .2 2.8.6M19 14v6M16 17h6"/>',dados:'<path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/>',
 ajustes:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>'},
-NAV=[["clientes","Clientes"],["retornos","Retornos"],["crm","CRM"],["registrar","Registrar atendimento"],["adicionar","Adicionar cliente"],["ajustes","Configurações"]];
+NAV=[["painel","Dashboard"],["clientes","Clientes"],["retornos","Retornos"],["crm","CRM"],["registrar","Registrar atendimento"],["adicionar","Adicionar cliente"],["ajustes","Configurações"]];
 function parseCsv(t){const l=t.split("\n")[0],sep=(l.match(/;/g)||[]).length>(l.match(/,/g)||[]).length?";":",",R=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}else if(ch=='"')q=true;else if(ch==sep){r.push(c);c=""}else if(ch=="\n"||ch=="\r"){if(ch=="\r"&&t[i+1]=="\n")i++;r.push(c);c="";if(r.some(x=>x.trim()))R.push(r);r=[]}else c+=ch}r.push(c);if(r.some(x=>x.trim()))R.push(r);return R}
 function importCsv(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{const R=parseCsv(t.replace(/^\uFEFF/,"")),m=$("#imsg");if(R.length<2){m.textContent="Arquivo vazio.";return}
 const H=R[0].map(h=>h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,"")),
