@@ -1363,7 +1363,7 @@ function finSelectedServiceItems(months){
   if(FIN_SERVICE_FILTER!=="all")items=items.filter(item=>finNormalizeServiceName(item.name)===finNormalizeServiceName(FIN_SERVICE_FILTER));
   return items;
 }
-function finSelectChartMonth(period){FIN_SERVICE_DETAIL_PERIOD=period;render()}
+function finSelectChartMonth(period){const parts=String(period||"").split("-");if(parts.length!==2)return;FIN_SERVICE_DETAIL_PERIOD=period;FIN_YEAR=Number(parts[0]);FIN_MONTH=parts[1];render()}
 function finChart(year,mode,selectedMonth){
   const width=660,height=245,left=18,right=10,top=28,bottom=34,plotH=height-top-bottom,plotW=width-left-right;
   const values=[];
