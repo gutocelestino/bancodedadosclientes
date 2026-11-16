@@ -1376,10 +1376,10 @@ function finPrevMonths(){
 function finComparePanel(current,previous,label){
   if(!previous.length)return '<section class="finance-panel"><h2>Comparação</h2><div class="hint">Ainda não há dados do período anterior para comparar com '+label+'. Conforme você cadastrar outros meses, a comparação aparece aqui.</div></section>';
   const before=finAggregate(previous);
-  const metric=(name,a,b)=>{const diff=a-b,pct=b?((diff/b)*100):null;const sign=diff>0?"+":"";return '<div class="finance-compare-item"><small>'+name+'</small><strong>'+finBRL(a)+'</strong><small>Anterior: '+finBRL(b)+' · '+(pct===null?"sem base anterior":sign+pct.toFixed(1).replace(".",",")+"%")+'</small></div>'};
+  const metric=(name,a,b,money)=>{const diff=a-b,pct=b?((diff/b)*100):null;const sign=diff>0?"+":"";const fmt=money?finBRL:finInt;return '<div class="finance-compare-item"><small>'+name+'</small><strong>'+fmt(a)+'</strong><small>Anterior: '+fmt(b)+' · '+(pct===null?"sem base anterior":sign+pct.toFixed(1).replace(".",",")+"%")+'</small></div>'};
   return '<section class="finance-panel"><h2>Comparação com '+label+'</h2><div class="finance-compare">'+
-    metric("Vendas brutas",current.gross,before.gross)+metric("Comissões avulsas + produtos",current.income,current.income-current.movementIn+before.movementIn)+
-    metric("Serviços vendidos",current.serviceCount,before.serviceCount)+metric("Produtos vendidos",current.productCount,before.productCount)+
+    metric("Vendas brutas",current.gross,before.gross,true)+metric("Comissões avulsas + produtos",current.income,before.income,true)+
+    metric("Serviços vendidos",current.serviceCount,before.serviceCount,false)+metric("Produtos vendidos",current.productCount,before.productCount,false)+
     '</div></section>';
 }
 function finMonthRows(months){
