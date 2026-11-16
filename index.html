@@ -715,7 +715,7 @@ function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");ret
 if(isNew)S.clients.push(f);else S.clients=S.clients.map(x=>x.id==f.id?f:x);save();cur=f.id;view=f.qual=="nao_qualificado"?"unqualifiedFicha":"ficha";form=null;FSEC=null;render()}
 function exportCsv(){const h=["nome","telefone","instagram","email","qualificacao","tipo","tesoura","brigadeiro","frequencia_dias","ultimo_atendimento","observacoes"],
 e=v=>'"'+String(v??"").replace(/"/g,'""')+'"',
-csv=[h.join(",")].concat(S.clients.map(c=>[c.name,c.phone,c.instagram,c.email,c.qual,c.tipo=="assinante"?"Assinante":"Cliente",c.tesoura,c.brig,c.freq,c.last,c.notes].map(e).join(","))).join("\n");
+csv=[h.join(",")].concat(S.clients.filter(c=>c.qual!="nao_qualificado").map(c=>[c.name,c.phone,c.instagram,c.email,c.qual,c.tipo=="assinante"?"Assinante":"Cliente",c.tesoura,c.brig,c.freq,c.last,c.notes].map(e).join(","))).join("\n");
 download("clientes.csv","text/csv;charset=utf-8","\ufeff"+csv)}
 const sv=p=>`<svg viewBox="0 0 24 24">${p}</svg>`,
 IC={logo:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/>',
@@ -740,10 +740,10 @@ let RS=null,RNEW=false,REG_FASE="fixo",REG_TIPO="avulso",RTXT={name:"",phone:""}
 function regPaint(){$("#rbox").innerHTML=regBox();const i=$("#rs")||$("#rn");if(i)i.focus()}
 function regSug(){const v=$("#rs").value.trim(),box=$("#sug");if(!v){box.innerHTML="";return}
 const d=dg(v),isNum=d.length>0&&!/[a-zA-ZÀ-ÿ]/.test(v),q=nz(v).split(" ");
-const m=S.clients.filter(c=>isNum?(d.length>=2&&dg(c.phone).includes(d)):q.every(w=>nz(c.name).includes(w))).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,8);
+const m=S.clients.filter(c=>c.qual!="nao_qualificado"&&(isNum?(d.length>=2&&dg(c.phone).includes(d)):q.every(w=>nz(c.name).includes(w)))).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,8);
 box.innerHTML=m.map(c=>`<button class="card" style="margin:8px 0 0" onclick="RS='${c.id}';regPaint()"><div class="row"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(c.phone||"")}</span></div></button>`).join("")+`<button class="card" style="margin:8px 0 0;border-style:dashed" onclick="regNew()">+ Cadastrar "${esc(v)}" como novo cliente</button>`}
 function regNew(){const v=$("#rs").value.trim();RTXT=dg(v).length>0&&!/[a-zA-ZÀ-ÿ]/.test(v)?{name:"",phone:v}:{name:v,phone:""};REG_FASE="fixo";REG_TIPO="avulso";RNEW=true;regPaint()}
-function regView(){const done=S.clients.filter(c=>c.visits.some(v=>v.date==RD));
+function regView(){const done=S.clients.filter(c=>c.qual!="nao_qualificado"&&c.visits.some(v=>v.date==RD));
 $("#app").innerHTML=`<h1>Registrar atendimento</h1><div class="sub">Quem veio no dia. Atualiza o último atendimento e o próximo retorno.</div>
 <div class="card" style="margin-top:14px"><label>Dia do atendimento<input type="date" id="rd" value="${RD}" onchange="if(this.value){RD=this.value;render()}"></label><div id="rbox">${regBox()}</div></div>
 <h2>Atendimentos de ${br(RD)} <b>${done.length}</b></h2>${done.length?done.map(c=>`<div class="card"><div class="row"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(c.phone||"")}</span></div><div class="sub">Próximo retorno: ${br(next(c))}</div></div>`).join(""):'<p class="empty">Nenhum atendimento registrado neste dia.</p>'}`}
@@ -758,7 +758,7 @@ const svc=c=>{
   if(c.visa=="sim")services.push("Visagismo");
   return [...new Set(services.map(service=>String(service||"").trim()).filter(Boolean))];
 };
-const allClientServices=()=>[...new Set([...svList(),...S.clients.flatMap(client=>svc(client))])].sort((a,b)=>a.localeCompare(b));
+const allClientServices=()=>[...new Set([...svList(),...S.clients.filter(client=>client.qual!="nao_qualificado").flatMap(client=>svc(client))])].sort((a,b)=>a.localeCompare(b));
 const chips=()=>`<label>O que o cliente fez</label><div class="chips">${svList().map(s=>`<button type="button" class="chip ${RSV.includes(s)?"on":""}" onclick="togS(this,'${s}')">${s}</button>`).join("")}</div>`;
 function togS(b,k){const i=RSV.indexOf(k);i<0?RSV.push(k):RSV.splice(i,1);b.classList.toggle("on")}
 function togForm(b,k){const a=svc(form),i=a.indexOf(k);i<0?a.push(k):a.splice(i,1);form.services=a;if(k=="Visagismo")form.visa=i<0?"sim":"nao";b.classList.toggle("on")}
@@ -768,6 +768,7 @@ if(RNEW)return`<label>Nome<input id="rn" value="${esc(RTXT.name)}"></label><labe
 return`<label>Cliente<input id="rs" placeholder="Digite o nome ou o final do telefone" autocomplete="off" oninput="regSug()"></label><div id="sug"></div>`}
 function regFor(id){cur=id;RS=id;RNEW=false;RSV=[];view="registrar";render()}
 function regAdd(){let c=RS&&S.clients.find(x=>x.id==RS);
+if(c&&c.qual=="nao_qualificado"){toast("Este contato está na lista de não qualificados. Reavalie a qualificação antes de registrar atendimento.");return}
 if(!c){const n=$("#rn").value.trim(),p=$("#rp").value.trim(),d=dg(p);if(!n){alert("Informe o nome.");return}
 c=(d.length>=8&&S.clients.find(x=>dg(x.phone).slice(-9)==d.slice(-9)))||S.clients.find(x=>nz(x.name)==nz(n));
 if(!c){c={id:"c"+Date.now(),name:n,phone:p,instagram:"",email:"",qual:"nao_avaliado",tipo:REG_TIPO,fase:REG_FASE,freq:"",last:"",services:[],log:[],visits:[],created:iso()};S.clients.push(c)}else if(p&&!c.phone)c.phone=p}
@@ -822,8 +823,8 @@ $("#app").innerHTML=`<h1>${o.isNew?"Nova oportunidade":"Editar oportunidade"}</h
 <label>Observações<textarea rows="3" oninput="OF.notes=this.value">${esc(o.notes)}</textarea></label>
 <div class="actions"><button class="btn" onclick="saveO()">Salvar</button><button class="btn alt" onclick="OF=null;render()">Cancelar</button>${o.isNew?"":`<button class="btn del" onclick="delO()">Excluir</button>`}</div>`}
 function oSug(){const v=$("#os").value.trim(),b=$("#osg");if(!v){b.innerHTML="";return}const d=dg(v),isN=d.length>0&&!/[a-zA-ZÀ-ÿ]/.test(v),q=nz(v).split(" ");
-b.innerHTML=S.clients.filter(c=>isN?(d.length>=2&&dg(c.phone).includes(d)):q.every(w=>nz(c.name).includes(w))).slice(0,6).map(c=>`<button class="card" style="margin:8px 0 0" onclick="linkO('${c.id}')"><div class="row"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(c.phone||"")}</span></div></button>`).join("")}
-function linkO(id){const c=S.clients.find(x=>x.id==id);OF.clientId=id;OF.name=c.name;OF.phone=c.phone||"";render()}
+b.innerHTML=S.clients.filter(c=>c.qual!="nao_qualificado"&&(isN?(d.length>=2&&dg(c.phone).includes(d)):q.every(w=>nz(c.name).includes(w)))).slice(0,6).map(c=>`<button class="card" style="margin:8px 0 0" onclick="linkO('${c.id}')"><div class="row"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(c.phone||"")}</span></div></button>`).join("")}
+function linkO(id){const c=S.clients.find(x=>x.id==id&&x.qual!="nao_qualificado");if(!c){toast("Esse contato está na lista de não qualificados.");return}OF.clientId=id;OF.name=c.name;OF.phone=c.phone||"";render()}
 function saveO(){const o=OF;if(!o.name.trim()){alert("Informe o nome.");return}o.name=o.name.trim();o.value=o.value?+o.value:"";const n=o.isNew;delete o.isNew;
 if(n)crm().push(o);else S.crm=crm().map(x=>x.id==o.id?o:x);OF=null;save();render()}
 function fuO(id){const o=crm().find(x=>x.id==id);o.lastfu=iso();save();setTimeout(render,300)}
@@ -863,7 +864,7 @@ $("#app").innerHTML=`<h1>Configurações</h1>
 ${PF?`<div style="margin-top:12px">${hp?`<input id="p0" type="password" inputmode="numeric" placeholder="PIN atual">`:""}${PF=="set"?`<input id="p1" type="password" inputmode="numeric" maxlength="6" placeholder="Novo PIN (4 a 6 números)"><input id="p2" type="password" inputmode="numeric" maxlength="6" placeholder="Repita o novo PIN">`:""}<div class="sub" id="pm" style="color:var(--bad);min-height:18px"></div><div class="actions" style="margin-top:6px"><button class="btn" onclick="savePin()">Salvar</button><button class="btn alt" onclick="PF=false;ajView()">Cancelar</button></div></div>`:`<div class="actions"><button class="btn" onclick="PF='set';ajView()">${hp?"Trocar PIN":"Criar PIN"}</button>${hp?`<button class="btn alt" onclick="PF='rm';ajView()">Remover PIN</button>`:""}</div>`}
 <div class="sub" style="margin-top:10px">O PIN esconde a tela em aparelhos compartilhados. Os dados continuam guardados no navegador.</div></div>
 <h2>Serviços oferecidos</h2><div class="card"><div class="sub">Aparecem como opções no cadastro e ao registrar atendimento. Toque num serviço para remover.</div><div class="chips">${svList().map((s,i)=>`<span class="chip on">${esc(s)}<b class="x" title="Remover" onclick="rmServ(${i})">✕</b></span>`).join("")}</div><div style="display:flex;gap:8px;margin-top:12px"><input id="ns" style="margin:0" placeholder="Novo serviço" onkeydown="if(event.key=='Enter')addServ()"><button class="btn" onclick="addServ()">Adicionar</button></div><div class="actions"><button class="btn alt" onclick="resetServ()">Restaurar lista padrão</button></div></div>
-<h2>Dados</h2><div class="card">${kv2("Clientes",S.clients.length)}${kv2("Oportunidades no CRM",crm().length)}<div style="margin-top:12px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Arquivo CSV (no Google Sheets: Arquivo → Fazer download → CSV). Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div class="actions"><button class="btn alt" onclick="exportCsv()">Exportar clientes (CSV)</button><button class="btn alt" onclick="backupJson()">Backup completo (JSON)</button><button class="btn del" onclick="wipe()">Apagar todos os dados</button></div></div>`}
+<h2>Dados</h2><div class="card">${kv2("Clientes",S.clients.filter(c=>c.qual!="nao_qualificado").length)}${kv2("Contatos não qualificados",S.clients.filter(c=>c.qual=="nao_qualificado").length)}${kv2("Oportunidades no CRM",crm().length)}<div style="margin-top:12px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Arquivo CSV (no Google Sheets: Arquivo → Fazer download → CSV). Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div class="actions"><button class="btn alt" onclick="exportCsv()">Exportar clientes (CSV)</button><button class="btn alt" onclick="backupJson()">Backup completo (JSON)</button><button class="btn del" onclick="wipe()">Apagar todos os dados</button></div></div>`}
 function resetServ(){delete cfg().serv;save();ajView()}
 let FSEC=null;
 function editC(sec){FSEC=sec||null;form=JSON.parse(JSON.stringify(S.clients.find(x=>x.id==cur)));form.returnView=view;view="form";render()}
