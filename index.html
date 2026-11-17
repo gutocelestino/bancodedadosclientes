@@ -1475,7 +1475,10 @@ function finSelectedMonthDetail(){
   if(FIN_MONTH==="all")return '<section class="finance-panel"><h2>Detalhes dos gráficos</h2><div class="hint">Toque em uma barra para abrir o detalhamento do mês, com quantidades e valores.</div></section>';
   const period=finPeriodId(FIN_YEAR,Number(FIN_MONTH)),m=finMonthRecord(period);
   if(!m)return '<section class="finance-panel"><h2>Detalhes de '+finMonthLabel(period)+'</h2><div class="finance-empty">Não existe fechamento cadastrado para este mês.</div></section>';
-  const services=Array.isArray(m.serviceItems)?m.serviceItems:[],products=Array.isArray(m.productItems)?m.productItems:[];
+  const products=Array.isArray(m.productItems)?m.productItems:[];
+  if(FIN_TAB==="produtos"){
+    return '<section class="finance-panel"><h2>Produtos de '+finMonthLabel(period)+'</h2><div class="finance-kpis">'+finKpi("Unidades vendidas",finInt(m.productCount||products.reduce((n,x)=>n+finN(x.qty),0)),finBRL(m.productGross||products.reduce((n,x)=>n+finN(x.value),0))+" em vendas")+'</div>'+finTable(products,"Não há detalhamento de produtos neste mês.")+'</section>';
+  }
   return '<section class="finance-panel"><h2>Detalhes de '+finMonthLabel(period)+'</h2><div class="finance-kpis">'+finKpi("Serviços realizados",finInt(finMonthServiceCount(m)),finBRL(m.serviceGross)+" vendidos")+finKpi("Produtos",finInt(m.productCount),finBRL(m.productGross)+" vendidos")+'</div><h2>Serviços do mês</h2>'+finTable(finExpandServiceMonth(m).filter(x=>x.kind==="servicos").map(x=>({name:x.name,qty:x.qty,value:x.value,subscription:false})),"Não há detalhamento de serviços.")+'<h2 style="margin-top:18px">Produtos do mês</h2>'+finTable(products,"Não há detalhamento de produtos.")+'</section>';
 }
 function finServiceTrendPeriods(){
