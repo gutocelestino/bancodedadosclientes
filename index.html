@@ -1440,7 +1440,7 @@ function finServiceTrendPeriods(){
 function finSubscriptionMonthlyChart(){
   const data=Array.from({length:12},(_,i)=>{
     const period=finPeriodId(FIN_YEAR,i+1),m=finMonthRecord(period);
-    const items=m&&Array.isArray(m.serviceItems)?m.serviceItems.filter(x=>x.subscription||/\\bass\\b|assin/i.test(x.name||"")):[];
+    const items=m&&Array.isArray(m.serviceItems)?m.serviceItems.filter(x=>x.subscription||/\bass\b|assin/i.test(x.name||"")):[];
     return{period,record:!!m,qty:items.reduce((n,x)=>n+finN(x.qty),0),value:m?finN(m.subscriptionCommission):0};
   });
   const max=Math.max(1,...data.map(x=>x.qty)),width=1080,height=330,left=26,right=18,top=40,bottom=54,plotH=height-top-bottom,slot=(width-left-right)/12,barW=48,base=height-bottom;
@@ -1449,7 +1449,7 @@ function finSubscriptionMonthlyChart(){
   data.forEach((v,i)=>{
     const x=left+i*slot+(slot-barW)/2,h=plotH*v.qty/max,selected=FIN_MONTH===String(i+1).padStart(2,"0");
     const label=v.record?finInt(v.qty):"—",month=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][i];
-    svg+='<g class="finance-chart-month" onclick="event.preventDefault();event.stopPropagation();finSelectChartMonth(\''+v.period+'\\')"><title>'+finMonthLabel(v.period)+' · '+label+' serviços · Comissão prevista '+finBRL(v.value)+'</title>';
+    svg+='<g class="finance-chart-month" onclick="finSelectChartMonth(\\''+v.period+'\\')"><title>'+finMonthLabel(v.period)+' · '+label+' serviços · Comissão prevista '+finBRL(v.value)+'</title>';
     svg+='<rect x="'+(x-10)+'" y="'+(top-5)+'" width="'+(barW+20)+'" height="'+(plotH+32)+'" fill="transparent"/><rect x="'+x+'" y="'+(base-h)+'" width="'+barW+'" height="'+Math.max(v.qty?4:0,h)+'" rx="5" fill="'+(selected?"#e8c27f":"#d6aa5c")+'" opacity="'+(v.record?1:.25)+'"/>';
     svg+='<text x="'+(x+barW/2)+'" y="'+Math.max(18,base-h-10)+'" text-anchor="middle" fill="#f1eee8" font-size="13" font-weight="700">'+label+'</text><text x="'+(x+barW/2)+'" y="'+(height-15)+'" text-anchor="middle" fill="'+(selected?"#f1eee8":"#a29e94")+'" font-size="13">'+month+'</text></g>';
   });
