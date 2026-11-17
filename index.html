@@ -43,6 +43,18 @@ main{margin:0 auto 0 260px;max-width:1100px;padding:28px 40px}}
 h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);margin:26px 0 10px}h2 b{color:var(--gold)}
 .card{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:10px;color:inherit;font:inherit}
 .conversation-stage{padding:14px;border-radius:18px}.conversation-client-card{background:var(--card)!important;border:1px solid var(--bd)!important}
+.calendar-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0}
+.calendar-month{font-family:"Instrument Serif",Georgia,serif;font-size:27px;text-transform:capitalize}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.calendar-weekday{text-align:center;color:var(--sub);font-size:10px;padding:7px 0}
+.calendar-day{min-height:66px;padding:7px 3px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--fg);text-align:center;cursor:pointer;min-width:0}
+.calendar-day.outside{opacity:.35}.calendar-day.today{border-color:var(--gold)}.calendar-day.selected{background:#d6aa5c20;border-color:var(--gold)}
+.calendar-day-number{font-size:13px}.calendar-day-count{display:block;margin:5px auto 0;min-width:17px;width:max-content;padding:2px 5px;border-radius:99px;background:#d6aa5c26;color:var(--gold);font-size:10px}
+.calendar-list{margin-top:18px}.calendar-appointment{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin:8px 0}
+.calendar-appointment-time{color:var(--gold);font-weight:700;font-size:13px}.calendar-form{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-top:14px}
+.calendar-empty{color:var(--sub);text-align:center;padding:22px 8px;font-size:13px}
+@media(max-width:390px){.calendar-day{min-height:58px;padding:6px 1px}.calendar-day-number{font-size:12px}.calendar-grid{gap:3px}}
+
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px}.nm{font-weight:600}
 .badge{font-size:11px;padding:3px 9px;border-radius:99px;background:var(--mut);color:var(--sub);white-space:nowrap}
 .badge.atrasado{background:#e5694f26;color:var(--bad)}.badge.hoje{background:#d6aa5c30;color:var(--gold)}.badge.proximo{background:#5fc08a22;color:var(--ok)}
@@ -243,6 +255,7 @@ freqOpts=v=>`<option value="">Frequência: todas</option>`+[...FO.map(k=>[k,SL[k
 ff=(c,v)=>!v||(v[0]=="f"?(c.freq>0&&c.freq<=+v.slice(1)):c.st==v),
 SL={sem_frequencia:"Sem frequência",atrasado:"Atrasado",hoje:"Retorno hoje",proximo:"Próximos 7 dias",em_dia:"Em dia"};
 let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",service:"",sub:"todos"},form=null,UNQ_Q="",NORETURN_Q="";
+let CAL_MONTH=iso().slice(0,7),CAL_SELECTED=iso(),CAL_FORM_OPEN=false,CAL_EDIT_ID=null;
 let FIN_TAB="resumo",FIN_YEAR=new Date().getFullYear(),FIN_MONTH="all",FIN_FORM=null,FIN_MOV_FORM=null,FIN_SERVICE_FILTER="all",FIN_SERVICE_GROUP="servicos",FIN_SERVICE_DETAIL_PERIOD=null,FIN_DETAIL_KEY=null;
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const iso=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -993,6 +1006,49 @@ document.addEventListener("input",updateActiveNavSnapshot);
 document.addEventListener("change",updateActiveNavSnapshot);
 window.addEventListener("scroll",()=>{if(NAV_READY&&NAV_HISTORY[NAV_INDEX])NAV_HISTORY[NAV_INDEX].scrollY=window.scrollY||0},{passive:true});
 
+
+function calendarItems(){if(!Array.isArray(S.calendarAppointments))S.calendarAppointments=[];return S.calendarAppointments}
+function calendarMonthMove(delta){const [y,m]=CAL_MONTH.split("-").map(Number),d=new Date(y,m-1+delta,1);CAL_MONTH=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");CAL_SELECTED=CAL_MONTH+"-01";CAL_FORM_OPEN=false;render()}
+function calendarSelectDay(day){CAL_SELECTED=day;CAL_FORM_OPEN=false;CAL_EDIT_ID=null;render()}
+function calendarOpenForm(id){CAL_EDIT_ID=id||null;CAL_FORM_OPEN=true;render()}
+function calendarCancelForm(){CAL_FORM_OPEN=false;CAL_EDIT_ID=null;render()}
+function calendarSave(){
+ const clientId=$("#calClient").value,date=$("#calDate").value,time=$("#calTime").value,notes=$("#calNotes").value.trim();
+ const client=S.clients.find(c=>c.id===clientId);
+ if(!client||!date||!time){toast("Escolha um cliente, uma data e um horário.");return}
+ const items=calendarItems();
+ if(CAL_EDIT_ID){const item=items.find(x=>x.id===CAL_EDIT_ID);if(!item)return;item.clientId=clientId;item.date=date;item.time=time;item.notes=notes}
+ else items.push({id:"ag"+Date.now(),clientId,date,time,notes,created:new Date().toISOString()});
+ CAL_MONTH=date.slice(0,7);CAL_SELECTED=date;CAL_FORM_OPEN=false;CAL_EDIT_ID=null;save();toast("Agendamento salvo na Carteira.");render()
+}
+function calendarDelete(id){askC("Excluir este agendamento?",()=>{S.calendarAppointments=calendarItems().filter(x=>x.id!==id);save();render()})}
+function calendarView(){
+ const [year,month]=CAL_MONTH.split("-").map(Number),first=new Date(year,month-1,1),start=(first.getDay()+6)%7,days=new Date(year,month,0).getDate(),prevDays=new Date(year,month-1,0).getDate();
+ const items=calendarItems().slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+ const byDay={};items.forEach(x=>(byDay[x.date]||(byDay[x.date]=[])).push(x));
+ const names=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+ let cells="";
+ for(let i=0;i<42;i++){let n,date,out=false;if(i<start){n=prevDays-start+i+1;const d=new Date(year,month-2,n);date=iso(d);out=true}else if(i>=start+days){n=i-start-days+1;const d=new Date(year,month,n);date=iso(d);out=true}else{n=i-start+1;date=CAL_MONTH+"-"+String(n).padStart(2,"0")}
+ const count=(byDay[date]||[]).length;cells+='<button class="calendar-day '+(out?"outside ":"")+(date===iso()?"today ":"")+(date===CAL_SELECTED?"selected":"")+'" onclick="calendarSelectDay(\''+date+'\')"><span class="calendar-day-number">'+n+'</span>'+(count?'<span class="calendar-day-count">'+count+'</span>':'')+'</button>'}
+ const dayItems=byDay[CAL_SELECTED]||[];
+ let formHtml="";
+ if(CAL_FORM_OPEN){
+  const editing=CAL_EDIT_ID?items.find(x=>x.id===CAL_EDIT_ID):null;
+  const options=S.clients.filter(c=>c.qual!=="nao_qualificado").slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>'<option value="'+esc(c.id)+'" '+((editing?editing.clientId:"")===c.id?"selected":"")+'>'+esc(c.name)+'</option>').join("");
+  formHtml='<div class="calendar-form"><div class="row"><strong>'+(editing?"Editar agendamento":"Marcar cliente")+'</strong><button class="lnk" onclick="calendarCancelForm()">Fechar</button></div>'+
+  '<label>Cliente<select id="calClient"><option value="">Selecione um cliente</option>'+options+'</select></label>'+
+  '<label>Data<input id="calDate" type="date" value="'+esc(editing?editing.date:CAL_SELECTED)+'"></label>'+
+  '<label>Horário<input id="calTime" type="time" value="'+esc(editing?editing.time:"")+'"></label>'+
+  '<label>Observação (opcional)<textarea id="calNotes" rows="2" placeholder="Ex.: corte e barba">'+esc(editing?editing.notes:"")+'</textarea></label>'+
+  '<div class="actions"><button class="btn" onclick="calendarSave()">Salvar agendamento</button><button class="btn alt" onclick="calendarCancelForm()">Cancelar</button></div></div>'
+ }
+ const listHtml=dayItems.length?dayItems.map(x=>{const c=S.clients.find(z=>z.id===x.clientId);return '<div class="calendar-appointment"><div class="row"><div><div class="calendar-appointment-time">'+esc(x.time)+'</div><div class="nm" style="margin-top:4px">'+esc(c?c.name:"Cliente não encontrado")+'</div>'+(x.notes?'<div class="sub" style="margin-top:4px">'+esc(x.notes)+'</div>':'')+'</div><div class="actions" style="margin:0"><button class="lnk" onclick="calendarOpenForm(\''+x.id+'\')">Editar</button><button class="lnk" style="color:var(--bad)" onclick="calendarDelete(\''+x.id+'\')">Excluir</button></div></div></div>'}).join(""):'<div class="calendar-empty">Nenhum cliente marcado para este dia.</div>';
+ $("#app").innerHTML='<h1>Calendário</h1><div class="sub">Organize os clientes por data e horário. Depois, bloqueie o horário na sua agenda principal.</div>'+
+ '<div class="calendar-head"><button class="btn alt" onclick="calendarMonthMove(-1)">‹</button><div class="calendar-month">'+names[month-1]+' '+year+'</div><button class="btn alt" onclick="calendarMonthMove(1)">›</button></div>'+
+ '<div class="calendar-grid">'+["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(x=>'<div class="calendar-weekday">'+x+'</div>').join("")+cells+'</div>'+
+ '<div class="calendar-list"><div class="row"><div><h2 style="margin:0"> '+br(CAL_SELECTED)+'</h2><div class="sub">'+dayItems.length+' agendamento(s)</div></div><button class="btn" onclick="calendarOpenForm()">+ Marcar cliente</button></div>'+listHtml+'</div>'+formHtml
+}
+
 function render(){
 $("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"],["nao_retorno","Não retornaram"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
 let r=rows();const el=$("#app");
@@ -1072,7 +1128,7 @@ else if(view=="ficha"||view=="form"){fichaView(r)}
 else if(view=="crm"){crmView()}
 else if(view=="registrar"){regView()}
 else if(view=="dados"){el.innerHTML=`<h1>Importar e exportar</h1><div class="sub">Arquivos CSV (no Google Sheets: Arquivo → Fazer download → CSV).</div><div class="card" style="margin-top:14px"><div class="nm">Importar clientes</div><div class="sub" style="margin:4px 0 8px">Colunas aceitas: nome, telefone, instagram, e-mail, qualificação, tipo, visagismo, frequência, último atendimento, observações.</div><input type="file" accept=".csv,text/csv" onchange="importCsv(this)"><div class="sub" id="imsg" style="margin-top:8px"></div></div><div style="margin-top:12px"><div class="nm">Restaurar backup</div><div class="sub" style="margin:4px 0 8px">Arquivo JSON gerado pelo Backup completo.</div><input type="file" accept=".json,application/json" onchange="restoreJson(this)"></div><div class="card"><div class="nm">Exportar clientes</div><div class="sub">${S.clients.length} clientes</div><div class="actions"><button class="btn" onclick="exportCsv()">Exportar CSV</button></div></div>`}
-else if(view=="financeiro"){financeView()}else if(view=="ajustes"){ajView()}trackNavRender();refreshPhotoUrls()}
+else if(view=="calendario"){calendarView()}else if(view=="financeiro"){financeView()}else if(view=="ajustes"){ajView()}trackNavRender();refreshPhotoUrls()}
 function render2(){const p=$("#q").selectionStart;render();const i=$("#q");i.focus();i.setSelectionRange(p,p)}
 function newC(){FSEC=null;form={id:"c"+Date.now(),name:"",phone:"",instagram:"",email:"",qual:"nao_avaliado",tipo:"avulso",fase:"fixo",services:[],tesoura:"nao_informado",brig:"nao_informado",freq:"",last:"",notes:"",visits:[],created:iso(),isNew:true};cur=form.id;view="form";render()}
 function fichaView(r){
@@ -1131,9 +1187,10 @@ IC={logo:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M2
 painel:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
 clientes:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.4c2.2.7 3.5 2.6 3.5 5.6"/>',
 retornos:'<path d="M8 2v4M16 2v4M3 10h18M21 12V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/><circle cx="17" cy="17" r="4"/><path d="M17 15.5V17l1 1"/>',
-crm:'<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/>',conversas:'<path d="M21 11.5a8.5 8.5 0 0 1-12.7 7.4L3 20l1.1-4.2A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h8M8 14h5"/>',registrar:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',adicionar:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6 1 0 2 .2 2.8.6M19 14v6M16 17h6"/>',dados:'<path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/>',
+crm:'<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/>',
+calendario:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h3M8 17h7"/>',conversas:'<path d="M21 11.5a8.5 8.5 0 0 1-12.7 7.4L3 20l1.1-4.2A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h8M8 14h5"/>',registrar:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',adicionar:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6 1 0 2 .2 2.8.6M19 14v6M16 17h6"/>',dados:'<path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/>',
 ajustes:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',financeiro:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 15v-3M12 15V7M17 15v-6"/>'},
-NAV=[["painel","Dashboard"],["clientes","Clientes"],["conversas","Conversas"],["retornos","Retornos"],["crm","CRM"],["registrar","Registrar atendimento"],["adicionar","Adicionar cliente"],["financeiro","Financeiro"],["ajustes","Configurações"]];
+NAV=[["painel","Dashboard"],["clientes","Clientes"],["conversas","Conversas"],["retornos","Retornos"],["crm","CRM"],["calendario","Calendário"],["registrar","Registrar atendimento"],["adicionar","Adicionar cliente"],["financeiro","Financeiro"],["ajustes","Configurações"]];
 function parseCsv(t){const l=t.split("\n")[0],sep=(l.match(/;/g)||[]).length>(l.match(/,/g)||[]).length?";":",",R=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}else if(ch=='"')q=true;else if(ch==sep){r.push(c);c=""}else if(ch=="\n"||ch=="\r"){if(ch=="\r"&&t[i+1]=="\n")i++;r.push(c);c="";if(r.some(x=>x.trim()))R.push(r);r=[]}else c+=ch}r.push(c);if(r.some(x=>x.trim()))R.push(r);return R}
 function importCsv(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{const R=parseCsv(t.replace(/^\uFEFF/,"")),m=$("#imsg");if(R.length<2){m.textContent="Arquivo vazio.";return}
 const H=R[0].map(h=>h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,"")),
