@@ -1437,6 +1437,24 @@ function finServiceTrendPeriods(){
   const parts=anchor.split("-").map(Number);
   return [-2,-1,0].map(offset=>{const d=new Date(Date.UTC(parts[0],parts[1]-1+offset,1));return String(d.getUTCFullYear())+"-"+String(d.getUTCMonth()+1).padStart(2,"0")});
 }
+function finSubscriptionMonthlyChart(){
+  const data=Array.from({length:12},(_,i)=>{
+    const period=finPeriodId(FIN_YEAR,i+1),m=finMonthRecord(period);
+    const items=m&&Array.isArray(m.serviceItems)?m.serviceItems.filter(x=>x.subscription||/\\bass\\b|assin/i.test(x.name||"")):[];
+    return{period,record:!!m,qty:items.reduce((n,x)=>n+finN(x.qty),0),value:m?finN(m.subscriptionCommission):0};
+  });
+  const max=Math.max(1,...data.map(x=>x.qty)),width=1080,height=330,left=26,right=18,top=40,bottom=54,plotH=height-top-bottom,slot=(width-left-right)/12,barW=48,base=height-bottom;
+  let svg='<svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Serviços de assinatura por mês">';
+  for(let g=0;g<=4;g++){const y=top+plotH*g/4;svg+='<line x1="'+left+'" y1="'+y+'" x2="'+(width-right)+'" y2="'+y+'" stroke="#ffffff17"/>'}
+  data.forEach((v,i)=>{
+    const x=left+i*slot+(slot-barW)/2,h=plotH*v.qty/max,selected=FIN_MONTH===String(i+1).padStart(2,"0");
+    const label=v.record?finInt(v.qty):"—",month=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][i];
+    svg+='<g class="finance-chart-month" onclick="event.preventDefault();event.stopPropagation();finSelectChartMonth(\\''+v.period+'\\')"><title>'+finMonthLabel(v.period)+' · '+label+' serviços · Comissão prevista '+finBRL(v.value)+'</title>';
+    svg+='<rect x="'+(x-10)+'" y="'+(top-5)+'" width="'+(barW+20)+'" height="'+(plotH+32)+'" fill="transparent"/><rect x="'+x+'" y="'+(base-h)+'" width="'+barW+'" height="'+Math.max(v.qty?4:0,h)+'" rx="5" fill="'+(selected?"#e8c27f":"#d6aa5c")+'" opacity="'+(v.record?1:.25)+'"/>';
+    svg+='<text x="'+(x+barW/2)+'" y="'+Math.max(18,base-h-10)+'" text-anchor="middle" fill="#f1eee8" font-size="13" font-weight="700">'+label+'</text><text x="'+(x+barW/2)+'" y="'+(height-15)+'" text-anchor="middle" fill="'+(selected?"#f1eee8":"#a29e94")+'" font-size="13">'+month+'</text></g>';
+  });
+  return '<div class="finance-chart">'+svg+'</svg></div><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>Mês</th><th>Serviços</th><th>Comissão prevista</th></tr></thead><tbody>'+data.map(v=>'<tr><td>'+finMonthLabel(v.period)+'</td><td>'+(v.record?finInt(v.qty):"—")+'</td><td>'+(v.record?finBRL(v.value):"—")+'</td></tr>').join("")+'</tbody></table></div>';
+}
 function finMonthlyCategoryChart(kind){
   const products=kind==="products";
   const periods=Array.from({length:12},(_,i)=>finPeriodId(FIN_YEAR,i+1));
@@ -1616,7 +1634,7 @@ function financeView(){
   if(FIN_MOV_FORM){finMovementFormView();return}
   if(FIN_DETAIL_KEY){$("#app").innerHTML='<div class="finance-page">'+finDetailView(months,total)+'</div>';return}
   const yearOptions=years.map(y=>'<option value="'+y+'" '+(FIN_YEAR===y?"selected":"")+'>'+y+'</option>').join("");
-  const tabs=[["resumo","Visão geral"],["servicos","Serviços"],["produtos","Produtos"],["assinaturas","Assinaturas"],["comissoes","Comissões"],["lancamentos","Lançamentos"]];
+  const tabs=[["resumo","Visão geral"],["servicos","Serviços"],["produtos","Produtos"],["assinaturas","Assinaturas"]];
   const tabHtml='<div class="tabs finance-tabs">'+tabs.map(([k,l])=>'<button class="'+(FIN_TAB===k?"on":"")+'" onclick="FIN_TAB=\''+k+'\';render()">'+l+'</button>').join("")+'</div>';
   const header='<div class="finance-head"><div><h1>Financeiro</h1><div class="sub">Uma visão separada da gestão de clientes: vendas, comissões, produtos, serviços e resultado por período.</div></div><button class="btn" onclick="finNewMonth()">+ Adicionar mês</button></div>'+
     '<div class="finance-filters"><label>Ano<select onchange="FIN_YEAR=Number(this.value);FIN_MONTH=\'all\';render()">'+yearOptions+'</select></label><label>Período<select onchange="FIN_MONTH=this.value;render()"><option value="all" '+(FIN_MONTH==="all"?"selected":"")+'>Ano inteiro</option>'+finMonthOptions()+'</select></label></div>'+
@@ -1660,8 +1678,9 @@ function financeView(){
       '<section class="finance-panel"><h2>Quantidade de produtos por mês</h2><div class="hint">Veja os 12 meses do ano, arraste o gráfico para os lados e toque em uma barra para abrir os detalhes daquele mês.</div>'+finMonthlyCategoryChart("products")+'</section>'+finSelectedMonthDetail()+
       '<section class="finance-panel"><h2>Produtos por tipo</h2><div class="hint">Ranking de produtos vendidos no período.</div>'+finTable(list,"Não há detalhamento de produtos neste período.")+'</section>';
   }else if(FIN_TAB==="assinaturas"){
-    const list=finDetailList(months).subscriptions;
+    const list=finDetailListt(months).subscriptions;
     body='<div class="finance-kpis">'+finKpi("Serviços de assinatura",finInt(finSubscriptionCount(months)),"Quantidade detalhada no relatório")+finKpi("Comissão prevista",finBRL(total.subscriptionCommission),"Valor projetado pelo relatório")+'</div>'+
+      '<section class="finance-panel"><h2>Assinaturas por mês</h2><div class="hint">Acompanhe a quantidade de serviços vinculados às assinaturas e a comissão prevista em cada mês. Arraste o gráfico para os lados e toque em um mês para selecionar o período.</div>'+finSubscriptionMonthlyChart()+'</section>'+
       '<section class="finance-panel"><h2>Serviços realizados por assinatura</h2><div class="hint">Estes itens aparecem com valor de venda zero no relatório, por serem serviços vinculados às assinaturas.</div>'+finTable(list,"Não há itens de assinatura detalhados neste período.")+'</section>'+
       '<section class="finance-panel"><h2>Como interpretar</h2><div class="hint">A comissão prevista de assinaturas é mostrada separadamente. Ela não é somada às entradas confirmadas enquanto não houver um valor efetivamente lançado.</div></section>';
   }else if(FIN_TAB==="comissoes"){
