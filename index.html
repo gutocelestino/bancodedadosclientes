@@ -1012,6 +1012,15 @@ dashSection("Atrasados",rr.filter(c=>c.st=="atrasado").sort(byNx),"Nenhum client
 dashSection("Próximos 7 dias",rr.filter(c=>c.st=="proximo").sort(byNx),"Nada nos próximos 7 dias.")+
 '</div>';
 }
+else if(view=="conversas"){
+const labels={para_chamar:"Para chamar",mensagem_enviada:"Mensagem enviada",aguardando_resposta:"Aguardando resposta",respondeu:"Respondeu",agendado:"Agendado"};
+const order=["para_chamar","mensagem_enviada","aguardando_resposta","respondeu","agendado"];
+const overdue=S.clients.filter(c=>c.qual!="nao_qualificado"&&!c.semRetorno&&c.tipo!="assinante"&&c.st=="atrasado"&&!c.conversationStatus);
+const groups=order.map(k=>[k,S.clients.filter(c=>c.conversationStatus==k&&c.qual!="nao_qualificado")]);
+groups[0][1]=groups[0][1].concat(overdue);
+const cards=items=>items.map(c=>"<div class=\"card\" style=\"margin:10px 0\"><div class=\"row\"><div><button class=\"lnk\" onclick=\"openConversationClient(\'"+c.id+"\')\">"+esc(c.name)+"</button><div class=\"sub\">"+esc(svc(c).join(" + ")||"Cliente")+" · Última visita: "+br(c.last)+"</div></div><span class=\"badge\">"+labels[c.conversationStatus||"para_chamar"]+"</span></div><div class=\"actions\"><select onchange=\"setConversationStatus(\'"+c.id+"\',this.value)\">"+order.map(k=>"<option value=\""+k+"\" "+((c.conversationStatus||"para_chamar")==k?"selected":"")+">"+labels[k]+"</option>").join("")+"</select></div></div>").join("");
+el.innerHTML="<h1>Conversas</h1><div class=\"sub\">Clientes atrasados e acompanhamento das mensagens de reativação.</div><div class=\"grid kp\">"+groups.map(g=>"<div class=\"stat\"><small>"+labels[g[0]]+"</small><div class=\"big\">"+g[1].length+"</div></div>").join("")+"</div>"+groups.map(g=>"<section style=\"margin-top:20px\"><h2>"+labels[g[0]]+"</h2>"+(g[1].length?cards(g[1]):"<p class=\"empty\">Nenhum cliente nesta etapa.</p>")+"</section>").join("");
+}
 else if(view=="retornos"){r=r.filter(c=>c.qual!="nao_qualificado"&&c.tipo!="assinante"&&!c.semRetorno);const w=r.filter(c=>c.nx).sort(byNx),L={hoje:r.filter(c=>c.st=="hoje"),atrasado:w.filter(c=>c.st=="atrasado"),proximo:w.filter(c=>c.st=="proximo"),todos:w,sem_frequencia:r.filter(c=>c.st=="sem_frequencia"),em_dia:w.filter(c=>c.st=="em_dia"),f15:r.filter(c=>ff(c,"f15")).sort(byNx),f30:r.filter(c=>ff(c,"f30")).sort(byNx),f60:r.filter(c=>ff(c,"f60")).sort(byNx),f90:r.filter(c=>ff(c,"f90")).sort(byNx)},N={hoje:"Hoje",atrasado:"Atrasados",proximo:"7 dias",todos:"Todos",sem_frequencia:"Sem frequência",em_dia:"Em dia",f15:"Até 15 dias",f30:"Até 30 dias",f60:"Até 60 dias",f90:"Até 90 dias"};
 el.innerHTML=`<h1>Retornos</h1><div class="tabs" style="flex-wrap:wrap;overflow:visible">${["hoje","atrasado","proximo","todos"].map(k=>`<button class="${tab==k?"on":""}" onclick="tab='${k}';render()">${N[k]} ${L[k].length}</button>`).join("")}<select class="chipsel${["hoje","atrasado","proximo","todos"].includes(tab)?"":" on"}" onchange="if(this.value){tab=this.value;render()}"><option value="">Filtros</option>${Object.keys(N).slice(4).map(k=>`<option value="${k}" ${tab==k?"selected":""}>${N[k]} ${L[k].length}</option>`).join("")}</select></div>${list(L[tab],"Nenhum cliente nesta lista.")}`}
 else if(view=="clientes"){
@@ -1105,7 +1114,7 @@ function fichaView(r){
   ficha2(c);
   return;
 }
-function goClientes(){go("clientes")}
+function setConversationStatus(id,status){const c=S.clients.find(x=>x.id==id);if(!c)return;if(status){c.conversationStatus=status;c.conversationUpdated=iso()}else{delete c.conversationStatus;delete c.conversationUpdated}save();render()}function openConversationClient(id){cur=id;view="ficha";render()}function goClientes(){go("clientes")}
 function cancelNewClient(){if(NAV_READY&&NAV_INDEX>0){backNav();return}goClientes()}
 function cancelEditForm(){if(NAV_READY&&NAV_INDEX>0){backNav();return}view=form&&form.returnView||'ficha';form=null;FSEC=null;render()}
 function saveForm(){const f=form;if(!f.name.trim()){alert("Informe o nome.");return}f.name=f.name.trim();f.tipo=f.tipo=="assinante"?"assinante":"avulso";f.produto=f.produto=="sim"?"sim":"nao";f.instagram=igh(f.instagram);f.freq=f.freq?+f.freq:"";f.services=svc(f);f.fase=f.fase=="novo"?"novo":"fixo";if(f.attendanceTotal!==undefined){const desired=Math.max(0,Math.floor(Number(f.attendanceTotal)||0));f.attendancesBase=desired-(Array.isArray(f.visits)?f.visits.length:0);delete f.attendanceTotal}delete f.visa;delete f.days;const isNew=f.isNew;delete f.isNew;delete f.returnView;if(f.qual=="nao_qualificado"){f.semRetorno=false;delete f.semRetornoDesde}
@@ -1121,7 +1130,7 @@ clientes:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 
 retornos:'<path d="M8 2v4M16 2v4M3 10h18M21 12V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/><circle cx="17" cy="17" r="4"/><path d="M17 15.5V17l1 1"/>',
 crm:'<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/>',registrar:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',adicionar:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6 1 0 2 .2 2.8.6M19 14v6M16 17h6"/>',dados:'<path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/>',
 ajustes:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',financeiro:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 15v-3M12 15V7M17 15v-6"/>'},
-NAV=[["painel","Dashboard"],["clientes","Clientes"],["retornos","Retornos"],["crm","CRM"],["registrar","Registrar atendimento"],["adicionar","Adicionar cliente"],["financeiro","Financeiro"],["ajustes","Configurações"]];
+NAV=[["painel","Dashboard"],["clientes","Clientes"],["conversas","Conversas"],["retornos","Retornos"],["crm","CRM"],["registrar","Registrar atendimento"],["adicionar","Adicionar cliente"],["financeiro","Financeiro"],["ajustes","Configurações"]];
 function parseCsv(t){const l=t.split("\n")[0],sep=(l.match(/;/g)||[]).length>(l.match(/,/g)||[]).length?";":",",R=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}else if(ch=='"')q=true;else if(ch==sep){r.push(c);c=""}else if(ch=="\n"||ch=="\r"){if(ch=="\r"&&t[i+1]=="\n")i++;r.push(c);c="";if(r.some(x=>x.trim()))R.push(r);r=[]}else c+=ch}r.push(c);if(r.some(x=>x.trim()))R.push(r);return R}
 function importCsv(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{const R=parseCsv(t.replace(/^\uFEFF/,"")),m=$("#imsg");if(R.length<2){m.textContent="Arquivo vazio.";return}
 const H=R[0].map(h=>h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,"")),
