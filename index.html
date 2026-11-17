@@ -1360,22 +1360,60 @@ function finTable(items,empty,kind){
 function finNormalizeServiceName(name){
   return String(name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
 }
-function finServiceKind(name){
-  const n=finNormalizeServiceName(name).replace(/[()]/g,"").replace(/\s+/g," ").trim();
-  const principais=["corte","barba","corte e barba","corte + barba","corte & barba","corte barba","corte/barba","combo corte e barba","combo corte + barba","combo corte barba","combo corte/barba"];
-  return principais.includes(n)?"servicos":"extras";
+function finIsSubscriptionItem(item){
+  return !!(item&&item.subscription)||/\bass\b|assin/i.test(String(item&&item.name||""));
 }
-function finServiceUnits(item){
-  const qty=Math.max(0,finN(item&&item.qty));
-  const n=finNormalizeServiceName(item&&item.name);
-  return qty*(n.includes("corte")&&n.includes("barba")?2:1);
+function finExpandServiceItem(item){
+  if(finIsSubscriptionItem(item))return [];
+  const name=finNormalizeServiceName(item&&item.name),qty=Math.max(0,finN(item&&item.qty));
+  if(!name||!qty)return [];
+  let rest=name.replace(/barba terapia/g," ").replace(/terapia da barba/g," ");
+  const out=[],add=(label,count,kind)=>{if(count>0)out.push({name:label,qty:qty*count,value:kind==="servicos"?finN(item.value):0,subscription:false,kind});};
+  const cut=(rest.match(/\bcorte\b/g)||[]).length;
+  const beard=(rest.match(/\bbarba\b/g)||[]).length;
+  if(cut)add("Corte",cut,"servicos");
+  if(beard)add("Barba",beard,"servicos");
+  const extras=[
+    ["Sobrancelha",/\bsobrancelh\w*/g],
+    ["Desondulação",/\bdesondul\w*/g],
+    ["Depilação",/\bdepil\w*/g],
+    ["Selagem",/\bselagem\b/g],
+    ["Raspagem",/\braspagem\b/g],
+    ["Acabamento",/\bacabamento\b/g],
+    ["Terapia capilar",/\bterapia capilar\b/g],
+    ["Hidratação",/\bhidrat\w*/g],
+    ["Camuflagem",/\bcamuflagem\b/g],
+    ["Barba terapia",/\bbarba terapia\b/g]
+  ];
+  extras.forEach(([label,re])=>{const count=(name.match(re)||[]).length;if(count)add(label,count,"extras")});
+  const matched=cut+beard+extras.reduce((n,[,re])=>n+(name.match(re)||[]).length,0);
+  if(!matched)out.push({name:String(item.name||"Serviço"),qty,value:finN(item.value),subscription:false,kind:"extras"});
+  return out;
+}
+function finServiceKind(name){
+  const item=finExpandServiceItem({name,qty:1,value:0});
+  return item.some(x=>x.kind==="servicos")?"servicos":"extras";
+}
+function finServiceUnits(item){return Math.max(0,finN(item&&item.qty));}
+function finExpandServiceMonth(month){
+  return (Array.isArray(month&&month.serviceItems)?month.serviceItems:[]).flatMap(finExpandServiceItem);
+}
+function finExpandedServiceItems(months){
+  const map=new Map();
+  months.forEach(m=>(Array.isArray(m.serviceItems)?m.serviceItems:[]).forEach(source=>{
+    finExpandServiceItem(source).forEach(x=>{
+      const key=x.kind+"|"+finNormalizeServiceName(x.name),item=map.get(key)||{name:x.name,qty:0,value:0,subscription:false,kind:x.kind};
+      item.qty+=x.qty;item.value+=x.value;map.set(key,item);
+    });
+  }));
+  return [...map.values()].sort((a,b)=>b.value-a.value||b.qty-a.qty||a.name.localeCompare(b.name));
 }
 function finMonthServiceCount(month){
   if(Array.isArray(month&&month.serviceItems)&&month.serviceItems.length)return month.serviceItems.reduce((sum,item)=>sum+finServiceUnits(item),0);
   return Math.max(0,finN(month&&month.serviceCount));
 }
 function finMonthGroupItems(months,group){
-  return finMergedItems(months,"serviceItems").filter(item=>finServiceKind(item.name)===group);
+  return finExpandedServiceItems(months).filter(item=>item.kind===group);
 }
 function finSelectedServiceItems(months){
   let items=finMonthGroupItems(months,FIN_SERVICE_GROUP);
@@ -1465,8 +1503,7 @@ function finMonthlyCategoryChart(kind){
       const items=Array.isArray(m.productItems)?m.productItems:[];
       return{period,record:true,qty:items.reduce((n,x)=>n+finN(x.qty),0)||finN(m.productCount),value:items.reduce((n,x)=>n+finN(x.value),0)||finN(m.productGross)};
     }
-    let items=Array.isArray(m.serviceItems)?m.serviceItems:[];
-    items=items.filter(x=>finServiceKind(x.name)===FIN_SERVICE_GROUP);
+    let items=finExpandServiceMonth(m).filter(x=>x.kind===FIN_SERVICE_GROUP);
     if(FIN_SERVICE_FILTER!=="all")items=items.filter(x=>finNormalizeServiceName(x.name)===finNormalizeServiceName(FIN_SERVICE_FILTER));
     return{period,record:true,qty:items.reduce((n,x)=>n+finServiceUnits(x),0),value:items.reduce((n,x)=>n+finN(x.value),0)};
   });
@@ -1486,8 +1523,7 @@ function finMonthlyCategoryChart(kind){
 }
 function finServiceMetric(period){
   const m=finMonthRecord(period);if(!m)return{qty:0,value:0,available:false,record:false};
-  let items=Array.isArray(m.serviceItems)?m.serviceItems:[];
-  items=items.filter(x=>finServiceKind(x.name)===FIN_SERVICE_GROUP);
+  let items=finExpandServiceMonth(m).filter(x=>x.kind===FIN_SERVICE_GROUP);
   if(FIN_SERVICE_FILTER!=="all")items=items.filter(x=>finNormalizeServiceName(x.name)===finNormalizeServiceName(FIN_SERVICE_FILTER));
   if(!Array.isArray(m.serviceItems)||!m.serviceItems.length)return{qty:0,value:0,available:false,record:true};
   return{qty:items.reduce((n,x)=>n+finServiceUnits(x),0),value:items.reduce((n,x)=>n+finN(x.value),0),available:true,record:true};
@@ -1506,15 +1542,15 @@ function finServiceTrendTable(){
 function finServiceMonthDetail(){
   if(!FIN_SERVICE_DETAIL_PERIOD)return '<section class="finance-panel"><h2>Detalhes do mês</h2><div class="hint">Clique em uma das barras para ver o número exato de serviços e o valor vendido naquele mês.</div></section>';
   const m=finMonthRecord(FIN_SERVICE_DETAIL_PERIOD);if(!m)return '<section class="finance-panel"><h2>'+finMonthLabel(FIN_SERVICE_DETAIL_PERIOD)+'</h2><div class="finance-empty">Não há fechamento cadastrado para este mês.</div></section>';
-  let items=Array.isArray(m.serviceItems)?m.serviceItems:[];items=items.filter(x=>finServiceKind(x.name)===FIN_SERVICE_GROUP);
+  let items=finExpandServiceMonth(m).filter(x=>x.kind===FIN_SERVICE_GROUP);
   if(FIN_SERVICE_FILTER!=="all")items=items.filter(x=>finNormalizeServiceName(x.name)===finNormalizeServiceName(FIN_SERVICE_FILTER));
   const rows=items.map(x=>({name:x.name,qty:finServiceUnits(x),value:x.value,subscription:x.subscription})),qty=rows.reduce((n,x)=>n+x.qty,0),value=rows.reduce((n,x)=>n+x.value,0);
   return '<section class="finance-panel"><div class="row"><div><h2>Detalhes de '+finMonthLabel(FIN_SERVICE_DETAIL_PERIOD)+'</h2><div class="hint">'+(FIN_SERVICE_GROUP==="servicos"?"Serviços principais":"Serviços extras")+'</div></div><button class="finance-link" onclick="FIN_SERVICE_DETAIL_PERIOD=null;render()">Fechar detalhes</button></div><div class="finance-kpis">'+finKpi("Quantidade realizada",finInt(qty),"Itens contabilizados")+finKpi("Valor vendido",finBRL(value),"Total no mês selecionado")+'</div>'+finTable(rows,"Não há itens desta categoria neste mês.")+'</section>';
 }
 function finDetailListt(months){
   const items=finMergedItems(months,"serviceItems");
-  const subscriptions=items.filter(x=>x.subscription||/\bass\b|assin/i.test(x.name));
-  const ordinary=items.filter(x=>!x.subscription&&!/\bass\b|assin/i.test(x.name));
+  const subscriptions=items.filter(finIsSubscriptionItem);
+  const ordinary=items.filter(x=>!finIsSubscriptionItem(x));
   return {all:items,subscriptions:subscriptions,ordinary:ordinary};
 }
 function finPrevMonths(){
