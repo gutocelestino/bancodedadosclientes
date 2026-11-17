@@ -1697,7 +1697,8 @@ function financeView(){
   }else if(FIN_TAB==="servicos"){
     const categoryItems=finMonthGroupItems(finStore().months,FIN_SERVICE_GROUP);
     const periodItems=finMonthGroupItems(months,FIN_SERVICE_GROUP);
-    const allowedServiceNames=FIN_SERVICE_GROUP==="extras"?new Set(["Sobrancelha","Desondulação","Depilação","Selagem","Raspagem","Acabamento","Terapia capilar","Hidratação","Camuflagem","Barba terapia"]):new Set(["Corte","Barba"]);\n    const names=[...new Map(categoryItems.filter(x=>allowedServiceNames.has(x.name)).map(x=>[finNormalizeServiceName(x.name),x.name])).values()].sort((a,b)=>a.localeCompare(b));
+    const allowedServiceNames=FIN_SERVICE_GROUP==="extras"?new Set(["Sobrancelha","Desondulação","Depilação","Selagem","Raspagem","Acabamento","Terapia capilar","Hidratação","Camuflagem","Barba terapia"]):new Set(["Corte","Barba"]);
+    const names=[...new Map(categoryItems.filter(x=>allowedServiceNames.has(x.name)).map(x=>[finNormalizeServiceName(x.name),x.name])).values()].sort((a,b)=>a.localeCompare(b));
     const options='<option value="all" '+(FIN_SERVICE_FILTER==="all"?"selected":"")+'>Todos</option>'+names.map(name=>'<option value="'+esc(name)+'" '+(finNormalizeServiceName(FIN_SERVICE_FILTER)===finNormalizeServiceName(name)?"selected":"")+'>'+esc(name)+'</option>').join("");
     const selectedItems=finSelectedServiceItems(months);
     const selectedQty=selectedItems.reduce((n,x)=>n+finServiceUnits(x),0),selectedValue=selectedItems.reduce((n,x)=>n+finN(x.value),0);
