@@ -255,10 +255,10 @@ freqOpts=v=>`<option value="">Frequência: todas</option>`+[...FO.map(k=>[k,SL[k
 ff=(c,v)=>!v||(v[0]=="f"?(c.freq>0&&c.freq<=+v.slice(1)):c.st==v),
 SL={sem_frequencia:"Sem frequência",atrasado:"Atrasado",hoje:"Retorno hoje",proximo:"Próximos 7 dias",em_dia:"Em dia"};
 let S={clients:[]},view="painel",cur=null,tab="hoje",clientSortUrgentFirst=true,F={q:"",qual:"",status:"",service:"",sub:"todos"},form=null,UNQ_Q="",NORETURN_Q="";
-let CAL_MONTH=iso().slice(0,7),CAL_SELECTED=iso(),CAL_FORM_OPEN=false,CAL_EDIT_ID=null;
 let FIN_TAB="resumo",FIN_YEAR=new Date().getFullYear(),FIN_MONTH="all",FIN_FORM=null,FIN_MOV_FORM=null,FIN_SERVICE_FILTER="all",FIN_SERVICE_GROUP="servicos",FIN_SERVICE_DETAIL_PERIOD=null,FIN_DETAIL_KEY=null;
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const iso=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+let CAL_MONTH=iso().slice(0,7),CAL_SELECTED=iso(),CAL_FORM_OPEN=false,CAL_EDIT_ID=null;
 const U=s=>{const[a,b,c]=s.split("-").map(Number);return Date.UTC(a,b-1,c)};
 const add=(s,n)=>new Date(U(s)+n*864e5).toISOString().slice(0,10);
 const br=s=>s?s.split("-").reverse().join("/"):"—";
