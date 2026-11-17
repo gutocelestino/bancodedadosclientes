@@ -224,7 +224,7 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 @media(min-width:800px){.finance-page{max-width:1100px}.finance-filters{grid-template-columns:190px 210px;justify-content:start}.finance-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.finance-panel{padding:18px}.finance-form-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.finance-form-grid .half{grid-column:span 2}.finance-form-grid .full{grid-column:1/-1}}
 .finance-kpi-clickable{cursor:pointer;position:relative;transition:border-color .15s,transform .15s}.finance-kpi-clickable:hover,.finance-kpi-clickable:focus-visible{border-color:var(--gold);outline:none;transform:translateY(-1px)}.finance-kpi-more{display:block;color:var(--gold);font-size:10px;font-weight:700;margin-top:7px}.finance-detail-view>.row{align-items:flex-start;margin-bottom:12px}.finance-chart{width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y;scrollbar-width:thin;scrollbar-color:#d6aa5c #292824}.finance-chart svg{width:1080px;min-width:1080px;max-width:none;height:330px;display:block}.finance-chart-month{cursor:pointer;outline:none;touch-action:pan-x pan-y}.finance-chart-month:active{opacity:.82}.finance-chart{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y;scrollbar-width:thin;scrollbar-color:#d6aa5c #292824;padding-bottom:8px}.finance-chart svg{width:960px;min-width:960px;max-width:none;height:auto;display:block}.finance-chart-month{cursor:pointer;pointer-events:all}.finance-chart-month:focus{outline:none}.finance-chart-month:focus rect:last-of-type{stroke:#e7bd7a;stroke-width:2}.finance-detail-view .finance-panel{scroll-margin-top:16px}.finance-chart{width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y;scrollbar-width:thin;scrollbar-color:#d6aa5c #292824}.finance-chart svg{width:1080px!important;min-width:1080px!important;max-width:none!important;height:330px!important;display:block}.finance-chart-month{cursor:pointer;outline:none;touch-action:pan-x pan-y}.finance-chart-month:active{opacity:.82}.finance-chart{display:block!important;width:100%!important;max-width:100%;overflow-x:scroll!important;overflow-y:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain;touch-action:pan-x pan-y}.finance-chart svg{display:block!important;width:1080px!important;min-width:1080px!important;max-width:none!important;height:330px!important;pointer-events:auto}.finance-chart-month{cursor:pointer;pointer-events:all;touch-action:manipulation}</style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="appRefresh" class="app-refresh" aria-live="polite" aria-hidden="true"><span class="app-refresh-mark">↓</span><span class="app-refresh-label">Puxe para atualizar</span></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;document.write('<scr'+'ipt src=&quot;https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js&quot;><\\/scr'+'ipt>')"></script>
 <script>
 const SUPABASE_URL="https://zkfgobmgwxbklwgwlhyu.supabase.co";
 const SUPABASE_KEY="sb_publishable_paXVsr9OplmsTNraw528Eg_POKNDRA0";
@@ -377,11 +377,20 @@ async function bootCloud(){
 }
 async function init(){
   try{const l=localStorage.getItem("carteira");if(l)S=JSON.parse(l)}catch(e){}
+  if(!window.supabase||!window.supabase.createClient){
+    $("#app").innerHTML=`<div style="max-width:390px;margin:8vh auto;padding:24px"><h1>Carteira</h1><p class="sub">Não foi possível carregar a conexão do sistema. Confira sua internet e toque para tentar novamente.</p><button class="btn" onclick="location.reload()">Tentar novamente</button></div>`;
+    return;
+  }
   authView("Conectando à sua conta…");
-  await bootCloud();
-  sb.auth.onAuthStateChange((event)=>{
-    if(event==="SIGNED_OUT"){cloudUser=null;cloudReady=false;authView("Você saiu da sua conta.")}
-  });
+  try{
+    await bootCloud();
+    sb.auth.onAuthStateChange((event)=>{
+      if(event==="SIGNED_OUT"){cloudUser=null;cloudReady=false;authView("Você saiu da sua conta.")}
+    });
+  }catch(error){
+    console.error("Falha ao iniciar a Carteira:",error);
+    authView("Não foi possível iniciar o sistema. Verifique sua conexão e tente novamente.");
+  }
 }
 
 // Iniciais automáticas quando o cliente não tem foto
