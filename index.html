@@ -299,7 +299,7 @@ function wa(c){
   const months=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
   const lastVisit=parts.length===3&&parts[0]&&parts[1]&&parts[2]?Number(parts[2])+" de "+(months[Number(parts[1])-1]||"")+(parts[0]?" de "+parts[0]:""):"";
   const visitText=lastVisit?"Dei uma olhada no nosso sistema e vi que sua última visita aqui foi no dia "+lastVisit+".":"Dei uma olhada no nosso sistema e queria saber como está seu corte.";
-  const message="Boa tarde, "+firstName+"! Tudo bem?\n\nAqui é a Martha, assistente do Guto, da Brond’s Barbearia. 👊🏼\n\n"+visitText+"\n\nTemos alguns horários disponíveis e será um prazer receber você novamente!\n\nPodemos marcar seu próximo corte? ✂️";
+  const message="Olá, "+firstName+"! Tudo bem?\n\nAqui é a Martha, assistente do Guto, da Brond’s Barbearia. 👊🏼\n\n"+visitText+"\n\nTemos alguns horários disponíveis e será um prazer receber você novamente!\n\nPodemos marcar seu próximo corte? ✂️";
   return "https://wa.me/"+d+"?text="+encodeURIComponent(message);
 }
 /* persistência: db (privado do usuário) com fallback em localStorage */
