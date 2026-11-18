@@ -48,10 +48,10 @@ h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--sub)
 .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
 .calendar-weekday{text-align:center;color:var(--sub);font-size:10px;padding:7px 0}
 .calendar-day{min-height:66px;padding:7px 3px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--fg);text-align:center;cursor:pointer;min-width:0}
-.calendar-day.outside{opacity:.35}.calendar-day.today{border-color:var(--gold)}.calendar-day.selected{background:#d6aa5c20;border-color:var(--gold)}
+.calendar-day.outside{opacity:.35}.calendar-day.today{border-color:var(--gold)}.calendar-day.selected{background:#d6aa5c20;border-color:var(--gold)}.calendar-day.has-appointments{background:#d6aa5c16;border-color:#d6aa5c99}.calendar-day-mark{display:block;margin:5px auto 0;width:max-content;padding:2px 5px;border-radius:99px;background:#d6aa5c26;color:var(--gold);font-size:9px;font-weight:700}
 .calendar-day-number{font-size:13px}.calendar-day-count{display:block;margin:5px auto 0;min-width:17px;width:max-content;padding:2px 5px;border-radius:99px;background:#d6aa5c26;color:var(--gold);font-size:10px}
 .calendar-list{margin-top:18px}.calendar-appointment{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin:8px 0}
-.calendar-appointment-time{color:var(--gold);font-weight:700;font-size:13px}.calendar-form{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-top:14px}
+.calendar-appointment-status{display:inline-block;color:var(--gold);background:#d6aa5c20;border-radius:99px;padding:3px 8px;font-size:11px;font-weight:700;margin-bottom:5px}.calendar-form{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-top:14px}
 .calendar-empty{color:var(--sub);text-align:center;padding:22px 8px;font-size:13px}
 @media(max-width:390px){.calendar-day{min-height:58px;padding:6px 1px}.calendar-day-number{font-size:12px}.calendar-grid{gap:3px}}
 
@@ -1013,23 +1013,23 @@ function calendarSelectDay(day){CAL_SELECTED=day;CAL_FORM_OPEN=false;CAL_EDIT_ID
 function calendarOpenForm(id){CAL_EDIT_ID=id||null;CAL_FORM_OPEN=true;render()}
 function calendarCancelForm(){CAL_FORM_OPEN=false;CAL_EDIT_ID=null;render()}
 function calendarSave(){
- const clientId=$("#calClient").value,date=$("#calDate").value,time=$("#calTime").value,notes=$("#calNotes").value.trim();
+ const clientId=$("#calClient").value,date=$("#calDate").value,notes=$("#calNotes").value.trim();
  const client=S.clients.find(c=>c.id===clientId);
- if(!client||!date||!time){toast("Escolha um cliente, uma data e um horário.");return}
+ if(!client||!date){toast("Escolha um cliente e uma data.");return}
  const items=calendarItems();
- if(CAL_EDIT_ID){const item=items.find(x=>x.id===CAL_EDIT_ID);if(!item)return;item.clientId=clientId;item.date=date;item.time=time;item.notes=notes}
- else items.push({id:"ag"+Date.now(),clientId,date,time,notes,created:new Date().toISOString()});
+ if(CAL_EDIT_ID){const item=items.find(x=>x.id===CAL_EDIT_ID);if(!item)return;item.clientId=clientId;item.date=date;item.time="";item.notes=notes}
+ else items.push({id:"ag"+Date.now(),clientId,date,time:"",notes,created:new Date().toISOString()});
  CAL_MONTH=date.slice(0,7);CAL_SELECTED=date;CAL_FORM_OPEN=false;CAL_EDIT_ID=null;save();toast("Agendamento salvo na Carteira.");render()
 }
 function calendarDelete(id){askC("Excluir este agendamento?",()=>{S.calendarAppointments=calendarItems().filter(x=>x.id!==id);save();render()})}
 function calendarView(){
  const [year,month]=CAL_MONTH.split("-").map(Number),first=new Date(year,month-1,1),start=(first.getDay()+6)%7,days=new Date(year,month,0).getDate(),prevDays=new Date(year,month-1,0).getDate();
- const items=calendarItems().slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+ const items=calendarItems().slice().sort((a,b)=>a.date.localeCompare(b.date));
  const byDay={};items.forEach(x=>(byDay[x.date]||(byDay[x.date]=[])).push(x));
  const names=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
  let cells="";
  for(let i=0;i<42;i++){let n,date,out=false;if(i<start){n=prevDays-start+i+1;const d=new Date(year,month-2,n);date=iso(d);out=true}else if(i>=start+days){n=i-start-days+1;const d=new Date(year,month,n);date=iso(d);out=true}else{n=i-start+1;date=CAL_MONTH+"-"+String(n).padStart(2,"0")}
- const count=(byDay[date]||[]).length;cells+='<button class="calendar-day '+(out?"outside ":"")+(date===iso()?"today ":"")+(date===CAL_SELECTED?"selected":"")+'" onclick="calendarSelectDay(\''+date+'\')"><span class="calendar-day-number">'+n+'</span>'+(count?'<span class="calendar-day-count">'+count+'</span>':'')+'</button>'}
+ const count=(byDay[date]||[]).length;cells+='<button class="calendar-day '+(out?"outside ":"")+(date===iso()?"today ":"")+(date===CAL_SELECTED?"selected":"")+'" onclick="calendarSelectDay(\''+date+'\')"><span class="calendar-day-number">'+n+'</span>'+(count?'<span class="calendar-day-mark">Marcado</span>':'')+'</button>'}
  const dayItems=byDay[CAL_SELECTED]||[];
  let formHtml="";
  if(CAL_FORM_OPEN){
@@ -1038,12 +1038,12 @@ function calendarView(){
   formHtml='<div class="calendar-form"><div class="row"><strong>'+(editing?"Editar agendamento":"Marcar cliente")+'</strong><button class="lnk" onclick="calendarCancelForm()">Fechar</button></div>'+
   '<label>Cliente<select id="calClient"><option value="">Selecione um cliente</option>'+options+'</select></label>'+
   '<label>Data<input id="calDate" type="date" value="'+esc(editing?editing.date:CAL_SELECTED)+'"></label>'+
-  '<label>Horário<input id="calTime" type="time" value="'+esc(editing?editing.time:"")+'"></label>'+
+  ''+
   '<label>Observação (opcional)<textarea id="calNotes" rows="2" placeholder="Ex.: corte e barba">'+esc(editing?editing.notes:"")+'</textarea></label>'+
   '<div class="actions"><button class="btn" onclick="calendarSave()">Salvar agendamento</button><button class="btn alt" onclick="calendarCancelForm()">Cancelar</button></div></div>'
  }
- const listHtml=dayItems.length?dayItems.map(x=>{const c=S.clients.find(z=>z.id===x.clientId);return '<div class="calendar-appointment"><div class="row"><div><div class="calendar-appointment-time">'+esc(x.time)+'</div><div class="nm" style="margin-top:4px">'+esc(c?c.name:"Cliente não encontrado")+'</div>'+(x.notes?'<div class="sub" style="margin-top:4px">'+esc(x.notes)+'</div>':'')+'</div><div class="actions" style="margin:0"><button class="lnk" onclick="calendarOpenForm(\''+x.id+'\')">Editar</button><button class="lnk" style="color:var(--bad)" onclick="calendarDelete(\''+x.id+'\')">Excluir</button></div></div></div>'}).join(""):'<div class="calendar-empty">Nenhum cliente marcado para este dia.</div>';
- $("#app").innerHTML='<h1>Calendário</h1><div class="sub">Organize os clientes por data e horário. Depois, bloqueie o horário na sua agenda principal.</div>'+
+ const listHtml=dayItems.length?dayItems.map(x=>{const c=S.clients.find(z=>z.id===x.clientId);return '<div class="calendar-appointment"><div class="row"><div><span class="calendar-appointment-status">Marcado</span><div class="nm" style="margin-top:4px">'+esc(c?c.name:"Cliente não encontrado")+'</div>'+(x.notes?'<div class="sub" style="margin-top:4px">'+esc(x.notes)+'</div>':'')+'</div><div class="actions" style="margin:0"><button class="lnk" onclick="calendarOpenForm(\''+x.id+'\')">Editar</button><button class="lnk" style="color:var(--bad)" onclick="calendarDelete(\''+x.id+'\')">Excluir</button></div></div></div>'}).join(""):'<div class="calendar-empty">Nenhum cliente marcado para este dia.</div>';
+ $("#app").innerHTML='<h1>Calendário</h1><div class="sub">Marque os clientes por dia. As datas com clientes marcados ficam destacadas no calendário.</div>'+
  '<div class="calendar-head"><button class="btn alt" onclick="calendarMonthMove(-1)">‹</button><div class="calendar-month">'+names[month-1]+' '+year+'</div><button class="btn alt" onclick="calendarMonthMove(1)">›</button></div>'+
  '<div class="calendar-grid">'+["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(x=>'<div class="calendar-weekday">'+x+'</div>').join("")+cells+'</div>'+
  '<div class="calendar-list"><div class="row"><div><h2 style="margin:0"> '+br(CAL_SELECTED)+'</h2><div class="sub">'+dayItems.length+' agendamento(s)</div></div><button class="btn" onclick="calendarOpenForm()">+ Marcar cliente</button></div>'+listHtml+'</div>'+formHtml
