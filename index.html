@@ -1259,7 +1259,7 @@ if(blocked){toast("Este contato está na lista de desqualificados. Reavalie-o an
 c=(d.length>=8&&S.clients.find(x=>x.qual!="nao_qualificado"&&dg(x.phone).slice(-9)==d.slice(-9)))||S.clients.find(x=>x.qual!="nao_qualificado"&&nz(x.name)==nz(n));
 if(!c){c={id:"c"+Date.now(),name:n,phone:p,instagram:"",email:"",qual:"nao_avaliado",tipo:REG_TIPO,fase:REG_FASE,freq:"",last:"",services:[],log:[],visits:[],created:iso()};S.clients.push(c)}else if(p&&!c.phone)c.phone=p}
 if(c.visits.some(v=>v.date==RD)){alert(c.name+" já foi registrado neste dia.");return}
-c.visits.push({date:RD,service:RSV.join(" + "),svcs:[...RSV],note:""});c.services=[...new Set([...svc(c),...RSV])];
+c.visits.push({date:RD,service:RSV.join(" + "),svcs:[...RSV],note:""});if(c.conversationStatus){delete c.conversationStatus;delete c.conversationDate;delete c.conversationUpdated;S.calendarAppointments=calendarItems().filter(x=>x.conversationId!==c.id)}c.services=[...new Set([...svc(c),...RSV])];
 if(!c.last||RD>c.last)c.last=RD;if(c.semRetorno){c.semRetorno=false;delete c.semRetornoDesde}const stayOnProfile=CLIENT_REG_OPEN;save();RS=null;RNEW=false;RSV=[];CLIENT_REG_OPEN=false;if(stayOnProfile){cur=c.id;view="ficha";render();toast("Atendimento registrado na ficha do cliente.");return}view="registrar";render();toast("Atendimento registrado.")}
 function ficha2(c){const rc=S.clients.find(x=>x.id==c.id);
 if(rc.notes){rc.log=rc.log||[];rc.log.push({id:"n"+Date.now(),date:iso(),text:rc.notes});rc.notes="";save()}
