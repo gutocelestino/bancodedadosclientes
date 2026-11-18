@@ -1755,7 +1755,45 @@ function finSaveMovement(){
 function finDeleteMovement(id){
   askC("Excluir este lançamento financeiro?",()=>{finStore().movements=finStore().movements.filter(x=>x.id!==id);save();render()});
 }
+function finEnsureSep2026(){
+  const store=finStore();
+  if(store.months.some(m=>m.period==="2026-09"))return;
+  store.months.push({
+    period:"2026-09",launches:172,customers:107,
+    serviceCount:196,serviceGross:9195,serviceCommission:4137.75,
+    productCount:4,productGross:230,productCommission:19.75,
+    subscriptionCommission:1714.28,otherIncome:0,reportedExpenses:0,
+    serviceItems:[
+      {name:"Corte",qty:58,value:3760},
+      {name:"Visagismo Equipe",qty:4,value:1600},
+      {name:"Corte e Barba",qty:8,value:960},
+      {name:"Corte + Desondulação",qty:3,value:605},
+      {name:"Barba",qty:8,value:480},
+      {name:"Desondulação",qty:3,value:465},
+      {name:"Cabelo, barba e sobrancelha",qty:3,value:420},
+      {name:"Corte + Sobrancelha",qty:2,value:170},
+      {name:"Cabelo, barba e Depilação",qty:1,value:150},
+      {name:"Barba express",qty:4,value:140},
+      {name:"Acabamento|Pezinho",qty:7,value:140},
+      {name:"Raspagem + Barba",qty:1,value:95},
+      {name:"Depilação Nariz",qty:3,value:90},
+      {name:"Corte raspado (Sem De...)",qty:2,value:60},
+      {name:"Sobrancelha",qty:3,value:60},
+      {name:"Corte e Barba ass",qty:11,value:0,subscription:true},
+      {name:"Corte ass",qty:27,value:0,subscription:true},
+      {name:"Acabamento ass",qty:15,value:0,subscription:true},
+      {name:"Barba ass",qty:33,value:0,subscription:true}
+    ],
+    productItems:[
+      {name:"BOOSTER OVERLORD L...",qty:3,value:165},
+      {name:"POMADA EM PO OVER...",qty:1,value:65}
+    ],
+    updatedAt:new Date().toISOString()
+  });
+  save();
+}
 function financeView(){
+  finEnsureSep2026();
   const store=finStore(),months=finMonthsInFilter(),total=finAggregate(months),years=[...new Set([new Date().getFullYear(),...store.months.map(x=>Number(x.period.slice(0,4)))])].filter(Boolean).sort((a,b)=>b-a);
   if(FIN_FORM){finMonthFormView();return}
   if(FIN_MOV_FORM){finMovementFormView();return}
