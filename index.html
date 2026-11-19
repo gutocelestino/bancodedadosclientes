@@ -1322,7 +1322,7 @@ c.visits.push({date:RD,service:RSV.join(" + "),svcs:[...RSV],note:""});if(c.conv
 if(!c.last||RD>c.last)c.last=RD;if(c.semRetorno){c.semRetorno=false;delete c.semRetornoDesde}const stayOnProfile=CLIENT_REG_OPEN;save();RS=null;RNEW=false;RSV=[];CLIENT_REG_OPEN=false;if(stayOnProfile){cur=c.id;view="ficha";render();toast("Atendimento registrado na ficha do cliente.");return}view="registrar";render();toast("Atendimento registrado.")}
 function ficha2(c){const rc=S.clients.find(x=>x.id==c.id);
 if(rc.notes){rc.log=rc.log||[];rc.log.push({id:"n"+Date.now(),date:iso(),text:rc.notes});rc.notes="";save()}
-const w=wa(c),vs=[...c.visits].sort((a,b)=>b.date.localeCompare(a.date)),lg=[...(rc.log||[])].reverse(),sv=svc(rc);
+const w=c.fase==="novo"?waNewClient(c):wa(c),vs=[...c.visits].sort((a,b)=>b.date.localeCompare(a.date)),lg=[...(rc.log||[])].reverse(),sv=svc(rc);
 $("#app").innerHTML=`<div class="row" style="justify-content:flex-end"><button class="lnk" onclick="editC()">✎ Editar</button></div>
 <div class="profile-head">
   <div class="profile-photo-wrap">
