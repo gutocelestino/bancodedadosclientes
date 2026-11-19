@@ -838,12 +838,13 @@ function navRouteKey(){
   if(view==="crm")return "crm|"+((OF&&OF.id)||"lista");
   if(view==="registrar")return "registrar|"+(RS||"novo");
   if(view==="financeiro")return "financeiro|"+(FIN_TAB||"resumo")+"|"+(FIN_DETAIL_KEY||"");
+  if(view==="documentos")return "documentos|"+(DOC_FOLDER_ID||"pastas")+"|"+(DOC_NOTE_ID||"");
   return view;
 }
 function captureNavState(){
   return {view,cur,tab,F:navCopy(F),form:navCopy(form),FSEC,OF:navCopy(OF),UF:navCopy(UF),
     UNQ_Q,NORETURN_Q,FOPEN,clientSortUrgentFirst,RS,RNEW,CLIENT_REG_OPEN,REG_FASE,REG_TIPO,
-    RTXT:navCopy(RTXT),RSV:navCopy(RSV),RD,FIN_TAB,FIN_YEAR,FIN_MONTH,FIN_FORM:navCopy(FIN_FORM),FIN_MOV_FORM:navCopy(FIN_MOV_FORM),FIN_DETAIL_KEY,FIN_SERVICE_FILTER,FIN_SERVICE_GROUP,FIN_SERVICE_DETAIL_PERIOD,scrollY:window.scrollY||0};
+    RTXT:navCopy(RTXT),RSV:navCopy(RSV),RD,FIN_TAB,FIN_YEAR,FIN_MONTH,FIN_FORM:navCopy(FIN_FORM),FIN_MOV_FORM:navCopy(FIN_MOV_FORM),FIN_DETAIL_KEY,FIN_SERVICE_FILTER,FIN_SERVICE_GROUP,FIN_SERVICE_DETAIL_PERIOD,DOC_FOLDER_ID,DOC_NOTE_ID,scrollY:window.scrollY||0};
 }
 function restoreNavState(state){
   view=state.view;cur=state.cur;tab=state.tab;F=navCopy(state.F)||F;
@@ -852,11 +853,12 @@ function restoreNavState(state){
   if(typeof state.clientSortUrgentFirst==="boolean")clientSortUrgentFirst=state.clientSortUrgentFirst;
   RS=state.RS??null;RNEW=!!state.RNEW;CLIENT_REG_OPEN=!!state.CLIENT_REG_OPEN;REG_FASE=state.REG_FASE||"fixo";REG_TIPO=state.REG_TIPO||"avulso";
   RTXT=navCopy(state.RTXT)||{name:"",phone:""};RSV=navCopy(state.RSV)||[];RD=state.RD||RD;
-  FIN_TAB=state.FIN_TAB||"resumo";FIN_YEAR=Number(state.FIN_YEAR)||new Date().getFullYear();FIN_MONTH=state.FIN_MONTH||"all";FIN_FORM=navCopy(state.FIN_FORM);FIN_MOV_FORM=navCopy(state.FIN_MOV_FORM);FIN_DETAIL_KEY=state.FIN_DETAIL_KEY||null;FIN_SERVICE_FILTER=state.FIN_SERVICE_FILTER||"all";FIN_SERVICE_GROUP=state.FIN_SERVICE_GROUP||"servicos";FIN_SERVICE_DETAIL_PERIOD=state.FIN_SERVICE_DETAIL_PERIOD||null;
+  FIN_TAB=state.FIN_TAB||"resumo";FIN_YEAR=Number(state.FIN_YEAR)||new Date().getFullYear();FIN_MONTH=state.FIN_MONTH||"all";FIN_FORM=navCopy(state.FIN_FORM);FIN_MOV_FORM=navCopy(state.FIN_MOV_FORM);FIN_DETAIL_KEY=state.FIN_DETAIL_KEY||null;FIN_SERVICE_FILTER=state.FIN_SERVICE_FILTER||"all";FIN_SERVICE_GROUP=state.FIN_SERVICE_GROUP||"servicos";FIN_SERVICE_DETAIL_PERIOD=state.FIN_SERVICE_DETAIL_PERIOD||null;DOC_FOLDER_ID=state.DOC_FOLDER_ID||null;DOC_NOTE_ID=state.DOC_NOTE_ID||null;
 }
 function renderBackControl(){
   const app=$("#app");if(!app)return;
   const old=app.querySelector(".app-backbar");if(old)old.remove();
+  if(view==="documentos"&&(DOC_FOLDER_ID||DOC_NOTE_ID))return;
   if(NAV_INDEX<=0)return;
   app.insertAdjacentHTML("afterbegin",'<div class="app-backbar"><button type="button" class="app-back-button" onclick="backNav()" aria-label="Voltar para a tela anterior"><span class="app-back-icon" aria-hidden="true">‹</span><span>Voltar</span></button></div>');
 }
@@ -936,7 +938,7 @@ window.addEventListener("popstate",event=>{
 document.addEventListener("touchstart",event=>{
   if(event.touches.length!==1||!NAV_READY||NAV_INDEX<=0)return;
   const target=event.target;
-  if(target&&target.closest&&target.closest("input,textarea,select,a,nav,.photo-crop-overlay,.photo-viewer-overlay,#dlg,#lock,[contenteditable=true]"))return;
+  if(target&&target.closest&&target.closest("input,select,a,nav,.photo-crop-overlay,.photo-viewer-overlay,#dlg,#lock,[contenteditable=true]"))return;
   const touch=event.touches[0];if(touch.clientX>34)return;
   NAV_SWIPE={x:touch.clientX,y:touch.clientY,index:NAV_INDEX,claimed:false};
 },{passive:true});
@@ -1098,10 +1100,10 @@ function documentsView(){
     content='<div class="doc-toolbar"><div><h1>Documentos</h1><div class="sub">Suas pastas e anotações em um só lugar.</div></div><button class="btn" onclick="docsFolderCreate()">+ Nova pasta</button></div>'+
       '<div class="doc-section-label">Minhas pastas</div>'+(folderRows||'<div class="doc-empty doc-empty-short">Nenhuma pasta por aqui ainda.<br>Toque em “Nova pasta” para começar.</div>');
   }else if(note){
-    content='<div class="app-backbar"><button class="app-back-button" onclick="DOC_NOTE_ID=null;render()"><span class="app-back-icon">‹</span> '+esc(folder.name)+'</button></div>'+
+    content='<div class="app-backbar"><button class="app-back-button" onclick="backNav()"><span class="app-back-icon">‹</span> '+esc(folder.name)+'</button></div>'+
       '<div class="doc-editor-ios"><input class="doc-title" value="'+esc(note.title||"")+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><textarea class="doc-body" placeholder="Comece a escrever..." oninput="docsUpdate(\'body\',this.value)">'+esc(note.body||"")+'</textarea><div class="doc-editor-footer"><span class="sub">Salvo automaticamente</span><button class="lnk" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div></div>';
   }else{
-    content='<div class="app-backbar"><button class="app-back-button" onclick="DOC_FOLDER_ID=null;DOC_NOTE_ID=null;render()"><span class="app-back-icon">‹</span> Pastas</button></div>'+
+    content='<div class="app-backbar"><button class="app-back-button" onclick="backNav()"><span class="app-back-icon">‹</span> Pastas</button></div>'+
       '<div class="doc-toolbar"><div><h1>'+esc(folder.name)+'</h1><div class="sub">Notas desta pasta</div></div><button class="btn" onclick="docsNewNote()">+ Nova nota</button></div>'+
       (noteRows||'<div class="doc-empty doc-empty-short">Esta pasta ainda está vazia.<br>Crie sua primeira nota.</div>');
   }
