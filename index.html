@@ -95,6 +95,29 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 @media(min-width:800px){.kvs{grid-template-columns:1fr 1fr}}
 @media(min-width:800px){.tbl{display:block}.cards{display:none}.flt{grid-template-columns:repeat(4,1fr)}}
 
+
+/* Documentos em lista vertical, inspirado no app Notas do iPhone */
+.doc-layout{display:block!important}
+.docs-ios{max-width:760px;margin:0 auto}
+.doc-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 24px}
+.doc-toolbar h1{margin:0 0 4px}
+.doc-section-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin:22px 0 8px;padding:0 4px}
+.doc-list-row{display:flex;align-items:center;gap:13px;width:100%;padding:15px 8px;text-align:left;color:var(--fg);background:transparent;border:0;border-bottom:1px solid var(--bd);font:inherit;cursor:pointer}
+.doc-list-row.selected{background:var(--mut);border-radius:10px}
+.doc-list-icon{width:30px;flex:none;font-size:21px;text-align:center}
+.doc-list-main{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.doc-list-main strong{font-size:15px;font-weight:600}
+.doc-list-main small{font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-chevron{font-size:25px;color:var(--sub);font-weight:300}
+.doc-row-actions{display:flex;justify-content:flex-end;gap:16px;padding:2px 12px 8px;border-bottom:1px solid var(--bd)}
+.doc-row-actions .lnk{font-size:12px;color:var(--sub)}
+.doc-empty-short{min-height:150px;padding:40px 12px}
+.doc-editor-ios{margin-top:10px}
+.doc-editor-ios .doc-title{width:100%;font-size:27px;margin:8px 0 10px}
+.doc-editor-ios .doc-body{width:100%;min-height:55vh;font-size:16px;line-height:1.65;resize:vertical}
+.doc-editor-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bd);padding-top:12px}
+@media(min-width:800px){.docs-ios{max-width:850px}}
+
 /* Fotos dos clientes */
 .avatar{width:42px;height:42px;min-width:42px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;background:var(--mut);border:1px solid var(--bd);color:var(--gold);font-weight:600;font-size:14px;vertical-align:middle}
 .avatar img{width:100%;height:100%;object-fit:cover}
@@ -1060,7 +1083,29 @@ function docsNewNote(){if(!DOC_FOLDER_ID){toast("Crie ou selecione uma pasta pri
 function docsSelectNote(id){DOC_NOTE_ID=id;render()}
 function docsUpdate(field,value){const n=S.documents.find(x=>x.id===DOC_NOTE_ID);if(n){n[field]=value;save()}}
 function docsDeleteNote(id){if(!confirm("Excluir esta nota?"))return;S.documents=S.documents.filter(n=>n.id!==id);DOC_NOTE_ID=null;save();render()}
-function documentsView(){docsInit();if(DOC_FOLDER_ID&&!S.documentFolders.some(f=>f.id===DOC_FOLDER_ID))DOC_FOLDER_ID=null;const folder=S.documentFolders.find(f=>f.id===DOC_FOLDER_ID),notes=folder?S.documents.filter(n=>n.folderId===folder.id):[];if(!notes.some(n=>n.id===DOC_NOTE_ID))DOC_NOTE_ID=notes[0]?.id||null;const note=notes.find(n=>n.id===DOC_NOTE_ID);const fl=S.documentFolders.map(f=>'<div class="doc-folder-row"><button class="lnk" onclick="DOC_FOLDER_ID=\''+f.id+'\';DOC_NOTE_ID=null;render()">'+(f.id===DOC_FOLDER_ID?'📂 ':'📁 ')+esc(f.name)+'</button><button class="ico" onclick="docsFolderRename(\''+f.id+'\')">✎</button><button class="ico" onclick="docsFolderDelete(\''+f.id+'\')">×</button></div>').join("");const nl=notes.map(n=>'<button class="doc-note-item '+(n.id===DOC_NOTE_ID?'on':'')+'" onclick="docsSelectNote(\''+n.id+'\')"><strong>'+esc(n.title||"Sem título")+'</strong><span>'+esc((n.body||"").replace(/\s+/g," ").slice(0,70)||"Nota vazia")+'</span></button>').join("");$("#app").innerHTML='<h1>Documentos</h1><div class="sub">Organize suas ideias e anotações em pastas.</div><div class="doc-layout"><aside class="card"><div class="row"><strong>Pastas</strong><button class="btn" onclick="docsFolderCreate()">+ Pasta</button></div>'+(fl||'<p class="empty">Nenhuma pasta criada.</p>')+'</aside><section class="card"><div class="row"><strong>'+(folder?esc(folder.name):"Notas")+'</strong><button class="btn" '+(!folder?'disabled':'')+' onclick="docsNewNote()">+ Nota</button></div>'+(folder?(nl||'<p class="empty">Nenhuma nota nesta pasta.</p>'):'<p class="empty">Crie ou selecione uma pasta.</p>')+'</section><section class="card doc-editor">'+(note?'<input class="doc-title" value="'+esc(note.title)+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><textarea class="doc-body" placeholder="Comece a escrever..." oninput="docsUpdate(\'body\',this.value)">'+esc(note.body||"")+'</textarea><div class="row"><span class="sub">Salvo automaticamente</span><button class="btn alt" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div>':'<div class="doc-empty">Selecione ou crie uma nota.</div>')+'</section></div>'}
+function documentsView(){
+  docsInit();
+  if(DOC_FOLDER_ID&&!S.documentFolders.some(f=>f.id===DOC_FOLDER_ID)){DOC_FOLDER_ID=null;DOC_NOTE_ID=null}
+  const folder=S.documentFolders.find(f=>f.id===DOC_FOLDER_ID);
+  const notes=folder?S.documents.filter(n=>n.folderId===folder.id):[];
+  if(!notes.some(n=>n.id===DOC_NOTE_ID))DOC_NOTE_ID=null;
+  const note=notes.find(n=>n.id===DOC_NOTE_ID);
+  const folderRows=S.documentFolders.map(f=>'<button class="doc-list-row" onclick="DOC_FOLDER_ID=\''+f.id+'\';DOC_NOTE_ID=null;render()"><span class="doc-list-icon">📁</span><span class="doc-list-main"><strong>'+esc(f.name)+'</strong><small>'+S.documents.filter(n=>n.folderId===f.id).length+' notas</small></span><span class="doc-chevron">›</span></button><div class="doc-row-actions"><button class="lnk" onclick="docsFolderRename(\''+f.id+'\')">Renomear</button><button class="lnk" onclick="docsFolderDelete(\''+f.id+'\')">Excluir</button></div>').join("");
+  const noteRows=notes.map(n=>'<button class="doc-list-row '+(n.id===DOC_NOTE_ID?'selected':'')+'" onclick="docsSelectNote(\''+n.id+'\')"><span class="doc-list-icon">📝</span><span class="doc-list-main"><strong>'+esc(n.title||"Sem título")+'</strong><small>'+esc((n.body||"").replace(/\\s+/g," ").slice(0,90)||"Sem texto")+'</small></span><span class="doc-chevron">›</span></button>').join("");
+  let content='';
+  if(!folder){
+    content='<div class="doc-toolbar"><div><h1>Documentos</h1><div class="sub">Suas pastas e anotações em um só lugar.</div></div><button class="btn" onclick="docsFolderCreate()">+ Nova pasta</button></div>'+
+      '<div class="doc-section-label">Minhas pastas</div>'+(folderRows||'<div class="doc-empty doc-empty-short">Nenhuma pasta por aqui ainda.<br>Toque em “Nova pasta” para começar.</div>');
+  }else if(note){
+    content='<div class="app-backbar"><button class="app-back-button" onclick="DOC_NOTE_ID=null;render()"><span class="app-back-icon">‹</span> '+esc(folder.name)+'</button></div>'+
+      '<div class="doc-editor-ios"><input class="doc-title" value="'+esc(note.title||"")+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><textarea class="doc-body" placeholder="Comece a escrever..." oninput="docsUpdate(\'body\',this.value)">'+esc(note.body||"")+'</textarea><div class="doc-editor-footer"><span class="sub">Salvo automaticamente</span><button class="lnk" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div></div>';
+  }else{
+    content='<div class="app-backbar"><button class="app-back-button" onclick="DOC_FOLDER_ID=null;DOC_NOTE_ID=null;render()"><span class="app-back-icon">‹</span> Pastas</button></div>'+
+      '<div class="doc-toolbar"><div><h1>'+esc(folder.name)+'</h1><div class="sub">Notas desta pasta</div></div><button class="btn" onclick="docsNewNote()">+ Nova nota</button></div>'+
+      (noteRows||'<div class="doc-empty doc-empty-short">Esta pasta ainda está vazia.<br>Crie sua primeira nota.</div>');
+  }
+  $("#app").innerHTML='<div class="docs-ios">'+content+'</div>';
+}
 
 function render(){
 $("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"],["nao_retorno","Não retornaram"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
