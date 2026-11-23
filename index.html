@@ -423,7 +423,11 @@ async function bootCloud(){
     S=local&&Array.isArray(local.clients)?local:{clients:[],crm:[],cfg:{}};
     cloudReady=true;await syncCloud();
   }
-  cloudReady=true;render();lockUI();
+  cloudReady=true;
+  restoreAppPosition();
+  render();
+  if(APP_RESTORE_SCROLL!==null){const y=APP_RESTORE_SCROLL;APP_RESTORE_SCROLL=null;setTimeout(()=>window.scrollTo(0,y),120)}
+  lockUI();
 }
 async function init(){
   try{const l=localStorage.getItem("carteira");if(l)S=JSON.parse(l)}catch(e){}
@@ -856,6 +860,24 @@ function restoreNavState(state){
   RTXT=navCopy(state.RTXT)||{name:"",phone:""};RSV=navCopy(state.RSV)||[];RD=state.RD||RD;
   FIN_TAB=state.FIN_TAB||"resumo";FIN_YEAR=Number(state.FIN_YEAR)||new Date().getFullYear();FIN_MONTH=state.FIN_MONTH||"all";FIN_FORM=navCopy(state.FIN_FORM);FIN_MOV_FORM=navCopy(state.FIN_MOV_FORM);FIN_DETAIL_KEY=state.FIN_DETAIL_KEY||null;FIN_SERVICE_FILTER=state.FIN_SERVICE_FILTER||"all";FIN_SERVICE_GROUP=state.FIN_SERVICE_GROUP||"servicos";FIN_SERVICE_DETAIL_PERIOD=state.FIN_SERVICE_DETAIL_PERIOD||null;DOC_FOLDER_ID=state.DOC_FOLDER_ID||null;DOC_NOTE_ID=state.DOC_NOTE_ID||null;
 }
+let APP_POSITION_KEY="carteira:lastPosition",APP_RESTORE_SCROLL=null;
+function persistAppPosition(){
+  try{sessionStorage.setItem(APP_POSITION_KEY,JSON.stringify(captureNavState()))}catch(error){console.warn("Não foi possível guardar a posição da Carteira",error)}
+}
+function restoreAppPosition(){
+  try{
+    const raw=sessionStorage.getItem(APP_POSITION_KEY);
+    if(!raw)return false;
+    sessionStorage.removeItem(APP_POSITION_KEY);
+    const state=JSON.parse(raw);
+    if(!state||!state.view)return false;
+    restoreNavState(state);
+    APP_RESTORE_SCROLL=Math.max(0,Number(state.scrollY)||0);
+    NAV_READY=false;NAV_HISTORY=[];NAV_INDEX=0;NAV_KEY="";
+    return true;
+  }catch(error){console.warn("Não foi possível restaurar a posição da Carteira",error);return false}
+}
+
 function renderBackControl(){
   const app=$("#app");if(!app)return;
   const old=app.querySelector(".app-backbar");if(old)old.remove();
@@ -975,6 +997,7 @@ function hideAppRefresh(){
 async function refreshAppNow(){
   if(APP_REFRESH_BUSY)return;
   APP_REFRESH_BUSY=true;clearTimeout(APP_REFRESH_HIDE);
+  persistAppPosition();
   appRefreshIndicator("Verificando atualizações…",true);
   try{
     if(navigator.onLine===false)throw new Error("offline");
