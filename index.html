@@ -1127,7 +1127,7 @@ function goalsView(allRows){
     const progress=monthly?Math.min(100,currentPerDay/day*100):0;
     const remaining=Math.max(0,needed-currentClients);
     return '<section class="finance-panel" style="margin-top:12px">'+
-      '<div class="row"><div><div class="sub">META DE ATENDIMENTO</div><div style="font-size:25px;font-weight:700">'+day+' por dia</div></div>'+
+      '<div class="row"><div><div class="sub">META DE ATENDIMENTO</div><div style="font-size:25px;font-weight:700">'+day+' por dia</div><div class="hint" style="margin-top:4px">Você vai atender, em média, '+day+' clientes por dia</div></div>'+
       '<div style="text-align:right"><div class="sub">Carteira estimada</div><strong style="font-size:20px">'+needed+' clientes</strong></div></div>'+
       '<div style="height:10px;background:var(--mut);border-radius:99px;overflow:hidden;margin:14px 0 8px"><div style="height:100%;width:'+progress.toFixed(1)+'%;background:var(--ok);border-radius:99px;transition:width .3s"></div></div>'+
       '<div class="row sub"><span>'+fmt(currentPerDay)+' atendimentos/dia na carteira atual</span><strong>'+Math.round(progress)+'% da meta</strong></div>'+
