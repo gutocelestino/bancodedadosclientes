@@ -1696,7 +1696,12 @@ function finServiceMonthDetail(){
   const m=finMonthRecord(FIN_SERVICE_DETAIL_PERIOD);if(!m)return '<section class="finance-panel"><h2>'+finMonthLabel(FIN_SERVICE_DETAIL_PERIOD)+'</h2><div class="finance-empty">Não há fechamento cadastrado para este mês.</div></section>';
   let items=finExpandServiceMonth(m).filter(x=>x.kind===FIN_SERVICE_GROUP);
   if(FIN_SERVICE_FILTER!=="all")items=items.filter(x=>finNormalizeServiceName(x.name)===finNormalizeServiceName(FIN_SERVICE_FILTER));
-  const rows=items.map(x=>({name:x.name,qty:finServiceUnits(x),value:x.value,subscription:x.subscription})),qty=rows.reduce((n,x)=>n+x.qty,0),value=rows.reduce((n,x)=>n+x.value,0);
+  const grouped=new Map();
+  items.forEach(x=>{
+    const key=finNormalizeServiceName(x.name),row=grouped.get(key)||{name:x.name,qty:0,value:0,subscription:!!x.subscription};
+    row.qty+=finServiceUnits(x);row.value+=finN(x.value);grouped.set(key,row);
+  });
+  const rows=[...grouped.values()].sort((a,b)=>b.value-a.value||b.qty-a.qty||a.name.localeCompare(b.name)),qty=rows.reduce((n,x)=>n+x.qty,0),value=rows.reduce((n,x)=>n+x.value,0);
   return '<section class="finance-panel"><div class="row"><div><h2>Detalhes de '+finMonthLabel(FIN_SERVICE_DETAIL_PERIOD)+'</h2><div class="hint">'+(FIN_SERVICE_GROUP==="servicos"?"Serviços principais":"Serviços extras")+'</div></div><button class="finance-link" onclick="FIN_SERVICE_DETAIL_PERIOD=null;render()">Fechar detalhes</button></div><div class="finance-kpis">'+finKpi("Quantidade realizada",finInt(qty),"Itens contabilizados")+finKpi("Valor vendido",finBRL(value),"Total no mês selecionado")+'</div>'+finTable(rows,"Não há itens desta categoria neste mês.")+'</section>';
 }
 function finDetailListt(months){
