@@ -104,6 +104,7 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .doc-section-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin:22px 0 8px;padding:0 4px}
 .doc-list-row{display:flex;align-items:center;gap:13px;width:100%;padding:15px 8px;text-align:left;color:var(--fg);background:transparent;border:0;border-bottom:1px solid var(--bd);font:inherit;cursor:pointer}
 .doc-list-row.selected{background:var(--mut);border-radius:10px}
+.doc-list-row[draggable="true"]{cursor:grab;touch-action:pan-y}.doc-list-row.dragging{opacity:.4}.doc-list-row.drag-over{background:var(--mut);outline:1px dashed var(--gold);border-radius:10px}.doc-list-row[draggable="true"]:before{content:'⠿';color:var(--sub);font-size:18px;margin-right:8px;letter-spacing:-3px}
 .doc-list-icon{width:30px;flex:none;font-size:21px;text-align:center}
 .doc-list-main{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
 .doc-list-main strong{font-size:15px;font-weight:600}
@@ -1083,6 +1084,14 @@ function docsFolderCreate(){docsInit();const name=prompt("Nome da pasta:");if(!n
 function docsFolderRename(id){const f=S.documentFolders.find(x=>x.id===id);if(!f)return;const n=prompt("Novo nome:",f.name);if(n&&n.trim()){f.name=n.trim();save();render()}}
 function docsFolderDelete(id){docsInit();if(!confirm("Excluir esta pasta e todas as notas dela?"))return;S.documents=S.documents.filter(n=>n.folderId!==id);S.documentFolders=S.documentFolders.filter(f=>f.id!==id);if(DOC_FOLDER_ID===id){DOC_FOLDER_ID=null;DOC_NOTE_ID=null}save();render()}
 function docsNewNote(){if(!DOC_FOLDER_ID){toast("Crie ou selecione uma pasta primeiro.");return}const n={id:"dn"+Date.now(),folderId:DOC_FOLDER_ID,title:"Nova nota",body:""};S.documents.unshift(n);DOC_NOTE_ID=n.id;save();render()}
+let DOC_DRAG=null;
+document.addEventListener('dragstart',function(e){const row=e.target.closest('[data-doc-drag-type]');if(!row)return;DOC_DRAG={type:row.dataset.docDragType,id:row.dataset.docDragId};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',DOC_DRAG.type+':'+DOC_DRAG.id);row.classList.add('dragging')});
+document.addEventListener('dragover',function(e){const row=e.target.closest('[data-doc-drag-type]');if(!row||!DOC_DRAG||row.dataset.docDragType!==DOC_DRAG.type)return;e.preventDefault();row.classList.add('drag-over')});
+document.addEventListener('dragleave',function(e){const row=e.target.closest('[data-doc-drag-type]');if(row)row.classList.remove('drag-over')});
+document.addEventListener('drop',function(e){const row=e.target.closest('[data-doc-drag-type]');if(!row||!DOC_DRAG)return;e.preventDefault();const type=row.dataset.docDragType,target=row.dataset.docDragId,source=DOC_DRAG;docsDragEnd();if(source.type===type&&source.id!==target)docsReorder(type,source.id,target)});
+document.addEventListener('dragend',docsDragEnd);
+function docsDragEnd(){DOC_DRAG=null;document.querySelectorAll('.doc-list-row.dragging,.doc-list-row.drag-over').forEach(function(el){el.classList.remove('dragging','drag-over')})}
+function docsReorder(type,sourceId,targetId){if(type==='folder'){const a=S.documentFolders,from=a.findIndex(x=>x.id===sourceId),to=a.findIndex(x=>x.id===targetId);if(from<0||to<0)return;const item=a.splice(from,1)[0];a.splice(to,0,item)}else{const positions=[],a=[];S.documents.forEach((x,i)=>{if(x.folderId===DOC_FOLDER_ID){positions.push(i);a.push(x)}});const from=a.findIndex(x=>x.id===sourceId),to=a.findIndex(x=>x.id===targetId);if(from<0||to<0)return;const item=a.splice(from,1)[0];a.splice(to,0,item);positions.forEach((p,i)=>{S.documents[p]=a[i]})}save();render()}
 function docsSelectNote(id){DOC_NOTE_ID=id;render()}
 function docsUpdate(field,value){const n=S.documents.find(x=>x.id===DOC_NOTE_ID);if(n){n[field]=value;save()}}
 function docsDeleteNote(id){if(!confirm("Excluir esta nota?"))return;S.documents=S.documents.filter(n=>n.id!==id);DOC_NOTE_ID=null;save();render()}
@@ -1093,8 +1102,8 @@ function documentsView(){
   const notes=folder?S.documents.filter(n=>n.folderId===folder.id):[];
   if(!notes.some(n=>n.id===DOC_NOTE_ID))DOC_NOTE_ID=null;
   const note=notes.find(n=>n.id===DOC_NOTE_ID);
-  const folderRows=S.documentFolders.map(f=>'<button class="doc-list-row" onclick="DOC_FOLDER_ID=\''+f.id+'\';DOC_NOTE_ID=null;render()"><span class="doc-list-icon">📁</span><span class="doc-list-main"><strong>'+esc(f.name)+'</strong><small>'+S.documents.filter(n=>n.folderId===f.id).length+' notas</small></span><span class="doc-chevron">›</span></button><div class="doc-row-actions"><button class="lnk" onclick="docsFolderRename(\''+f.id+'\')">Renomear</button><button class="lnk" onclick="docsFolderDelete(\''+f.id+'\')">Excluir</button></div>').join("");
-  const noteRows=notes.map(n=>'<button class="doc-list-row '+(n.id===DOC_NOTE_ID?'selected':'')+'" onclick="docsSelectNote(\''+n.id+'\')"><span class="doc-list-icon">📝</span><span class="doc-list-main"><strong>'+esc(n.title||"Sem título")+'</strong><small>'+esc((n.body||"").replace(/\\s+/g," ").slice(0,90)||"Sem texto")+'</small></span><span class="doc-chevron">›</span></button>').join("");
+  const folderRows=S.documentFolders.map(f=>'<button class="doc-list-row" draggable="true" data-doc-drag-type="folder" data-doc-drag-id="'+f.id+'" onclick="DOC_FOLDER_ID=\''+f.id+'\';DOC_NOTE_ID=null;render()"><span class="doc-list-icon">📁</span><span class="doc-list-main"><strong>'+esc(f.name)+'</strong><small>'+S.documents.filter(n=>n.folderId===f.id).length+' notas</small></span><span class="doc-chevron">›</span></button><div class="doc-row-actions"><button class="lnk" onclick="docsFolderRename(\''+f.id+'\')">Renomear</button><button class="lnk" onclick="docsFolderDelete(\''+f.id+'\')">Excluir</button></div>').join("");
+  const noteRows=notes.map(n=>'<button class="doc-list-row '+(n.id===DOC_NOTE_ID?'selected':'')+'" draggable="true" data-doc-drag-type="note" data-doc-drag-id="'+n.id+'" onclick="docsSelectNote(\''+n.id+'\')"><span class="doc-list-icon">📝</span><span class="doc-list-main"><strong>'+esc(n.title||"Sem título")+'</strong><small>'+esc((n.body||"").replace(/\\s+/g," ").slice(0,90)||"Sem texto")+'</small></span><span class="doc-chevron">›</span></button>').join("");
   let content='';
   if(!folder){
     content='<div class="doc-toolbar"><div><h1>Documentos</h1><div class="sub">Suas pastas e anotações em um só lugar.</div></div><button class="btn" onclick="docsFolderCreate()">+ Nova pasta</button></div>'+
