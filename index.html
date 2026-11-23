@@ -1139,7 +1139,7 @@ function goalsView(allRows){
       '<div class="row"><div><div class="sub">META DE ATENDIMENTO</div><div style="font-size:25px;font-weight:700">'+day+' por dia</div><div class="hint" style="margin-top:4px">Você vai atender, em média, '+day+' clientes por dia</div></div>'+
       '<div style="text-align:right"><div class="sub">Carteira estimada</div><strong style="font-size:20px">'+needed+' clientes</strong></div></div>'+
       '<div style="height:10px;background:var(--mut);border-radius:99px;overflow:hidden;margin:14px 0 8px"><div style="height:100%;width:'+progress.toFixed(1)+'%;background:var(--ok);border-radius:99px;transition:width .3s"></div></div>'+
-      '<div class="row sub"><span>'+fmt(currentPerDay)+' atendimentos/dia na carteira atual</span><strong>'+Math.round(progress)+'% da meta</strong></div>'+
+      '<div class="row sub"><span>'+fmt(day)+' atendimentos/dia nesta meta</span><strong>'+Math.round(progress)+'% da meta</strong></div>'+
       '<div class="hint" style="margin-top:10px">'+(remaining? 'Faltam aproximadamente '+remaining+' clientes recorrentes com frequência semelhante à média atual.':'Meta alcançada pela projeção atual.')+' · '+monthly+' atendimentos/mês</div>'+
       '</section>';
   }).join("");
