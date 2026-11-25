@@ -1244,7 +1244,7 @@ function notificationItems(r=rows()){
   const days=c.nx?Math.max(1,Math.round((U(today)-U(c.nx))/864e5)):0;
   items.push({id:"late_"+c.id,type:"atraso",client:c,title:c.name,detail:"Último atendimento: "+br(c.last),message:"Está "+days+" dia"+(days===1?"":"s")+" além da frequência habitual.",icon:IC.clock||IC.retorno||""});
  });
- S.clients.filter(c=>c.qual!=="nao_qualificado"&&["aguardando_cliente","mensagem_enviada"].includes(c.conversationStatus)&&c.conversationUpdated).forEach(c=>{
+ S.clients.filter(c=>c.qual!=="nao_qualificado"&&["aguardando_cliente","mensagem_enviada","nao_respondeu"].includes(c.conversationStatus)&&c.conversationUpdated).forEach(c=>{
   const days=Math.max(0,Math.floor((U(today)-U(c.conversationUpdated))/864e5));
   if(days>=3)items.push({id:"conversation_"+c.id,type:"conversa",client:c,title:c.name,detail:"Em acompanhamento há "+days+" dia"+(days===1?"":"s"),message:"A conversa está sem atualização. Vale fazer um novo contato.",icon:IC.conversas||""});
  });
