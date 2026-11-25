@@ -115,7 +115,12 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .doc-empty-short{min-height:150px;padding:40px 12px}
 .doc-editor-ios{margin-top:10px}
 .doc-editor-ios .doc-title{width:100%;font-size:27px;margin:8px 0 10px}
-.doc-editor-ios .doc-body{width:100%;min-height:55vh;font-size:16px;line-height:1.65;resize:vertical}
+.doc-editor-ios .doc-body{width:100%;min-height:55vh;font-size:16px;line-height:1.65;resize:vertical;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:var(--mut);border:1px solid var(--bd);border-radius:10px}
+.doc-format-toolbar{display:flex;align-items:center;gap:8px;padding:8px 0;position:sticky;top:0;background:var(--bg);z-index:2}
+.doc-format-toolbar button{min-width:40px;padding:8px 12px;border:1px solid var(--bd);border-radius:9px;background:var(--mut);color:var(--fg);font:inherit;font-weight:700}
+.doc-format-toolbar button.italic{font-style:italic}
+.doc-body[contenteditable=true]:empty:before{content:attr(data-placeholder);color:var(--sub)}
+.doc-body b,.doc-body strong{font-weight:800}.doc-body i,.doc-body em{font-style:italic}
 .doc-editor-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bd);padding-top:12px}
 @media(min-width:800px){.docs-ios{max-width:850px}}
 
@@ -1116,7 +1121,29 @@ document.addEventListener('dragend',docsDragEnd);
 function docsDragEnd(){DOC_DRAG=null;document.querySelectorAll('.doc-list-row.dragging,.doc-list-row.drag-over').forEach(function(el){el.classList.remove('dragging','drag-over')})}
 function docsReorder(type,sourceId,targetId){if(type==='folder'){const a=S.documentFolders,from=a.findIndex(x=>x.id===sourceId),to=a.findIndex(x=>x.id===targetId);if(from<0||to<0)return;const item=a.splice(from,1)[0];a.splice(to,0,item)}else{const positions=[],a=[];S.documents.forEach((x,i)=>{if(x.folderId===DOC_FOLDER_ID){positions.push(i);a.push(x)}});const from=a.findIndex(x=>x.id===sourceId),to=a.findIndex(x=>x.id===targetId);if(from<0||to<0)return;const item=a.splice(from,1)[0];a.splice(to,0,item);positions.forEach((p,i)=>{S.documents[p]=a[i]})}save();render()}
 function docsSelectNote(id){DOC_NOTE_ID=id;render()}
-function docsUpdate(field,value){const n=S.documents.find(x=>x.id===DOC_NOTE_ID);if(n){n[field]=value;save()}}
+function docsSafeHtml(value){
+  const box=document.createElement("div");box.innerHTML=String(value||"");
+  const allowed=["B","STRONG","I","EM","BR","P","DIV"];
+  function clean(node){
+    Array.from(node.childNodes).forEach(child=>{
+      if(child.nodeType===1){
+        if(!allowed.includes(child.tagName)){const text=document.createTextNode(child.textContent||"");child.replaceWith(text)}
+        else{Array.from(child.attributes).forEach(attr=>child.removeAttribute(attr.name));clean(child)}
+      }else if(child.nodeType!==3)child.remove();
+    });
+  }
+  clean(box);return box.innerHTML;
+}
+function docsBodyHtml(value){
+  const raw=String(value||"");
+  if(!/<\\/?(b|strong|i|em|br|p|div)\\b/i.test(raw))return esc(raw).replace(/\\r?\\n/g,"<br>");
+  return docsSafeHtml(raw);
+}
+function docsFormat(command){
+  const editor=document.querySelector(".doc-body[contenteditable=true]");if(!editor)return;
+  editor.focus();document.execCommand(command,false,null);docsUpdate("body",editor.innerHTML);
+}
+function docsUpdate(field,value){const n=S.documents.find(x=>x.id===DOC_NOTE_ID);if(n){n[field]=field==="body"?docsSafeHtml(value):value;save()}}
 function docsDeleteNote(id){if(!confirm("Excluir esta nota?"))return;S.documents=S.documents.filter(n=>n.id!==id);DOC_NOTE_ID=null;save();render()}
 function documentsView(){
   docsInit();
@@ -1126,14 +1153,14 @@ function documentsView(){
   if(!notes.some(n=>n.id===DOC_NOTE_ID))DOC_NOTE_ID=null;
   const note=notes.find(n=>n.id===DOC_NOTE_ID);
   const folderRows=S.documentFolders.map(f=>'<button class="doc-list-row" draggable="true" data-doc-drag-type="folder" data-doc-drag-id="'+f.id+'" onclick="DOC_FOLDER_ID=\''+f.id+'\';DOC_NOTE_ID=null;render()"><span class="doc-list-icon">📁</span><span class="doc-list-main"><strong>'+esc(f.name)+'</strong><small>'+S.documents.filter(n=>n.folderId===f.id).length+' notas</small></span><span class="doc-chevron">›</span></button><div class="doc-row-actions"><button class="lnk" onclick="docsFolderRename(\''+f.id+'\')">Renomear</button><button class="lnk" onclick="docsFolderDelete(\''+f.id+'\')">Excluir</button></div>').join("");
-  const noteRows=notes.map(n=>'<button class="doc-list-row '+(n.id===DOC_NOTE_ID?'selected':'')+'" draggable="true" data-doc-drag-type="note" data-doc-drag-id="'+n.id+'" onclick="docsSelectNote(\''+n.id+'\')"><span class="doc-list-icon">📝</span><span class="doc-list-main"><strong>'+esc(n.title||"Sem título")+'</strong><small>'+esc((n.body||"").replace(/\\s+/g," ").slice(0,90)||"Sem texto")+'</small></span><span class="doc-chevron">›</span></button>').join("");
+  const noteRows=notes.map(n=>'<button class="doc-list-row '+(n.id===DOC_NOTE_ID?'selected':'')+'" draggable="true" data-doc-drag-type="note" data-doc-drag-id="'+n.id+'" onclick="docsSelectNote(\''+n.id+'\')"><span class="doc-list-icon">📝</span><span class="doc-list-main"><strong>'+esc(n.title||"Sem título")+'</strong><small>'+esc((function(){const d=document.createElement("div");d.innerHTML=docsBodyHtml(n.body||"");return (d.textContent||"").replace(/\\s+/g," ").slice(0,90)})()||"Sem texto")+'</small></span><span class="doc-chevron">›</span></button>').join("");
   let content='';
   if(!folder){
     content='<div class="doc-toolbar"><div><h1>Documentos</h1><div class="sub">Suas pastas e anotações em um só lugar.</div></div><button class="btn" onclick="docsFolderCreate()">+ Nova pasta</button></div>'+
       '<div class="doc-section-label">Minhas pastas</div>'+(folderRows||'<div class="doc-empty doc-empty-short">Nenhuma pasta por aqui ainda.<br>Toque em “Nova pasta” para começar.</div>');
   }else if(note){
     content='<div class="app-backbar"><button class="app-back-button" onclick="backNav()"><span class="app-back-icon">‹</span> '+esc(folder.name)+'</button></div>'+
-      '<div class="doc-editor-ios"><input class="doc-title" value="'+esc(note.title||"")+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><textarea class="doc-body" placeholder="Comece a escrever..." oninput="docsUpdate(\'body\',this.value)">'+esc(note.body||"")+'</textarea><div class="doc-editor-footer"><span class="sub">Salvo automaticamente</span><button class="lnk" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div></div>';
+      '<div class="doc-editor-ios"><input class="doc-title" value="'+esc(note.title||"")+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><div class="doc-format-toolbar"><button type="button" title="Negrito" onmousedown="event.preventDefault()" onclick="docsFormat(\'bold\')">B</button><button type="button" class="italic" title="Itálico" onmousedown="event.preventDefault()" onclick="docsFormat(\'italic\')">I</button></div><div class="doc-body" contenteditable="true" data-placeholder="Comece a escrever..." oninput="docsUpdate(\'body\',this.innerHTML)">'+docsBodyHtml(note.body||"")+'</div><div class="doc-editor-footer"><span class="sub">Salvo automaticamente</span><button class="lnk" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div></div>';
   }else{
     content='<div class="app-backbar"><button class="app-back-button" onclick="backNav()"><span class="app-back-icon">‹</span> Pastas</button></div>'+
       '<div class="doc-toolbar"><div><h1>'+esc(folder.name)+'</h1><div class="sub">Notas desta pasta</div></div><button class="btn" onclick="docsNewNote()">+ Nova nota</button></div>'+
