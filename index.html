@@ -1136,7 +1136,7 @@ function docsSafeHtml(value){
 }
 function docsBodyHtml(value){
   const raw=String(value||"");
-  if(!/<\\/?(b|strong|i|em|br|p|div)\\b/i.test(raw))return esc(raw).replace(/\\r?\\n/g,"<br>");
+  if(!/<\/?(b|strong|i|em|br|p|div)\b/i.test(raw))return esc(raw).replace(/\r?\n/g,"<br>");
   return docsSafeHtml(raw);
 }
 function docsFormat(command){
