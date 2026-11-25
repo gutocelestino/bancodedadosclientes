@@ -1152,7 +1152,7 @@ function docsSafeHtml(value){
 }
 function docsBodyHtml(value){
   const raw=String(value||"");
-  if(!/<\/?(b|strong|i|em|br|p|div)\b/i.test(raw))return esc(raw).replace(/\r?\n/g,"<br>");
+  if(!/<\/?(b|strong|i|em|br|p|div|input)\b/i.test(raw))return esc(raw).replace(/\r?\n/g,"<br>");
   return docsSafeHtml(raw);
 }
 let DOC_SAVED_RANGE=null;
@@ -1171,7 +1171,7 @@ function docsInsertChecklist(){
  range.deleteContents();range.insertNode(space);range.insertNode(checkbox);const br=document.createElement("br");space.parentNode.insertBefore(br,space.nextSibling);
  const next=document.createRange();next.setStartAfter(br);next.collapse(true);sel.removeAllRanges();sel.addRange(next);DOC_SAVED_RANGE=next.cloneRange();docsUpdate("body",editor.innerHTML);
 }
-function docsToggleChecklist(event){const target=event.target;if(!target||target.tagName!=="INPUT"||target.type!=="checkbox")return;const editor=target.closest(".doc-body");if(editor)setTimeout(()=>docsUpdate("body",editor.innerHTML),0)}
+function docsToggleChecklist(event){const target=event.target;if(!target||target.tagName!=="INPUT"||target.type!=="checkbox")return;const editor=target.closest(".doc-body");if(!editor)return;if(target.checked)target.setAttribute("checked","");else target.removeAttribute("checked");docsUpdate("body",editor.innerHTML)}
 function docsFormat(command){
   const editor=document.querySelector(".doc-body[contenteditable=true]");if(!editor)return;
   const sel=window.getSelection();editor.focus();
