@@ -1197,7 +1197,9 @@ function docsEditorKeydown(event){
  if(checkIndex>=0){
   const hasText=line.slice(checkIndex+1).some(t=>t.type==="text"&&t.value.trim().length);
   if(!hasText){
-   const box=line[checkIndex].node;
+   const boxes=editor.querySelectorAll('input[type="checkbox"]');
+   const box=boxes[boxes.length-1];
+   if(!box)return;
    const parent=box.parentNode,after=box.nextSibling;
    box.remove();
    if(after&&after.nodeType===3&&after.textContent.startsWith(" "))after.deleteData(0,1);
