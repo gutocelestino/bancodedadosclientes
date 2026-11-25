@@ -1176,29 +1176,21 @@ function docsSlashMenu(show){const menu=document.getElementById("docSlashMenu");
 function docsInsertChecklistAtCaret(){const editor=document.querySelector(".doc-body[contenteditable=true]");if(!editor)return;editor.focus();const sel=window.getSelection();let range=sel&&sel.rangeCount?sel.getRangeAt(0).cloneRange():null;if(!range||!editor.contains(range.commonAncestorContainer)){range=document.createRange();range.selectNodeContents(editor);range.collapse(false)}const box=document.createElement("input");box.type="checkbox";const space=document.createTextNode(" ");range.deleteContents();range.insertNode(space);range.insertNode(box);const br=document.createElement("br");space.parentNode.insertBefore(br,space.nextSibling);const next=document.createRange();next.setStartAfter(br);next.collapse(true);sel.removeAllRanges();sel.addRange(next);DOC_SAVED_RANGE=next.cloneRange();docsSlashMenu(false);docsUpdate("body",editor.innerHTML)}
 function docsApplySlashCommand(command){const editor=document.querySelector(".doc-body[contenteditable=true]");if(!editor)return;const sel=window.getSelection();if(!sel||!sel.rangeCount)return;const range=sel.getRangeAt(0),node=range.startContainer;if(node.nodeType===3&&node.textContent.slice(0,range.startOffset).endsWith("/")){node.deleteData(range.startOffset-1,1);range.setStart(node,range.startOffset-1);range.collapse(true);sel.removeAllRanges();sel.addRange(range)}docsSlashMenu(false);if(command==="checklist")docsInsertChecklistAtCaret();else{document.execCommand(command,false,null);docsUpdate("body",editor.innerHTML)}}
 function docsEditorKeydown(event){
- const editor=event.currentTarget,sel=window.getSelection();
+ const editor=event.currentTarget;
  if((event.metaKey||event.ctrlKey)&&!event.shiftKey){
   const key=event.key.toLowerCase();
   if(key==="b"||key==="i"){event.preventDefault();document.execCommand(key==="b"?"bold":"italic",false,null);docsUpdate("body",editor.innerHTML);return}
  }
  if(event.key==="Escape"&&DOC_SLASH_OPEN){event.preventDefault();docsSlashMenu(false);return}
  if(event.key==="Enter"&&DOC_SLASH_OPEN){event.preventDefault();docsApplySlashCommand("checklist");return}
- if(event.key==="Enter"&&sel&&sel.rangeCount){
-  const range=sel.getRangeAt(0);
-  if(!editor.contains(range.startContainer))return;
-  const before=document.createRange();before.selectNodeContents(editor);before.setEnd(range.startContainer,range.startOffset);
-  const fragment=before.cloneContents();
-  const parts=Array.from(fragment.childNodes);let current=[];
-  for(const node of parts){if(node.nodeType===1&&node.tagName==="BR")current=[];else current.push(node)}
-  const hasChecklist=current.some(node=>node.nodeType===1&&node.matches&&node.matches('input[type="checkbox"]')||node.nodeType===3&&node.previousSibling&&node.previousSibling.nodeType===1&&node.previousSibling.matches('input[type="checkbox"]'));
-  if(hasChecklist){
-   event.preventDefault();
-   const br=document.createElement("br"),box=document.createElement("input"),space=document.createTextNode(" ");
-   box.type="checkbox";
-   range.deleteContents();range.insertNode(br);br.parentNode.insertBefore(box,br.nextSibling);box.parentNode.insertBefore(space,box.nextSibling);
-   const next=document.createRange();next.setStart(space,1);next.collapse(true);sel.removeAllRanges();sel.addRange(next);
-   DOC_SAVED_RANGE=next.cloneRange();docsUpdate("body",editor.innerHTML);
-  }
+ if(event.key==="Enter"&&!event.shiftKey){
+  const sel=window.getSelection();
+  if(!sel||!sel.rangeCount||!editor.contains(sel.getRangeAt(0).startContainer))return;
+  event.preventDefault();
+  editor.focus();
+  document.execCommand("insertLineBreak",false,null);
+  docsRememberSelection();
+  docsUpdate("body",editor.innerHTML);
  }
 }
 function docsEditorInput(event){const editor=event.currentTarget,sel=window.getSelection();if(sel&&sel.rangeCount){const r=sel.getRangeAt(0),n=r.startContainer;if(n.nodeType===3&&n.textContent.slice(0,r.startOffset).trim()==="/")docsSlashMenu(true);else if(DOC_SLASH_OPEN)docsSlashMenu(false)}docsUpdate("body",editor.innerHTML)}
@@ -2130,6 +2122,11 @@ function finDeleteMonth(period){
   askC("Excluir o relatório de "+finMonthLabel(period)+"? As movimentações manuais daquele mês serão mantidas.",()=>{finStore().months=finStore().months.filter(x=>x.period!==period);save();render()});
 }
 
+
+// Guarda a tela atual antes de qualquer recarga ou saída da página.
+window.addEventListener("pagehide",persistAppPosition);
+window.addEventListener("beforeunload",persistAppPosition);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")persistAppPosition()});
 
 init();
 
