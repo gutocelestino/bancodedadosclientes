@@ -278,7 +278,7 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .notify-section h2{font-size:17px;margin:0}
 .notify-empty{padding:30px 16px;text-align:center;border:1px dashed var(--bd);border-radius:16px;color:var(--sub);margin-top:18px}
 @media(min-width:800px){.notify-bell{top:16px;right:22px}}
-</style></head><body><main id="app"></main>
+.doc-body input[type="checkbox"]{width:17px;height:17px;accent-color:var(--gold);vertical-align:middle;margin:0 7px 0 2px;cursor:pointer}</style></head><body><main id="app"></main>
 <nav id="nav"></nav><div id="lock"></div><div id="dlg"></div><div id="toast"></div><div id="appRefresh" class="app-refresh" aria-live="polite" aria-hidden="true"><span class="app-refresh-mark">↓</span><span class="app-refresh-label">Puxe para atualizar</span></div><div id="photoCrop" class="photo-crop-overlay" aria-hidden="true"></div><div id="photoViewer" class="photo-viewer-overlay" aria-hidden="true" onclick="closeClientPhoto(event)"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;document.write('<scr'+'ipt src=&quot;https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js&quot;><\\/scr'+'ipt>')"></script>
 <script>
@@ -1138,11 +1138,12 @@ function docsReorder(type,sourceId,targetId){if(type==='folder'){const a=S.docum
 function docsSelectNote(id){DOC_NOTE_ID=id;render()}
 function docsSafeHtml(value){
   const box=document.createElement("div");box.innerHTML=String(value||"");
-  const allowed=["B","STRONG","I","EM","BR","P","DIV"];
+  const allowed=["B","STRONG","I","EM","BR","P","DIV","INPUT"];
   function clean(node){
     Array.from(node.childNodes).forEach(child=>{
       if(child.nodeType===1){
         if(!allowed.includes(child.tagName)){const text=document.createTextNode(child.textContent||"");child.replaceWith(text)}
+        else if(child.tagName==="INPUT"){if(child.type!=="checkbox"){child.remove()}else{const checked=child.hasAttribute("checked");Array.from(child.attributes).forEach(attr=>child.removeAttribute(attr.name));child.setAttribute("type","checkbox");if(checked)child.setAttribute("checked","")}}
         else{Array.from(child.attributes).forEach(attr=>child.removeAttribute(attr.name));clean(child)}
       }else if(child.nodeType!==3)child.remove();
     });
@@ -1161,6 +1162,16 @@ function docsRememberSelection(){
   const range=sel.getRangeAt(0);
   if(editor.contains(range.commonAncestorContainer))DOC_SAVED_RANGE=range.cloneRange();
 }
+function docsInsertChecklist(){
+ const editor=document.querySelector(".doc-body[contenteditable=true]");if(!editor)return;
+ editor.focus();const sel=window.getSelection();let range=DOC_SAVED_RANGE&&editor.contains(DOC_SAVED_RANGE.commonAncestorContainer)?DOC_SAVED_RANGE.cloneRange():null;
+ if(!range&&sel&&sel.rangeCount&&editor.contains(sel.getRangeAt(0).commonAncestorContainer))range=sel.getRangeAt(0).cloneRange();
+ if(!range){range=document.createRange();range.selectNodeContents(editor);range.collapse(false)}
+ const checkbox=document.createElement("input");checkbox.type="checkbox";const space=document.createTextNode(" ");
+ range.deleteContents();range.insertNode(space);range.insertNode(checkbox);const br=document.createElement("br");space.parentNode.insertBefore(br,space.nextSibling);
+ const next=document.createRange();next.setStartAfter(br);next.collapse(true);sel.removeAllRanges();sel.addRange(next);DOC_SAVED_RANGE=next.cloneRange();docsUpdate("body",editor.innerHTML);
+}
+function docsToggleChecklist(event){const target=event.target;if(!target||target.tagName!=="INPUT"||target.type!=="checkbox")return;const editor=target.closest(".doc-body");if(editor)setTimeout(()=>docsUpdate("body",editor.innerHTML),0)}
 function docsFormat(command){
   const editor=document.querySelector(".doc-body[contenteditable=true]");if(!editor)return;
   const sel=window.getSelection();editor.focus();
@@ -1194,7 +1205,7 @@ function documentsView(){
       '<div class="doc-section-label">Minhas pastas</div>'+(folderRows||'<div class="doc-empty doc-empty-short">Nenhuma pasta por aqui ainda.<br>Toque em “Nova pasta” para começar.</div>');
   }else if(note){
     content='<div class="app-backbar"><button class="app-back-button" onclick="backNav()"><span class="app-back-icon">‹</span> '+esc(folder.name)+'</button></div>'+
-      '<div class="doc-editor-ios"><input class="doc-title" value="'+esc(note.title||"")+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><div class="doc-format-toolbar"><button type="button" title="Negrito" onmousedown="event.preventDefault()" onclick="docsFormat(\'bold\')">B</button><button type="button" class="italic" title="Itálico" onmousedown="event.preventDefault()" onclick="docsFormat(\'italic\')">I</button></div><div class="doc-body" contenteditable="true" data-placeholder="Comece a escrever..." onmouseup="docsRememberSelection()" onkeyup="docsRememberSelection()" oninput="docsUpdate(\'body\',this.innerHTML)">'+docsBodyHtml(note.body||"")+'</div><div class="doc-editor-footer"><span class="sub">Salvo automaticamente</span><button class="lnk" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div></div>';
+      '<div class="doc-editor-ios"><input class="doc-title" value="'+esc(note.title||"")+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><div class="doc-format-toolbar"><button type="button" title="Negrito" onmousedown="event.preventDefault()" onclick="docsFormat(\'bold\')">B</button><button type="button" class="italic" title="Itálico" onmousedown="event.preventDefault()" onclick="docsFormat(\'italic\')">I</button><button type="button" title="Adicionar item de checklist" onmousedown="event.preventDefault()" onclick="docsInsertChecklist()">☐ Checklist</button></div><div class="doc-body" contenteditable="true" data-placeholder="Comece a escrever..." onmouseup="docsRememberSelection()" onkeyup="docsRememberSelection()" onclick="docsToggleChecklist(event)" oninput="docsUpdate(\'body\',this.innerHTML)">'+docsBodyHtml(note.body||"")+'</div><div class="doc-editor-footer"><span class="sub">Salvo automaticamente</span><button class="lnk" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div></div>';
   }else{
     content='<div class="app-backbar"><button class="app-back-button" onclick="backNav()"><span class="app-back-icon">‹</span> Pastas</button></div>'+
       '<div class="doc-toolbar"><div><h1>'+esc(folder.name)+'</h1><div class="sub">Notas desta pasta</div></div><button class="btn" onclick="docsNewNote()">+ Nova nota</button></div>'+
