@@ -1183,15 +1183,36 @@ function docsEditorKeydown(event){
  }
  if(event.key==="Escape"&&DOC_SLASH_OPEN){event.preventDefault();docsSlashMenu(false);return}
  if(event.key==="Enter"&&DOC_SLASH_OPEN){event.preventDefault();docsApplySlashCommand("checklist");return}
- if(event.key==="Enter"&&!event.shiftKey){
-  const sel=window.getSelection();
-  if(!sel||!sel.rangeCount||!editor.contains(sel.getRangeAt(0).startContainer))return;
-  event.preventDefault();
-  editor.focus();
-  document.execCommand("insertLineBreak",false,null);
-  docsRememberSelection();
-  docsUpdate("body",editor.innerHTML);
+ if(event.key!=="Enter"||event.shiftKey)return;
+ const sel=window.getSelection();
+ if(!sel||!sel.rangeCount||!editor.contains(sel.getRangeAt(0).startContainer))return;
+ event.preventDefault();
+ const range=sel.getRangeAt(0);
+ const before=document.createRange();before.selectNodeContents(editor);before.setEnd(range.startContainer,range.startOffset);
+ const fragment=before.cloneContents(),tokens=[];
+ const flatten=node=>{node.childNodes&&Array.from(node.childNodes).forEach(child=>{if(child.nodeType===1&&child.tagName==="BR")tokens.push({type:"br"});else if(child.nodeType===1&&child.matches&&child.matches('input[type="checkbox"]'))tokens.push({type:"check",node:child});else if(child.nodeType===3)tokens.push({type:"text",value:child.textContent});else flatten(child)})};
+ flatten(fragment);
+ let lastBreak=-1;tokens.forEach((t,i)=>{if(t.type==="br")lastBreak=i});
+ const line=tokens.slice(lastBreak+1),checkIndex=line.findIndex(t=>t.type==="check");
+ if(checkIndex>=0){
+  const hasText=line.slice(checkIndex+1).some(t=>t.type==="text"&&t.value.trim().length);
+  if(!hasText){
+   const box=line[checkIndex].node;
+   const parent=box.parentNode,after=box.nextSibling;
+   box.remove();
+   if(after&&after.nodeType===3&&after.textContent.startsWith(" "))after.deleteData(0,1);
+   const next=document.createRange();next.selectNodeContents(editor);next.collapse(false);
+   sel.removeAllRanges();sel.addRange(next);
+  }else{
+   const br=document.createElement("br"),box=document.createElement("input"),space=document.createTextNode(" ");
+   box.type="checkbox";
+   range.deleteContents();range.insertNode(br);br.parentNode.insertBefore(box,br.nextSibling);box.parentNode.insertBefore(space,box.nextSibling);
+   const next=document.createRange();next.setStart(space,1);next.collapse(true);sel.removeAllRanges();sel.addRange(next);
+  }
+ }else{
+  editor.focus();document.execCommand("insertLineBreak",false,null);
  }
+ docsRememberSelection();docsUpdate("body",editor.innerHTML);
 }
 function docsEditorInput(event){const editor=event.currentTarget,sel=window.getSelection();if(sel&&sel.rangeCount){const r=sel.getRangeAt(0),n=r.startContainer;if(n.nodeType===3&&n.textContent.slice(0,r.startOffset).trim()==="/")docsSlashMenu(true);else if(DOC_SLASH_OPEN)docsSlashMenu(false)}docsUpdate("body",editor.innerHTML)}
 function docsToggleChecklist(event){const target=event.target;if(!target||target.tagName!=="INPUT"||target.type!=="checkbox")return;const editor=target.closest(".doc-body");if(!editor)return;if(target.checked)target.setAttribute("checked","");else target.removeAttribute("checked");docsUpdate("body",editor.innerHTML)}
