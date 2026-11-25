@@ -1139,9 +1139,28 @@ function docsBodyHtml(value){
   if(!/<\/?(b|strong|i|em|br|p|div)\b/i.test(raw))return esc(raw).replace(/\r?\n/g,"<br>");
   return docsSafeHtml(raw);
 }
+let DOC_SAVED_RANGE=null;
+function docsRememberSelection(){
+  const editor=document.querySelector(".doc-body[contenteditable=true]"),sel=window.getSelection();
+  if(!editor||!sel||!sel.rangeCount)return;
+  const range=sel.getRangeAt(0);
+  if(editor.contains(range.commonAncestorContainer))DOC_SAVED_RANGE=range.cloneRange();
+}
 function docsFormat(command){
   const editor=document.querySelector(".doc-body[contenteditable=true]");if(!editor)return;
-  editor.focus();document.execCommand(command,false,null);docsUpdate("body",editor.innerHTML);
+  const sel=window.getSelection();editor.focus();
+  if(!DOC_SAVED_RANGE&&sel&&sel.rangeCount&&editor.contains(sel.getRangeAt(0).commonAncestorContainer))DOC_SAVED_RANGE=sel.getRangeAt(0).cloneRange();
+  if(!DOC_SAVED_RANGE||!editor.contains(DOC_SAVED_RANGE.commonAncestorContainer)){toast("Selecione um trecho do texto primeiro.");return}
+  const range=DOC_SAVED_RANGE.cloneRange();
+  if(range.collapsed){toast("Selecione o texto que deseja formatar.");return}
+  const tag=command==="bold"?"strong":"em";
+  const wrapper=document.createElement(tag);
+  try{
+    wrapper.appendChild(range.extractContents());range.insertNode(wrapper);
+    const next=document.createRange();next.selectNodeContents(wrapper);
+    sel.removeAllRanges();sel.addRange(next);DOC_SAVED_RANGE=next.cloneRange();
+    docsUpdate("body",editor.innerHTML);
+  }catch(error){console.warn("Falha ao formatar nota",error);toast("Não foi possível aplicar a formatação.")}
 }
 function docsUpdate(field,value){const n=S.documents.find(x=>x.id===DOC_NOTE_ID);if(n){n[field]=field==="body"?docsSafeHtml(value):value;save()}}
 function docsDeleteNote(id){if(!confirm("Excluir esta nota?"))return;S.documents=S.documents.filter(n=>n.id!==id);DOC_NOTE_ID=null;save();render()}
@@ -1160,7 +1179,7 @@ function documentsView(){
       '<div class="doc-section-label">Minhas pastas</div>'+(folderRows||'<div class="doc-empty doc-empty-short">Nenhuma pasta por aqui ainda.<br>Toque em “Nova pasta” para começar.</div>');
   }else if(note){
     content='<div class="app-backbar"><button class="app-back-button" onclick="backNav()"><span class="app-back-icon">‹</span> '+esc(folder.name)+'</button></div>'+
-      '<div class="doc-editor-ios"><input class="doc-title" value="'+esc(note.title||"")+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><div class="doc-format-toolbar"><button type="button" title="Negrito" onmousedown="event.preventDefault()" onclick="docsFormat(\'bold\')">B</button><button type="button" class="italic" title="Itálico" onmousedown="event.preventDefault()" onclick="docsFormat(\'italic\')">I</button></div><div class="doc-body" contenteditable="true" data-placeholder="Comece a escrever..." oninput="docsUpdate(\'body\',this.innerHTML)">'+docsBodyHtml(note.body||"")+'</div><div class="doc-editor-footer"><span class="sub">Salvo automaticamente</span><button class="lnk" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div></div>';
+      '<div class="doc-editor-ios"><input class="doc-title" value="'+esc(note.title||"")+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><div class="doc-format-toolbar"><button type="button" title="Negrito" onmousedown="event.preventDefault()" onclick="docsFormat(\'bold\')">B</button><button type="button" class="italic" title="Itálico" onmousedown="event.preventDefault()" onclick="docsFormat(\'italic\')">I</button></div><div class="doc-body" contenteditable="true" data-placeholder="Comece a escrever..." onmouseup="docsRememberSelection()" onkeyup="docsRememberSelection()" oninput="docsUpdate(\'body\',this.innerHTML)">'+docsBodyHtml(note.body||"")+'</div><div class="doc-editor-footer"><span class="sub">Salvo automaticamente</span><button class="lnk" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div></div>';
   }else{
     content='<div class="app-backbar"><button class="app-back-button" onclick="backNav()"><span class="app-back-icon">‹</span> Pastas</button></div>'+
       '<div class="doc-toolbar"><div><h1>'+esc(folder.name)+'</h1><div class="sub">Notas desta pasta</div></div><button class="btn" onclick="docsNewNote()">+ Nova nota</button></div>'+
