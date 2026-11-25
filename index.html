@@ -1240,7 +1240,7 @@ function goalsView(allRows){
 
 function notificationItems(r=rows()){
  const today=iso(),items=[];
- r.filter(c=>returnEligible(c)&&c.st==="atrasado"&&!c.conversationStatus).forEach(c=>{
+ r.filter(c=>returnEligible(c)&&c.st==="atrasado").forEach(c=>{
   const days=c.nx?Math.max(1,Math.round((U(today)-U(c.nx))/864e5)):0;
   items.push({id:"late_"+c.id,type:"atraso",client:c,title:c.name,detail:"Último atendimento: "+br(c.last),message:"Está "+days+" dia"+(days===1?"":"s")+" além da frequência habitual.",icon:IC.clock||IC.retorno||""});
  });
@@ -1260,7 +1260,7 @@ function notificationCard(n){
 }
 function render(){
 $("#nav").innerHTML=`<div class="brand"><span class="logo">${sv(IC.logo)}</span>Carteira</div>`+NAV.map(([k,t])=>{const add=view=="form"&&form&&form.isNew,inC=["clientes","ficha","form","naoqualificados","unqualifiedFicha","unqualifiedForm"].includes(view)&&!add;return`<button class="${k=="clientes"?(inC?"on":""):k=="adicionar"?(add?"on":""):view==k?"on":""}" onclick="${k=="adicionar"?"newC()":"go('"+k+"')"}">${sv(IC[k])}<span>${t}</span></button>`+(k=="clientes"&&inC?[["novos","Novos clientes"],["fixos","Clientes fixos"],["assinatura","Assinantes"],["naoqualificados","Desqualificados"],["nao_retorno","Não retornaram"]].map(([s,l])=>`<button class="s2 ${F.sub==s&&view=="clientes"?"on2":""}" onclick="goSub('${s}')">${l}</button>`).join(""):"")}).join("");
-let r=rows();const alerts=notificationItems(r);const el=$("#app");let bell=$("#notifyBell");if(!bell){bell=document.createElement("button");bell.id="notifyBell";bell.className="notify-bell";bell.onclick=()=>go("notificacoes");document.body.appendChild(bell)}bell.innerHTML=sv(IC.conversas||IC.clientes||"")+(alerts.length?'<span class="notify-count">'+alerts.length+'</span>':"");bell.style.display=cloudReady?"flex":"none";bell.setAttribute("aria-label",alerts.length+" notificações pendentes");
+let r=rows();const alerts=notificationItems(r);const el=$("#app");let bell=$("#notifyBell");if(!bell){bell=document.createElement("button");bell.id="notifyBell";bell.className="notify-bell";bell.onclick=()=>go("notificacoes");document.body.appendChild(bell)}bell.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>'+(alerts.length?'<span class="notify-count">'+alerts.length+'</span>':"");bell.style.display=cloudReady?"flex":"none";bell.setAttribute("aria-label",alerts.length+" notificações pendentes");
 if(view=="painel"){
 const clientes=r.filter(c=>c.qual!="nao_qualificado"&&!c.semRetorno),naoQualificados=r.filter(c=>c.qual=="nao_qualificado"),naoRetornaram=r.filter(c=>c.qual!="nao_qualificado"&&c.semRetorno);
 const rr=clientes.filter(c=>c.tipo!="assinante"),m=f=>rr.filter(f).length;
