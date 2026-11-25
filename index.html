@@ -120,7 +120,7 @@ label{display:block;font-size:12px;color:var(--sub);margin-top:12px}
 .doc-format-toolbar button{min-width:40px;padding:8px 12px;border:1px solid var(--bd);border-radius:9px;background:var(--mut);color:var(--fg);font:inherit;font-weight:700}
 .doc-format-toolbar button.italic{font-style:italic}
 .doc-body[contenteditable=true]:empty:before{content:attr(data-placeholder);color:var(--sub)}
-.doc-body b,.doc-body strong{font-weight:800}.doc-body i,.doc-body em{font-style:italic}
+.doc-body b,.doc-body strong{font-weight:800}.doc-body i,.doc-body em{font-style:italic}.doc-body .doc-size-1{font-size:1.8em;font-weight:700;line-height:1.25}.doc-body .doc-size-2{font-size:1.45em;font-weight:700;line-height:1.3}.doc-body .doc-size-3{font-size:1.2em;font-weight:700;line-height:1.4}
 .doc-editor-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bd);padding-top:12px}
 @media(min-width:800px){.docs-ios{max-width:850px}}
 
@@ -1138,13 +1138,13 @@ function docsReorder(type,sourceId,targetId){if(type==='folder'){const a=S.docum
 function docsSelectNote(id){DOC_NOTE_ID=id;render()}
 function docsSafeHtml(value){
   const box=document.createElement("div");box.innerHTML=String(value||"");
-  const allowed=["B","STRONG","I","EM","BR","P","DIV","INPUT"];
+  const allowed=["B","STRONG","I","EM","BR","P","DIV","SPAN","INPUT"];
   function clean(node){
     Array.from(node.childNodes).forEach(child=>{
       if(child.nodeType===1){
         if(!allowed.includes(child.tagName)){const text=document.createTextNode(child.textContent||"");child.replaceWith(text)}
         else if(child.tagName==="INPUT"){if(child.type!=="checkbox"){child.remove()}else{const checked=child.hasAttribute("checked");Array.from(child.attributes).forEach(attr=>child.removeAttribute(attr.name));child.setAttribute("type","checkbox");if(checked)child.setAttribute("checked","")}}
-        else{Array.from(child.attributes).forEach(attr=>child.removeAttribute(attr.name));clean(child)}
+        else{const keepClass=child.tagName==="SPAN"&&["doc-size-1","doc-size-2","doc-size-3"].includes(child.getAttribute("class"))?child.getAttribute("class"):"";Array.from(child.attributes).forEach(attr=>child.removeAttribute(attr.name));if(keepClass)child.setAttribute("class",keepClass);clean(child)}
       }else if(child.nodeType!==3)child.remove();
     });
   }
@@ -1152,7 +1152,7 @@ function docsSafeHtml(value){
 }
 function docsBodyHtml(value){
   const raw=String(value||"");
-  if(!/<\/?(b|strong|i|em|br|p|div|input)\b/i.test(raw))return esc(raw).replace(/\r?\n/g,"<br>");
+  if(!/<\/?(b|strong|i|em|br|p|div|span|input)\b/i.test(raw))return esc(raw).replace(/\r?\n/g,"<br>");
   return docsSafeHtml(raw);
 }
 let DOC_SAVED_RANGE=null;
@@ -1225,8 +1225,9 @@ function docsFormat(command){
   if(!DOC_SAVED_RANGE||!editor.contains(DOC_SAVED_RANGE.commonAncestorContainer)){toast("Selecione um trecho do texto primeiro.");return}
   const range=DOC_SAVED_RANGE.cloneRange();
   if(range.collapsed){toast("Selecione o texto que deseja formatar.");return}
-  const tag=command==="bold"?"strong":"em";
-  const wrapper=document.createElement(tag);
+  const sizeClass={"size1":"doc-size-1","size2":"doc-size-2","size3":"doc-size-3"}[command];
+  const wrapper=document.createElement(sizeClass?"span":(command==="bold"?"strong":"em"));
+  if(sizeClass)wrapper.className=sizeClass;
   try{
     wrapper.appendChild(range.extractContents());range.insertNode(wrapper);
     const next=document.createRange();next.selectNodeContents(wrapper);
@@ -1251,7 +1252,7 @@ function documentsView(){
       '<div class="doc-section-label">Minhas pastas</div>'+(folderRows||'<div class="doc-empty doc-empty-short">Nenhuma pasta por aqui ainda.<br>Toque em “Nova pasta” para começar.</div>');
   }else if(note){
     content='<div class="app-backbar"><button class="app-back-button" onclick="backNav()"><span class="app-back-icon">‹</span> '+esc(folder.name)+'</button></div>'+
-      '<div class="doc-editor-ios"><input class="doc-title" value="'+esc(note.title||"")+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><div class="doc-format-toolbar"><button type="button" title="Negrito" onmousedown="event.preventDefault()" onclick="docsFormat(\'bold\')">B</button><button type="button" class="italic" title="Itálico" onmousedown="event.preventDefault()" onclick="docsFormat(\'italic\')">I</button><span class="sub" style="margin-left:6px">Digite / para comandos · ⌘/Ctrl + B ou I</span></div><div class="doc-body" contenteditable="true" data-placeholder="Comece a escrever..." onmouseup="docsRememberSelection()" onkeyup="docsRememberSelection()" onclick="docsToggleChecklist(event)" onkeydown="docsEditorKeydown(event)" oninput="docsEditorInput(event)">'+docsBodyHtml(note.body||"")+'</div><div id="docSlashMenu" class="doc-slash-menu" style="display:none"><button type="button" onmousedown="event.preventDefault()" onclick="docsApplySlashCommand(\'checklist\')">☐ Lista de tarefas</button><button type="button" onclick="docsApplySlashCommand(\'bold\')"><strong>B</strong> Negrito</button><button type="button" onclick="docsApplySlashCommand(\'italic\')"><em>I</em> Itálico</button></div><div class="doc-editor-footer"><span class="sub">Salvo automaticamente</span><button class="lnk" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div></div>';
+      '<div class="doc-editor-ios"><input class="doc-title" value="'+esc(note.title||"")+'" placeholder="Título" oninput="docsUpdate(\'title\',this.value)"><div class="doc-format-toolbar"><button type="button" title="Título grande" onmousedown="event.preventDefault()" onclick="docsFormat(\'size1\')">H1</button><button type="button" title="Título médio" onmousedown="event.preventDefault()" onclick="docsFormat(\'size2\')">H2</button><button type="button" title="Título pequeno" onmousedown="event.preventDefault()" onclick="docsFormat(\'size3\')">H3</button><button type="button" title="Negrito" onmousedown="event.preventDefault()" onclick="docsFormat(\'bold\')">B</button><button type="button" class="italic" title="Itálico" onmousedown="event.preventDefault()" onclick="docsFormat(\'italic\')">I</button><span class="sub" style="margin-left:6px">Selecione o texto e escolha o tamanho</span></div><div class="doc-body" contenteditable="true" data-placeholder="Comece a escrever..." onmouseup="docsRememberSelection()" onkeyup="docsRememberSelection()" onclick="docsToggleChecklist(event)" onkeydown="docsEditorKeydown(event)" oninput="docsEditorInput(event)">'+docsBodyHtml(note.body||"")+'</div><div id="docSlashMenu" class="doc-slash-menu" style="display:none"><button type="button" onmousedown="event.preventDefault()" onclick="docsApplySlashCommand(\'checklist\')">☐ Lista de tarefas</button><button type="button" onclick="docsApplySlashCommand(\'bold\')"><strong>B</strong> Negrito</button><button type="button" onclick="docsApplySlashCommand(\'italic\')"><em>I</em> Itálico</button></div><div class="doc-editor-footer"><span class="sub">Salvo automaticamente</span><button class="lnk" onclick="docsDeleteNote(\''+note.id+'\')">Excluir nota</button></div></div>';
   }else{
     content='<div class="app-backbar"><button class="app-back-button" onclick="backNav()"><span class="app-back-icon">‹</span> Pastas</button></div>'+
       '<div class="doc-toolbar"><div><h1>'+esc(folder.name)+'</h1><div class="sub">Notas desta pasta</div></div><button class="btn" onclick="docsNewNote()">+ Nova nota</button></div>'+
